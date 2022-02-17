@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='ovos-tts-server',
-    version='0.0.1',
+    version='0.0.2',
     description='simple flask server to host OpenVoiceOS tts plugins as a service',
     url='https://github.com/OpenVoiceOS/ovos-tts-server',
     author='JarbasAi',

@@ -2,6 +2,8 @@
 
 Turn any OVOS TTS plugin into a micro service!
 
+Use with OpenVoiceOS [companion plugin](https://github.com/OpenVoiceOS/ovos-tts-server-plugin)
+
 ## Install
 
 `pip install ovos-tts-server`

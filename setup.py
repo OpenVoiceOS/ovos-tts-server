@@ -10,7 +10,7 @@ setup(
     author_email='jarbasai@mailfence.com',
     license='Apache-2.0',
     packages=['ovos_tts_server'],
-    install_requires=["ovos-plugin-manager>=0.0.4a2",
+    install_requires=["ovos-plugin-manager>=0.0.5",
                       "flask"],
     zip_safe=True,
     classifiers=[

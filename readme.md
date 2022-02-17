@@ -20,9 +20,9 @@ options:
   --cache          save every synth to disk
 ```
 
-eg, to use the GladosTTS plugin `ovos-tts-server --engine neon-tts-plugin-glados --cache`
+eg, to use the [GladosTTS plugin](https://github.com/NeonGeckoCom/neon-tts-plugin-glados) `ovos-tts-server --engine neon-tts-plugin-glados --cache`
 
-then do a get request `http://192.168.1.112:9666/synthesize/your text goes here`
+then do a get request `http://192.168.1.112:9666/synthesize/hello`
 
 ## Companion plugin
 
@@ -30,6 +30,30 @@ coming soon - companion plugin to point to a ovos-tts-server instance
 
 ## Docker
 
-coming soon - sample docker file
+you can create easily crete a docker file to serve any plugin
 
-Each plugin can provide its own Dockerfile in its repository using this repository
+```dockerfile
+FROM python:3.7
+
+RUN pip3 install ovos-utils==0.0.15
+RUN pip3 install ovos-plugin-manager==0.0.4
+RUN pip3 install ovos-tts-server==0.0.1
+
+RUN pip3 install {PLUGIN_HERE}
+
+ENTRYPOINT ovos-tts-server --engine {PLUGIN_HERE} --cache
+```
+
+build it
+```bash
+docker build . -t my_ovos_tts_plugin
+```
+
+run it
+```bash
+docker run -p 8080:9666 my_ovos_tts_plugin
+```
+
+use it `http://localhost:8080/synthesize/hello`
+
+Each plugin can provide its own Dockerfile in its repository using ovos-tts-server

@@ -26,7 +26,7 @@ jobs:
             python setup.py sdist
       - name: Build Distribution Packages
         run: |
-          python setup.py bdist_wheel
+          python setup.py sdist bdist_wheel
       - name: Install tflite_runtime workaround tflit bug
         run: |
           pip3 install numpy

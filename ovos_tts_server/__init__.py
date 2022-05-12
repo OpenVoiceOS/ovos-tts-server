@@ -22,8 +22,8 @@ def create_app():
     @app.route("/synthesize/<utterance>", methods=['GET'])
     def synth(utterance):
         utterance = TTS.validate_ssml(utterance)
-        audio = TTS.synth(utterance, **request.args)
-        return send_file(audio, mimetype="audio/wav")
+        audio, phonemes = TTS.synth(utterance, **request.args)
+        return send_file(audio.path, mimetype="audio/wav")
 
     return app
 

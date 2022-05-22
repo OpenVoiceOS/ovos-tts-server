@@ -12,20 +12,8 @@
 #
 from flask import Flask, send_file, request
 from ovos_plugin_manager.tts import load_tts_plugin
-from ovos_plugin_manager.utils.tts_cache import hash_sentence
 
 TTS = None
-
-
-def get_tts(sentence, voice=None, lang=None):
-    global TTS
-    sentence_hash = hash_sentence(sentence)
-    cache = TTS.get_cache(lang=lang, voice=voice)
-    if sentence_hash in cache:  # load from cache
-        audio_file, phonemes = TTS._get_from_cache(sentence, sentence_hash, lang=lang, voice=voice)
-    else:  # synth + cache
-        audio_file, phonemes = TTS._synth(sentence, sentence_hash, lang=lang, voice=voice)
-    return audio_file.path
 
 
 def create_app():
@@ -33,10 +21,9 @@ def create_app():
 
     @app.route("/synthesize/<utterance>", methods=['GET'])
     def synth(utterance):
-        lang = request.args.get("lang")
-        voice = request.args.get("voice")
-        audio = get_tts(utterance, lang=lang, voice=voice)
-        return send_file(audio, mimetype="audio/wav")
+        utterance = TTS.validate_ssml(utterance)
+        audio, phonemes = TTS.synth(utterance, **request.args)
+        return send_file(audio.path, mimetype="audio/wav")
 
     return app
 

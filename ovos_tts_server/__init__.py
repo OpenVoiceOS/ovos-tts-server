@@ -9,26 +9,32 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-from flask import Flask, send_file, request
+
+import uvicorn
+
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from ovos_plugin_manager.tts import load_tts_plugin
+from ovos_utils.log import LOG
+from starlette.requests import Request
 
 TTS = None
 
 
 def create_app():
-    app = Flask(__name__)
+    app = FastAPI()
 
-    @app.route("/synthesize/<utterance>", methods=['GET'])
-    def synth(utterance):
+    @app.get("/synthesize/{utterance}")
+    def synth(utterance: str, request: Request):
+        LOG.debug(f"{utterance}|{request.query_params}")
         utterance = TTS.validate_ssml(utterance)
-        audio, phonemes = TTS.synth(utterance, **request.args)
-        return send_file(audio.path, mimetype="audio/wav")
+        audio, phonemes = TTS.synth(utterance, **request.query_params)
+        return FileResponse(audio.path)
 
     return app
 
 
-def start_tts_server(engine, port=9666, host="0.0.0.0", cache=False):
+def start_tts_server(engine, cache=False):
     global TTS
 
     # load ovos TTS plugin
@@ -38,7 +44,6 @@ def start_tts_server(engine, port=9666, host="0.0.0.0", cache=False):
     TTS.log_timestamps = True  # enable logging
 
     app = create_app()
-    app.run(port=port, use_reloader=False, host=host)
-    return app
+    return app, TTS
 
 

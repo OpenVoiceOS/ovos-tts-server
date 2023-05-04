@@ -1,17 +1,44 @@
 #!/usr/bin/env python3
-from setuptools import setup
+from setuptools import setup, find_packages
+from os import path, environ
+
+BASE_PATH = path.abspath(path.dirname(__file__))
+
+
+def required(requirements_file):
+    """ Read requirements file and remove comments and empty lines. """
+    with open(path.join(BASE_PATH, requirements_file), 'r') as f:
+        requirements = f.read().splitlines()
+        if 'MYCROFT_LOOSE_REQUIREMENTS' in environ:
+            print('USING LOOSE REQUIREMENTS!')
+            requirements = [r.replace('==', '>=').replace('~=', '>=') for r in requirements]
+        return [pkg for pkg in requirements
+                if pkg.strip() and not pkg.startswith("#")]
+
+
+with open(path.join(BASE_PATH, "readme.md"), "r") as f:
+    long_description = f.read()
+
+with open(path.join(BASE_PATH, "version.py"), "r", encoding="utf-8") as v:
+    for line in v.readlines():
+        if line.startswith("__version__"):
+            if '"' in line:
+                version = line.split('"')[1]
+            else:
+                version = line.split("'")[1]
 
 setup(
     name='ovos-tts-server',
-    version='0.0.2',
-    description='simple flask server to host OpenVoiceOS tts plugins as a service',
+    version=version,
+    description='simple FastAPI server to host TTS plugins as a service',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/OpenVoiceOS/ovos-tts-server',
     author='JarbasAi',
     author_email='jarbasai@mailfence.com',
     license='Apache-2.0',
-    packages=['ovos_tts_server'],
-    install_requires=["ovos-plugin-manager>=0.0.18a3",
-                      "flask"],
+    packages=find_packages(),
+    install_requires=required("requirements/requirements.txt"),
     zip_safe=True,
     classifiers=[
         'Development Status :: 3 - Alpha',

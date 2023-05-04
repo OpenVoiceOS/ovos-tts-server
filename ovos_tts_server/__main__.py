@@ -9,8 +9,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
+import uvicorn
+
 from ovos_tts_server import start_tts_server
+from ovos_tts_server.gradio_app import bind_gradio_service
+from ovos_utils.log import LOG
 
 
 def main():
@@ -24,9 +28,24 @@ def main():
                         default="0.0.0.0")
     parser.add_argument("--cache", help="save every synth to disk",
                         action="store_true")
+    parser.add_argument("--gradio", help="Enable Gradio Web UI",
+                        action="store_true")
+    parser.add_argument("--title", help="Title for webUI",
+                        default="TTS")
+    parser.add_argument("--description", help="Text description to print in UI",
+                        default="Get Text-to-Speech")
+    parser.add_argument("--info", help="Text to display at end of UI",
+                        default=None)
+    parser.add_argument("--badge", help="URL of visitor badge", default=None)
     args = parser.parse_args()
 
-    start_tts_server(args.engine, port=args.port, host=args.host, cache=bool(args.cache))
+    server, engine = start_tts_server(args.engine, cache=bool(args.cache))
+    LOG.info("Server Started")
+    if args.gradio:
+        bind_gradio_service(server, engine, args.title, args.description,
+                            args.info, args.badge)
+        LOG.info("Gradio Started")
+    uvicorn.run(server, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":

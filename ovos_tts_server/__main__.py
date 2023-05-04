@@ -28,6 +28,8 @@ def main():
                         default="0.0.0.0")
     parser.add_argument("--cache", help="save every synth to disk",
                         action="store_true")
+    parser.add_argument("--lang", help="default language supported by plugin",
+                        default="en-us")
     parser.add_argument("--gradio", help="Enable Gradio Web UI",
                         action="store_true")
     parser.add_argument("--title", help="Title for webUI",
@@ -43,7 +45,7 @@ def main():
     LOG.info("Server Started")
     if args.gradio:
         bind_gradio_service(server, engine, args.title, args.description,
-                            args.info, args.badge)
+                            args.info, args.badge, args.lang)
         LOG.info("Gradio Started")
     uvicorn.run(server, host=args.host, port=args.port)
 

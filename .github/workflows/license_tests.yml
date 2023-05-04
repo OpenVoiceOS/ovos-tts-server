@@ -9,4 +9,4 @@ jobs:
   license_tests:
     uses: neongeckocom/.github/.github/workflows/license_tests.yml@master
     with:
-      packages-exclude: '^(tqdm|bs4|gradio_client|bitstruct).*'
+      packages-exclude: '^(tqdm|bs4|gradio|bitstruct).*'

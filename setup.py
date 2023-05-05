@@ -55,6 +55,7 @@ setup(
     license='Apache-2.0',
     packages=find_packages(),
     install_requires=required("requirements/requirements.txt"),
+    package_data={"ovos_tts_server": ["examples/*"]},
     zip_safe=True,
     classifiers=[
         'Development Status :: 3 - Alpha',

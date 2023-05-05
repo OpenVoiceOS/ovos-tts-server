@@ -2,7 +2,6 @@ import tempfile
 import gradio as gr
 
 from ovos_utils import LOG
-from neon_tts_plugin_coqui import CoquiTTS
 
 TTS = None
 
@@ -32,7 +31,7 @@ def bind_gradio_service(app, tts_engine, title, description, info, badge,
             with gr.Column():  # variant="panel"
                 textbox = gr.Textbox(
                     label="Input",
-                    value=CoquiTTS.langs[default_lang]["sentence"],
+                    value="",
                     max_lines=3,
                 )
                 radio = gr.Radio(
@@ -54,7 +53,7 @@ def bind_gradio_service(app, tts_engine, title, description, info, badge,
             [textbox, radio],
             [audio],
         )
-        radio.change(lambda lang: CoquiTTS.langs[lang]["sentence"],
-                     radio, textbox)
+        # radio.change(lambda lang: CoquiTTS.langs[lang]["sentence"],
+        #              radio, textbox)
     LOG.info(f"Mounting app to /gradio")
     gr.mount_gradio_app(app, blocks, path="/gradio")

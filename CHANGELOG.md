@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.2a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.2a3) (2023-05-05)
+## [0.0.2a4](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.2a4) (2023-05-05)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.0.2...0.0.2a3)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.2a3...0.0.2a4)
+
+**Implemented enhancements:**
+
+- Add examples from Coqui plugin with default language handling [\#10](https://github.com/OpenVoiceOS/ovos-tts-server/pull/10) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.2a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.2a3) (2023-05-05)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.0.2...V0.0.2a3)
 
 **Implemented enhancements:**
 

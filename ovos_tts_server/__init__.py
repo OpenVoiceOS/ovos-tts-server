@@ -18,12 +18,14 @@ from starlette.requests import Request
 TTS = None
 
 
-def create_app(tts_plugin):
+def create_app(tts_plugin, has_gradio=False):
     app = FastAPI()
 
     @app.get("/status")
     def stats(request: Request):
-        return {"status": "ok", "plugin": tts_plugin}
+        return {"status": "ok",
+                "plugin": tts_plugin,
+                "gradio": has_gradio}
 
     @app.get("/synthesize/{utterance}")
     def synth(utterance: str, request: Request):
@@ -35,7 +37,7 @@ def create_app(tts_plugin):
     return app
 
 
-def start_tts_server(tts_plugin, cache=False):
+def start_tts_server(tts_plugin, cache=False, has_gradio=False):
     global TTS
 
     # load ovos TTS plugin
@@ -44,7 +46,7 @@ def start_tts_server(tts_plugin, cache=False):
     TTS = engine(config={"persist_cache": cache})  # this will cache every synth even across reboots
     TTS.log_timestamps = True  # enable logging
 
-    app = create_app(tts_plugin)
+    app = create_app(tts_plugin, has_gradio)
     return app, TTS
 
 

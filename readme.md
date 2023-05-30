@@ -2,11 +2,28 @@
 
 Turn any OVOS TTS plugin into a micro service!
 
-Use with OpenVoiceOS [companion plugin](https://github.com/OpenVoiceOS/ovos-tts-server-plugin)
 
 ## Install
 
 `pip install ovos-tts-server`
+
+## Companion plugin
+
+Use in your voice assistant with OpenVoiceOS [companion plugin](https://github.com/OpenVoiceOS/ovos-tts-server-plugin)
+
+## Configuration
+
+the plugin is configured just like if it was running in the assistant, under mycroft.conf
+
+eg
+```
+ "tts": {
+    "module": "ovos-tts-plugin-piper",
+    "ovos-tts-plugin-piper": {
+      "model": "alan-low"
+    }
+  }
+```
 
 ## Usage
 
@@ -26,9 +43,6 @@ eg, to use the [GladosTTS plugin](https://github.com/NeonGeckoCom/neon-tts-plugi
 
 then do a get request `http://192.168.1.112:9666/synthesize/hello`
 
-## Companion plugin
-
-coming soon - companion plugin to point to a ovos-tts-server instance
 
 ## Docker
 

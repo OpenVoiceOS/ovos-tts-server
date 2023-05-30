@@ -9,9 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import uvicorn
-
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from ovos_plugin_manager.tts import load_tts_plugin
@@ -21,8 +18,12 @@ from starlette.requests import Request
 TTS = None
 
 
-def create_app():
+def create_app(tts_plugin):
     app = FastAPI()
+
+    @app.get("/status")
+    def stats(request: Request):
+        return {"status": "ok", "plugin": tts_plugin}
 
     @app.get("/synthesize/{utterance}")
     def synth(utterance: str, request: Request):
@@ -34,16 +35,16 @@ def create_app():
     return app
 
 
-def start_tts_server(engine, cache=False):
+def start_tts_server(tts_plugin, cache=False):
     global TTS
 
     # load ovos TTS plugin
-    engine = load_tts_plugin(engine)
+    engine = load_tts_plugin(tts_plugin)
 
     TTS = engine(config={"persist_cache": cache})  # this will cache every synth even across reboots
     TTS.log_timestamps = True  # enable logging
 
-    app = create_app()
+    app = create_app(tts_plugin)
     return app, TTS
 
 

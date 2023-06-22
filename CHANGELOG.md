@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.3a7](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.3a7) (2023-06-22)
+## [0.0.3a8](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.3a8) (2023-06-22)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a6...0.0.3a7)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a7...0.0.3a8)
+
+**Implemented enhancements:**
+
+- add gradio to status report [\#14](https://github.com/OpenVoiceOS/ovos-tts-server/pull/14) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.3a7](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a7) (2023-06-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a6...V0.0.3a7)
 
 **Fixed bugs:**
 

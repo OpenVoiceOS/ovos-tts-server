@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from ovos_plugin_manager.tts import load_tts_plugin
 from ovos_utils.log import LOG
+from ovos_config import Configuration
 from starlette.requests import Request
 
 TTS = None
@@ -41,7 +42,9 @@ def start_tts_server(tts_plugin, cache=False):
     # load ovos TTS plugin
     engine = load_tts_plugin(tts_plugin)
 
-    TTS = engine(config={"persist_cache": cache})  # this will cache every synth even across reboots
+    config = Configuration().get("tts", {}).get(tts_plugin, {})
+    config["persist_cache] = cache  # this will cache every synth even across reboots
+    TTS = engine(config)
     TTS.log_timestamps = True  # enable logging
 
     app = create_app(tts_plugin)

@@ -43,7 +43,7 @@ def start_tts_server(tts_plugin, cache=False):
     engine = load_tts_plugin(tts_plugin)
 
     config = Configuration().get("tts", {}).get(tts_plugin, {})
-    config["persist_cache] = cache  # this will cache every synth even across reboots
+    config["persist_cache"] = cache  # this will cache every synth even across reboots
     TTS = engine(config)
     TTS.log_timestamps = True  # enable logging
 

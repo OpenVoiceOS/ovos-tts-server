@@ -16,6 +16,9 @@ from ovos_utils.log import LOG
 from ovos_config import Configuration
 from starlette.requests import Request
 
+
+LOG.set_level("ERROR")  # avoid server side logs
+
 TTS = None
 
 
@@ -30,7 +33,6 @@ def create_app(tts_plugin, has_gradio=False):
 
     @app.get("/synthesize/{utterance}")
     def synth(utterance: str, request: Request):
-        LOG.debug(f"{utterance}|{request.query_params}")
         utterance = TTS.validate_ssml(utterance)
         audio, phonemes = TTS.synth(utterance, **request.query_params)
         return FileResponse(audio.path)

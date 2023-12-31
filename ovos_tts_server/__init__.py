@@ -37,6 +37,13 @@ def create_app(tts_plugin, has_gradio=False):
         audio, phonemes = TTS.synth(utterance, **request.query_params)
         return FileResponse(audio.path)
 
+    @app.get("/v2/synthesize")
+    def synth(request: Request):
+        utterance = request.query_params["utterance"]
+        utterance = TTS.validate_ssml(utterance)
+        audio, phonemes = TTS.synth(utterance, **request.query_params)
+        return FileResponse(audio.path)
+        
     return app
 
 

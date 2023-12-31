@@ -1,8 +1,20 @@
 # Changelog
 
-## [0.0.3a9](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.3a9) (2023-10-14)
+## [0.0.3a10](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.3a10) (2023-12-31)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a8...0.0.3a9)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a9...0.0.3a10)
+
+**Fixed bugs:**
+
+- move utterance to query params [\#19](https://github.com/OpenVoiceOS/ovos-tts-server/pull/19) ([JarbasAl](https://github.com/JarbasAl))
+
+**Closed issues:**
+
+- Add PyPI Automation [\#5](https://github.com/OpenVoiceOS/ovos-tts-server/issues/5)
+
+## [V0.0.3a9](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a9) (2023-10-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a8...V0.0.3a9)
 
 **Merged pull requests:**
 

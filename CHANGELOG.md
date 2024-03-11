@@ -1,8 +1,24 @@
 # Changelog
 
-## [0.0.3a10](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.3a10) (2023-12-31)
+## [0.0.3a11](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.3a11) (2024-03-11)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a9...0.0.3a10)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a10...0.0.3a11)
+
+**Implemented enhancements:**
+
+- Add an endpoint with `utterance` in request payload [\#18](https://github.com/OpenVoiceOS/ovos-tts-server/issues/18)
+
+**Closed issues:**
+
+- Ability to set both primary and fallback TTS to ovos-tts-server [\#12](https://github.com/OpenVoiceOS/ovos-tts-server/issues/12)
+
+**Merged pull requests:**
+
+- Update ovos-utils requirement from ~=0.0.32 to ~=0.0.38 in /requirements [\#24](https://github.com/OpenVoiceOS/ovos-tts-server/pull/24) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [V0.0.3a10](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a10) (2023-12-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a9...V0.0.3a10)
 
 **Fixed bugs:**
 

@@ -1,5 +1,5 @@
 ovos-plugin-manager~=0.0.18
 fastapi~=0.95
-uvicorn~=0.22
+uvicorn~=0.29
 gradio~=3.28
 ovos-utils~=0.0.38

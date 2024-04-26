@@ -1,8 +1,16 @@
 # Changelog
 
-## [0.0.3a11](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.3a11) (2024-03-11)
+## [0.0.3a12](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.3a12) (2024-04-26)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a10...0.0.3a11)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a11...0.0.3a12)
+
+**Merged pull requests:**
+
+- Update ovos-plugin-manager requirement from ~=0.0.18 to ~=0.0.25 in /requirements [\#20](https://github.com/OpenVoiceOS/ovos-tts-server/pull/20) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [V0.0.3a11](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a11) (2024-03-11)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a10...V0.0.3a11)
 
 **Implemented enhancements:**
 

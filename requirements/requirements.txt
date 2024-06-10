@@ -1,5 +1,5 @@
 ovos-plugin-manager~=0.0.25
 fastapi~=0.95
 uvicorn~=0.22
-gradio~=3.28
+gradio~=4.36
 ovos-utils~=0.0

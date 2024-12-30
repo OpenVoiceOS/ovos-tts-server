@@ -1,0 +1,120 @@
+# Changelog
+
+## [0.0.3a14](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.0.3a14) (2024-12-30)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a13...0.0.3a14)
+
+**Merged pull requests:**
+
+- fix:semver [\#46](https://github.com/OpenVoiceOS/ovos-tts-server/pull/46) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.3a13](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a13) (2024-04-26)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a12...V0.0.3a13)
+
+## [V0.0.3a12](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a12) (2024-04-26)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a11...V0.0.3a12)
+
+**Merged pull requests:**
+
+- Update ovos-plugin-manager requirement from ~=0.0.18 to ~=0.0.25 in /requirements [\#20](https://github.com/OpenVoiceOS/ovos-tts-server/pull/20) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [V0.0.3a11](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a11) (2024-03-11)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a10...V0.0.3a11)
+
+**Implemented enhancements:**
+
+- Add an endpoint with `utterance` in request payload [\#18](https://github.com/OpenVoiceOS/ovos-tts-server/issues/18)
+
+**Closed issues:**
+
+- Ability to set both primary and fallback TTS to ovos-tts-server [\#12](https://github.com/OpenVoiceOS/ovos-tts-server/issues/12)
+
+**Merged pull requests:**
+
+- Update ovos-utils requirement from ~=0.0.32 to ~=0.0.38 in /requirements [\#24](https://github.com/OpenVoiceOS/ovos-tts-server/pull/24) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [V0.0.3a10](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a10) (2023-12-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a9...V0.0.3a10)
+
+**Fixed bugs:**
+
+- move utterance to query params [\#19](https://github.com/OpenVoiceOS/ovos-tts-server/pull/19) ([JarbasAl](https://github.com/JarbasAl))
+
+**Closed issues:**
+
+- Add PyPI Automation [\#5](https://github.com/OpenVoiceOS/ovos-tts-server/issues/5)
+
+## [V0.0.3a9](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a9) (2023-10-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a8...V0.0.3a9)
+
+**Merged pull requests:**
+
+- LOG.set\_level\("ERROR"\)  [\#17](https://github.com/OpenVoiceOS/ovos-tts-server/pull/17) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.3a8](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a8) (2023-06-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a7...V0.0.3a8)
+
+**Implemented enhancements:**
+
+- add gradio to status report [\#14](https://github.com/OpenVoiceOS/ovos-tts-server/pull/14) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.3a7](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a7) (2023-06-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a6...V0.0.3a7)
+
+**Fixed bugs:**
+
+- fix/config reading [\#16](https://github.com/OpenVoiceOS/ovos-tts-server/pull/16) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.3a6](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a6) (2023-05-30)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.3a5...V0.0.3a6)
+
+**Implemented enhancements:**
+
+- add status endpoint + update readme [\#13](https://github.com/OpenVoiceOS/ovos-tts-server/pull/13) ([JarbasAl](https://github.com/JarbasAl))
+
+## [V0.0.3a5](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.3a5) (2023-05-05)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.2a4...V0.0.3a5)
+
+**Fixed bugs:**
+
+- Fix version and package data [\#11](https://github.com/OpenVoiceOS/ovos-tts-server/pull/11) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.2a4](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.2a4) (2023-05-05)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/V0.0.2a3...V0.0.2a4)
+
+**Implemented enhancements:**
+
+- Add examples from Coqui plugin with default language handling [\#10](https://github.com/OpenVoiceOS/ovos-tts-server/pull/10) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [V0.0.2a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/V0.0.2a3) (2023-05-05)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.0.2...V0.0.2a3)
+
+**Implemented enhancements:**
+
+- Release Automation [\#9](https://github.com/OpenVoiceOS/ovos-tts-server/pull/9) ([NeonDaniel](https://github.com/NeonDaniel))
+- Adds gradio web UI with other updates [\#7](https://github.com/OpenVoiceOS/ovos-tts-server/pull/7) ([NeonDaniel](https://github.com/NeonDaniel))
+
+**Fixed bugs:**
+
+- Remove leftover hard-coded plugin references [\#8](https://github.com/OpenVoiceOS/ovos-tts-server/pull/8) ([NeonDaniel](https://github.com/NeonDaniel))
+
+**Merged pull requests:**
+
+- Update license test automation [\#6](https://github.com/OpenVoiceOS/ovos-tts-server/pull/6) ([NeonDaniel](https://github.com/NeonDaniel))
+- Fix typo causing build tests to not run [\#4](https://github.com/OpenVoiceOS/ovos-tts-server/pull/4) ([NeonDaniel](https://github.com/NeonDaniel))
+- feat/gender [\#2](https://github.com/OpenVoiceOS/ovos-tts-server/pull/2) ([NeonJarbas](https://github.com/NeonJarbas))
+
+
+
+\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*

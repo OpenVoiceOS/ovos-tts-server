@@ -41,7 +41,8 @@ def main():
     parser.add_argument("--badge", help="URL of visitor badge", default=None)
     args = parser.parse_args()
 
-    server, engine = start_tts_server(args.engine, cache=bool(args.cache))
+    server, engine = start_tts_server(args.engine, cache=bool(args.cache),
+                                      has_gradio=bool(args.gradio))
     LOG.info("Server Started")
     if args.gradio:
         bind_gradio_service(server, engine, args.title, args.description,

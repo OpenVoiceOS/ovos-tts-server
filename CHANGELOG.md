@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.1a2) (2025-01-03)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.1a1...0.1.1a2)
+
+**Merged pull requests:**
+
+- Update fastapi requirement from ~=0.95 to ~=0.115 in /requirements [\#48](https://github.com/OpenVoiceOS/ovos-tts-server/pull/48) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [0.1.1a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.1a1) (2025-01-03)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.0...0.1.1a1)

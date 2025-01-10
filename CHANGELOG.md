@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.1a3) (2025-01-10)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.1a2...0.1.1a3)
+
+**Merged pull requests:**
+
+- Update uvicorn requirement from ~=0.30 to ~=0.34 in /requirements [\#52](https://github.com/OpenVoiceOS/ovos-tts-server/pull/52) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [0.1.1a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.1a2) (2025-01-03)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.1a1...0.1.1a2)

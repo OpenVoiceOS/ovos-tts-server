@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.2a1) (2025-01-15)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.1a3...0.1.2a1)
+
+**Merged pull requests:**
+
+- fix: port int [\#55](https://github.com/OpenVoiceOS/ovos-tts-server/pull/55) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.1.1a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.1a3) (2025-01-10)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.1a2...0.1.1a3)

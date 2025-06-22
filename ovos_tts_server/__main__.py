@@ -42,7 +42,7 @@ def main():
     args = parser.parse_args()
 
     server, engine = start_tts_server(args.engine, cache=bool(args.cache),
-                                      has_gradio=bool(args.gradio))
+                                      has_gradio=bool(args.gradio), lang=args.lang)
     LOG.info("Server Started")
     if args.gradio:
         bind_gradio_service(server, engine, args.title, args.description,

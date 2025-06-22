@@ -43,17 +43,19 @@ def create_app(tts_plugin, has_gradio=False):
         utterance = TTS.validate_ssml(utterance)
         audio, phonemes = TTS.synth(utterance, **request.query_params)
         return FileResponse(audio.path)
-        
+
     return app
 
 
-def start_tts_server(tts_plugin, cache=False, has_gradio=False):
+def start_tts_server(tts_plugin, cache=False, has_gradio=False, lang=None):
     global TTS
 
     # load ovos TTS plugin
     engine = load_tts_plugin(tts_plugin)
 
     config = Configuration().get("tts", {}).get(tts_plugin, {})
+    if lang:
+        config["lang"] = lang
     config["persist_cache"] = cache  # this will cache every synth even across reboots
     TTS = engine(config=config)
     TTS.log_timestamps = True  # enable logging

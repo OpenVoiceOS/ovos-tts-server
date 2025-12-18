@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.4a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.4a2) (2025-12-18)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.4a1...0.1.4a2)
+
+**Implemented enhancements:**
+
+- report languages supported by the loaded plugin [\#68](https://github.com/OpenVoiceOS/ovos-tts-server/issues/68)
+
+**Merged pull requests:**
+
+- chore: Configure Renovate [\#71](https://github.com/OpenVoiceOS/ovos-tts-server/pull/71) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.1.4a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.4a1) (2025-01-26)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.3...0.1.4a1)

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4a4](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.4a4) (2025-12-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.4a3...0.1.4a4)
+
+**Merged pull requests:**
+
+- chore\(deps\): update dependency ovos-plugin-manager to v2 [\#78](https://github.com/OpenVoiceOS/ovos-tts-server/pull/78) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.1.4a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.4a3) (2025-12-19)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.4a2...0.1.4a3)

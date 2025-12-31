@@ -11,7 +11,7 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       - name: Send message to Matrix bots channel
         id: matrix-chat-message
         uses: fadenb/matrix-chat-message@v0.0.6

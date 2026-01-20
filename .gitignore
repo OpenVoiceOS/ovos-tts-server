@@ -1,0 +1,14 @@
+# Python things
+__pycache__
+.pytest_cache
+
+# Editor things
+.*.sw?
+
+# venv stuff
+.envrc
+venv
+# setup.py artifacts
+dist
+build
+*.egg-info

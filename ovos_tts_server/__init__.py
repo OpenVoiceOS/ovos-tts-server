@@ -10,11 +10,11 @@ class TTSEngineWrapper:
 
     def __init__(self, plugin_name: str, cache: bool = False):
         """
-        Initialize TTS engine.
-
-        Args:
-            plugin_name: Name of the TTS plugin to load.
-            cache: Whether to persist cached audio across reboots.
+        Create a TTSEngineWrapper by loading and configuring the named TTS plugin.
+        
+        Parameters:
+            plugin_name (str): Name of the TTS plugin to load.
+            cache (bool): If True, persist generated audio cache across restarts.
         """
         engine = load_tts_plugin(plugin_name)
         config = Configuration().get("tts", {}).get(plugin_name, {})
@@ -26,18 +26,24 @@ class TTSEngineWrapper:
 
     @property
     def langs(self):
+        """
+        Return the list of languages supported by the wrapped TTS engine.
+        
+        Returns:
+            list[str]: Engine-reported available language codes, or a list containing the wrapper's default language if the engine does not expose available languages.
+        """
         return self.engine.available_languages or [self.lang]
 
     def synthesize(self, utterance: str, **kwargs) -> Tuple[str, Optional[str]]:
         """
-        Synthesize audio from text/SSML.
-
-        Args:
-            utterance: Text or SSML to synthesize.
-            kwargs: Plugin-specific synthesis parameters.
-
+        Synthesize spoken audio from the given text or SSML.
+        
+        Parameters:
+        	utterance (str): Text or SSML to synthesize.
+        	kwargs: Plugin-specific synthesis parameters forwarded to the underlying TTS engine.
+        
         Returns:
-            Tuple of audio file path and phonemes (if any).
+        	tuple (str, Optional[str]): `(audio_path, phonemes)` where `audio_path` is the file path to the generated audio and `phonemes` is the phoneme data produced by the engine, or `None` if not available.
         """
         utterance = self.engine.validate_ssml(utterance)
         audio, phonemes = self.engine.synth(utterance, **kwargs)
@@ -46,19 +52,30 @@ class TTSEngineWrapper:
 
 def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     """
-    Create FastAPI app with injected TTS engine.
-
-    Args:
-        tts_engine: TTSEngineWrapper instance.
-
+    Create a FastAPI application wired to the provided TTS engine.
+    
+    Parameters:
+        tts_engine (TTSEngineWrapper): Injected TTS engine used by the app's endpoints.
+    
     Returns:
-        Configured FastAPI application.
+        FastAPI: Configured FastAPI application exposing /status, legacy /synthesize/{utterance}, and /v2/synthesize endpoints.
     """
     app = FastAPI(title="OVOS TTS Server")
 
     @app.get("/status")
     def status() -> dict:
-        """Return the status of the TTS engine."""
+        """
+        Provide current status and configuration details for the injected TTS engine.
+        
+        Returns:
+            dict: A mapping containing:
+                - "status": health status string, always "ok".
+                - "plugin": plugin name (str).
+                - "langs": list of supported language codes (List[str]).
+                - "default_lang": default language code (str).
+                - "default_model": configured model name or None.
+                - "default_voice": configured voice name or None.
+        """
         config = getattr(tts_engine.engine, "config", {})
         return {
             "status": "ok",
@@ -73,9 +90,13 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     @app.get("/synthesize/{utterance}")
     async def synth_legacy(utterance: str, request: Request) -> FileResponse:
         """
-        Legacy endpoint for simple TTS synthesis.
-
-        Query parameters are passed directly to the TTS plugin.
+        Generate and return synthesized audio for the given utterance, forwarding query parameters to the TTS plugin.
+        
+        Parameters:
+            request (Request): The incoming FastAPI request whose query parameters are forwarded to the TTS plugin.
+        
+        Returns:
+            FileResponse: A response serving the synthesized audio file.
         """
         audio_path, _ = tts_engine.synthesize(utterance, **request.query_params)
         return FileResponse(audio_path)
@@ -83,10 +104,13 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     @app.get("/v2/synthesize")
     async def synth_v2(request: Request) -> FileResponse:
         """
-        Modern endpoint for TTS synthesis.
-
-        Expects 'utterance' as a query parameter.
-        All other query parameters are passed to the TTS plugin.
+        Handle /v2/synthesize requests and return synthesized speech as a file response.
+        
+        Reads the required "utterance" query parameter and forwards all other query parameters to the TTS plugin as options. If "utterance" is missing, an error dictionary is returned.
+        
+        Returns:
+            FileResponse: A response serving the synthesized audio file.
+            dict: If "utterance" is missing, a dictionary with an "error" key describing the problem.
         """
         utterance = request.query_params.get("utterance")
         if not utterance:

@@ -6,7 +6,17 @@ BASE_PATH = path.abspath(path.dirname(__file__))
 
 
 def required(requirements_file):
-    """ Read requirements file and remove comments and empty lines. """
+    """
+    Load a requirements file relative to the project base and return a cleaned list of package requirement strings.
+    
+    If the environment variable `MYCROFT_LOOSE_REQUIREMENTS` is set, convert strict version specifiers (`==`, `~=`) to `>=` before filtering. Blank lines and comment lines beginning with `#` are removed.
+    
+    Parameters:
+        requirements_file (str): Path to the requirements file relative to the project's base path.
+    
+    Returns:
+        list[str]: A list of requirement lines suitable for use in package installation.
+    """
     with open(path.join(BASE_PATH, requirements_file), 'r') as f:
         requirements = f.read().splitlines()
         if 'MYCROFT_LOOSE_REQUIREMENTS' in environ:
@@ -20,7 +30,15 @@ with open(path.join(BASE_PATH, "README.md"), "r") as f:
     long_description = f.read()
 
 def get_version():
-    """ Find the version of ovos-core"""
+    """
+    Determine the package version from ovos_tts_server/version.py.
+    
+    Reads version components and returns a version string in the form "major.minor.build".
+    If the alpha component is greater than zero, appends an "a" suffix followed by the alpha number.
+    
+    Returns:
+        str: The computed version string, e.g. "1.2.3" or "1.2.3a1".
+    """
     version = None
     version_file = path.join(BASE_PATH, 'ovos_tts_server', 'version.py')
     major, minor, build, alpha = (None, None, None, None)

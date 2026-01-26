@@ -17,6 +17,22 @@ from ovos_utils.log import LOG
 
 
 def main():
+    """
+    Parse command-line options and start the Text-to-Speech server served by uvicorn.
+    
+    Recognized command-line options include:
+    - --engine: TTS plugin to use
+    - --port: TCP port to bind (default 9666)
+    - --host: network interface to bind (default "0.0.0.0")
+    - --cache: save each synthesis to disk (flag)
+    - --lang: default language for the plugin (default "en-us")
+    - --title: UI title (default "TTS")
+    - --description: UI description (default "Get Text-to-Speech")
+    - --info: UI end text
+    - --badge: URL of visitor badge
+    
+    This function initializes the TTS server using the provided options and runs it with uvicorn.
+    """
     import argparse
 
     parser = argparse.ArgumentParser()

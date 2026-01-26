@@ -1,64 +1,117 @@
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-from fastapi import FastAPI
+from typing import Optional, Tuple
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import FileResponse
 from ovos_plugin_manager.tts import load_tts_plugin
-from ovos_utils.log import LOG
 from ovos_config import Configuration
-from starlette.requests import Request
 
 
-LOG.set_level("ERROR")  # avoid server side logs
+class TTSEngineWrapper:
+    """Wrapper around an OVOS TTS engine for dependency injection."""
 
-TTS = None
+    def __init__(self, plugin_name: str, cache: bool = False):
+        """
+        Initialize TTS engine.
+
+        Args:
+            plugin_name: Name of the TTS plugin to load.
+            cache: Whether to persist cached audio across reboots.
+        """
+        engine = load_tts_plugin(plugin_name)
+        config = Configuration().get("tts", {}).get(plugin_name, {})
+        config["persist_cache"] = cache
+        self.engine = engine(config=config)
+        self.engine.log_timestamps = True
+        self.plugin_name = plugin_name
+        self.lang = config.get("lang") or Configuration().get("lang") or "mul"
+
+    @property
+    def langs(self):
+        return self.engine.available_languages or [self.lang]
+
+    def synthesize(self, utterance: str, **kwargs) -> Tuple[str, Optional[str]]:
+        """
+        Synthesize audio from text/SSML.
+
+        Args:
+            utterance: Text or SSML to synthesize.
+            kwargs: Plugin-specific synthesis parameters.
+
+        Returns:
+            Tuple of audio file path and phonemes (if any).
+        """
+        utterance = self.engine.validate_ssml(utterance)
+        audio, phonemes = self.engine.synth(utterance, **kwargs)
+        return audio.path, phonemes
 
 
-def create_app(tts_plugin, has_gradio=False):
-    app = FastAPI()
+def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
+    """
+    Create FastAPI app with injected TTS engine.
+
+    Args:
+        tts_engine: TTSEngineWrapper instance.
+
+    Returns:
+        Configured FastAPI application.
+    """
+    app = FastAPI(title="OVOS TTS Server")
 
     @app.get("/status")
-    def stats(request: Request):
-        return {"status": "ok",
-                "plugin": tts_plugin,
-                "gradio": has_gradio}
+    def status() -> dict:
+        """Return the status of the TTS engine."""
+        config = getattr(tts_engine.engine, "config", {})
+        return {
+            "status": "ok",
+            "plugin": tts_engine.plugin_name,
+            "langs": tts_engine.langs,
+            "default_lang": tts_engine.lang,
+            "default_model": config.get("model"),
+            "default_voice": config.get("voice")
+        }
 
+    # legacy OVOS endpoints
     @app.get("/synthesize/{utterance}")
-    def synth(utterance: str, request: Request):
-        utterance = TTS.validate_ssml(utterance)
-        audio, phonemes = TTS.synth(utterance, **request.query_params)
-        return FileResponse(audio.path)
+    async def synth_legacy(utterance: str, request: Request) -> FileResponse:
+        """
+        Legacy endpoint for simple TTS synthesis.
+
+        Query parameters are passed directly to the TTS plugin.
+        """
+        audio_path, _ = tts_engine.synthesize(utterance, **request.query_params)
+        return FileResponse(audio_path)
 
     @app.get("/v2/synthesize")
-    def synth(request: Request):
-        utterance = request.query_params["utterance"]
-        utterance = TTS.validate_ssml(utterance)
-        audio, phonemes = TTS.synth(utterance, **request.query_params)
-        return FileResponse(audio.path)
-        
+    async def synth_v2(request: Request) -> FileResponse:
+        """
+        Modern endpoint for TTS synthesis.
+
+        Expects 'utterance' as a query parameter.
+        All other query parameters are passed to the TTS plugin.
+        """
+        utterance = request.query_params.get("utterance")
+        if not utterance:
+            return {"error": "Missing 'utterance' query parameter"}
+
+        # Pass all plugin-specific options
+        plugin_params = dict(request.query_params)
+        plugin_params.pop("utterance", None)  # Remove the utterance key
+        audio_path, _ = tts_engine.synthesize(utterance, **plugin_params)
+        return FileResponse(audio_path)
+
     return app
 
 
-def start_tts_server(tts_plugin, cache=False, has_gradio=False):
-    global TTS
+def start_tts_server(tts_plugin: str, cache: bool = False) -> Tuple[FastAPI, TTSEngineWrapper]:
+    """
+    Initialize TTS engine and create FastAPI app.
 
-    # load ovos TTS plugin
-    engine = load_tts_plugin(tts_plugin)
+    Args:
+        tts_plugin: TTS plugin name to load.
+        cache: Whether to persist cached audio across reboots.
 
-    config = Configuration().get("tts", {}).get(tts_plugin, {})
-    config["persist_cache"] = cache  # this will cache every synth even across reboots
-    TTS = engine(config=config)
-    TTS.log_timestamps = True  # enable logging
-
-    app = create_app(tts_plugin, has_gradio)
-    return app, TTS
-
-
+    Returns:
+        Tuple of FastAPI app and TTS engine wrapper.
+    """
+    tts_engine = TTSEngineWrapper(plugin_name=tts_plugin, cache=cache)
+    app = create_app(tts_engine)
+    return app, tts_engine

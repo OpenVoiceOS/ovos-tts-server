@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.0.0a1) (2026-01-26)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.4a5...1.0.0a1)
+
+**Breaking changes:**
+
+- refactor!: deprecate gradio, improve /status , encapsulate tts plugin… [\#79](https://github.com/OpenVoiceOS/ovos-tts-server/pull/79) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.1.4a5](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.4a5) (2026-01-26)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.4a4...0.1.4a5)

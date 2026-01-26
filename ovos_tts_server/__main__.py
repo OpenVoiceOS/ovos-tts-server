@@ -54,7 +54,7 @@ def main():
     parser.add_argument("--badge", help="URL of visitor badge", default=None)
     args = parser.parse_args()
 
-    server, engine = start_tts_server(args.engine, cache=bool(args.cache))
+    server, engine = start_tts_server(tts_plugin=args.engine, cache=bool(args.cache))
     LOG.info("Server Started")
     uvicorn.run(server, host=args.host, port=int(args.port))
 

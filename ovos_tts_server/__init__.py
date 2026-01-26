@@ -1,5 +1,5 @@
-from typing import Optional, Tuple
-from fastapi import FastAPI, Request, Depends
+from typing import Optional, Tuple, Literal
+from fastapi import FastAPI, Request, Depends, Response
 from fastapi.responses import FileResponse
 from ovos_plugin_manager.tts import load_tts_plugin
 from ovos_config import Configuration
@@ -114,7 +114,7 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         """
         utterance = request.query_params.get("utterance")
         if not utterance:
-            return {"error": "Missing 'utterance' query parameter"}
+            return Response(content='{"error": "Missing utterance"}', status_code=400, media_type="application/json")
 
         # Pass all plugin-specific options
         plugin_params = dict(request.query_params)

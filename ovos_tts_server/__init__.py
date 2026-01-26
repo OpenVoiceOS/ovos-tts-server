@@ -1,8 +1,9 @@
-from typing import Optional, Tuple, Literal
-from fastapi import FastAPI, Request, Depends, Response
+from typing import Optional, Tuple
+
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse
-from ovos_plugin_manager.tts import load_tts_plugin
 from ovos_config import Configuration
+from ovos_plugin_manager.tts import load_tts_plugin
 
 
 class TTSEngineWrapper:

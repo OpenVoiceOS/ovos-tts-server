@@ -13,11 +13,26 @@
 import uvicorn
 
 from ovos_tts_server import start_tts_server
-from ovos_tts_server.gradio_app import bind_gradio_service
 from ovos_utils.log import LOG
 
 
 def main():
+    """
+    Parse command-line options and start the Text-to-Speech server served by uvicorn.
+    
+    Recognized command-line options include:
+    - --engine: TTS plugin to use
+    - --port: TCP port to bind (default 9666)
+    - --host: network interface to bind (default "0.0.0.0")
+    - --cache: save each synthesis to disk (flag)
+    - --lang: default language for the plugin (default "en-us")
+    - --title: UI title (default "TTS")
+    - --description: UI description (default "Get Text-to-Speech")
+    - --info: UI end text
+    - --badge: URL of visitor badge
+    
+    This function initializes the TTS server using the provided options and runs it with uvicorn.
+    """
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -30,8 +45,6 @@ def main():
                         action="store_true")
     parser.add_argument("--lang", help="default language supported by plugin",
                         default="en-us")
-    parser.add_argument("--gradio", help="Enable Gradio Web UI",
-                        action="store_true")
     parser.add_argument("--title", help="Title for webUI",
                         default="TTS")
     parser.add_argument("--description", help="Text description to print in UI",
@@ -41,13 +54,8 @@ def main():
     parser.add_argument("--badge", help="URL of visitor badge", default=None)
     args = parser.parse_args()
 
-    server, engine = start_tts_server(args.engine, cache=bool(args.cache),
-                                      has_gradio=bool(args.gradio))
+    server, engine = start_tts_server(tts_plugin=args.engine, cache=bool(args.cache))
     LOG.info("Server Started")
-    if args.gradio:
-        bind_gradio_service(server, engine, args.title, args.description,
-                            args.info, args.badge, args.lang)
-        LOG.info("Gradio Started")
     uvicorn.run(server, host=args.host, port=int(args.port))
 
 

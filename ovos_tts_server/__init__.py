@@ -40,18 +40,19 @@ class TTSEngineWrapper:
     @property
     def langs(self):
         """
-        Return the list of languages supported by the wrapped TTS engine.
+        List languages supported by the wrapped TTS engine.
         
         Returns:
-            list[str]: Engine-reported available language codes, or a list containing the wrapper's default language if the engine does not expose available languages.
+            list[str]: Engine-reported language codes, or a single-item list containing the wrapper's default language if the engine does not provide available languages.
         """
         return self.engine.available_languages or [self.lang]
 
     @property
     def voices(self):
         """
-        Attempt to retrieve available voices from the plugin.
-        Returns a list of dictionaries or strings depending on the plugin.
+        Return the available voices exposed by the wrapped TTS engine.
+        
+        A list of available voices — each item is typically a dict or a string depending on the engine implementation. Returns an empty list if the wrapped engine does not expose an `available_voices` attribute.
         """
         if hasattr(self.engine, "available_voices"):
             return self.engine.available_voices
@@ -59,14 +60,14 @@ class TTSEngineWrapper:
 
     def synthesize(self, utterance: str, **kwargs) -> Tuple[str, Optional[str]]:
         """
-        Synthesize spoken audio from the given text or SSML.
+        Synthesize speech audio from the provided text or SSML.
         
         Parameters:
-        	utterance (str): Text or SSML to synthesize.
-        	kwargs: Plugin-specific synthesis parameters forwarded to the underlying TTS engine.
+            utterance (str): Text or SSML to synthesize.
+            **kwargs: Plugin-specific synthesis options forwarded to the underlying TTS engine (e.g., lang, voice, format).
         
         Returns:
-        	tuple (str, Optional[str]): `(audio_path, phonemes)` where `audio_path` is the file path to the generated audio and `phonemes` is the phoneme data produced by the engine, or `None` if not available.
+            tuple: `(audio_path, phonemes)` where `audio_path` is the file path to the generated audio and `phonemes` is the phoneme data produced by the engine, or `None` if not available.
         """
         utterance = self.engine.validate_ssml(utterance)
         audio, phonemes = self.engine.synth(utterance, **kwargs)
@@ -114,8 +115,11 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     @app.get("/locales")
     def mary_locales():
         """
-        MaryTTS Compatibility: Returns a newline-separated list of supported locales.
-        Format: [locale]\n...
+        Provide supported locales in MaryTTS-compatible plain-text format.
+        
+        Returns:
+            A plain-text HTTP response whose body contains supported locale identifiers,
+            one per line (newline-separated).
         """
         langs = tts_engine.langs
         # Ensure we return plain text, not JSON
@@ -124,9 +128,12 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     @app.get("/voices")
     def mary_voices():
         """
-        MaryTTS Compatibility: Returns a list of supported voices.
-        Format: [name] [locale] [gender]\n...
-        Note: Name must be space-free.
+        Provide a MaryTTS-compatible plain-text listing of available voices.
+        
+        Each line has the format: "<name> <locale> <gender>". The generated name must not contain spaces; the response currently emits a single default voice line based on the server's TTS engine.
+        
+        Returns:
+        	A FastAPI Response with media_type "text/plain" whose body is newline-separated voice entries.
         """
         lines = []
 
@@ -138,8 +145,15 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     @app.api_route("/process", methods=["GET", "POST"])
     def mary_process(params: MaryTTSInput = Depends()):
         """
-        MaryTTS Compatibility: Processes input text and returns a wav file.
-        Accepts both GET and POST parameters validated by Pydantic.
+        Handle MaryTTS-compatible /process requests and return the synthesized audio as a WAV FileResponse.
+        
+        Maps MaryTTS parameters to TTS engine options (LOCALE → lang, VOICE underscores replaced with spaces) and synthesizes INPUT_TEXT via the injected TTS engine.
+        
+        Parameters:
+            params (MaryTTSInput): Validated MaryTTS request parameters injected via Depends(); contains INPUT_TEXT, INPUT_TYPE, LOCALE, VOICE, OUTPUT_TYPE, and AUDIO.
+        
+        Returns:
+            FileResponse: A response serving the synthesized audio as a WAV file.
         """
         # Map MaryTTS specific params to OVOS synthesize params
         synth_kwargs = {}
@@ -160,13 +174,14 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     @app.get("/synthesize/{utterance}")
     async def synth_legacy(utterance: str, request: Request) -> FileResponse:
         """
-        Generate and return synthesized audio for the given utterance, forwarding query parameters to the TTS plugin.
+        Produce synthesized audio for an utterance using query parameters from the incoming request.
         
         Parameters:
-            request (Request): The incoming FastAPI request whose query parameters are forwarded to the TTS plugin.
+            utterance (str): Text to synthesize.
+            request (Request): Incoming FastAPI request whose query parameters are forwarded to the TTS plugin as synthesis options.
         
         Returns:
-            FileResponse: A response serving the synthesized audio file.
+            FileResponse: A response serving the generated audio file.
         """
         audio_path, _ = tts_engine.synthesize(utterance, **request.query_params)
         return FileResponse(audio_path)
@@ -197,14 +212,14 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
 
 def start_tts_server(tts_plugin: str, cache: bool = False) -> Tuple[FastAPI, TTSEngineWrapper]:
     """
-    Initialize TTS engine and create FastAPI app.
-
-    Args:
-        tts_plugin: TTS plugin name to load.
-        cache: Whether to persist cached audio across reboots.
-
+    Create and configure a FastAPI application wired to a TTSEngineWrapper for the specified plugin.
+    
+    Parameters:
+        tts_plugin (str): Name of the TTS plugin to load.
+        cache (bool): If True, persist synthesized audio cache across restarts.
+    
     Returns:
-        Tuple of FastAPI app and TTS engine wrapper.
+        Tuple[FastAPI, TTSEngineWrapper]: The configured FastAPI app and the initialized TTS engine wrapper.
     """
     tts_engine = TTSEngineWrapper(plugin_name=tts_plugin, cache=cache)
     app = create_app(tts_engine)

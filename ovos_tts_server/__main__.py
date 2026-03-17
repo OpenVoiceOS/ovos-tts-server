@@ -29,13 +29,6 @@ def main():
                         action="store_true")
     parser.add_argument("--lang", help="default language supported by plugin",
                         default="en-us")
-    parser.add_argument("--title", help="Title for webUI",
-                        default="TTS")
-    parser.add_argument("--description", help="Text description to print in UI",
-                        default="Get Text-to-Speech")
-    parser.add_argument("--info", help="Text to display at end of UI",
-                        default=None)
-    parser.add_argument("--badge", help="URL of visitor badge", default=None)
     args = parser.parse_args()
 
     server, engine = start_tts_server(args.engine, cache=bool(args.cache))

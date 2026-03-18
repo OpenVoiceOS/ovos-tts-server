@@ -25,6 +25,9 @@ dependencies = [
     "pydantic",
 ]
 
+[project.optional-dependencies]
+audio = ["pydub"]
+
 [project.urls]
 Homepage = "https://github.com/OpenVoiceOS/ovos-tts-server"
 Repository = "https://github.com/OpenVoiceOS/ovos-tts-server"

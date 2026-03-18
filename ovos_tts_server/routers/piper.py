@@ -8,7 +8,7 @@ from fastapi.responses import Response
 
 def make_piper_router(engine) -> APIRouter:
     """Create Piper TTS HTTP server-compatible router."""
-    router = APIRouter(tags=["piper"])
+    router = APIRouter(prefix="/piper", tags=["piper"])
 
     @router.get("/")
     def piper_tts(

@@ -28,7 +28,7 @@ def make_openai_tts_router(engine) -> APIRouter:
     Returns:
         Configured APIRouter with OpenAI-compatible /v1/audio/speech endpoint.
     """
-    router = APIRouter(tags=["openai-tts"])
+    router = APIRouter(prefix="/openai", tags=["openai-tts"])
 
     @router.post("/v1/audio/speech")
     def speech(

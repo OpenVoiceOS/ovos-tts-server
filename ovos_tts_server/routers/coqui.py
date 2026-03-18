@@ -15,7 +15,7 @@ def make_coqui_router(engine) -> APIRouter:
     Returns:
         Configured APIRouter with Coqui-compatible /api/tts endpoint.
     """
-    router = APIRouter(tags=["coqui"])
+    router = APIRouter(prefix="/coqui", tags=["coqui"])
 
     @router.get("/api/tts")
     def coqui_tts(

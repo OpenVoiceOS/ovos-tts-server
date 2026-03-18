@@ -74,7 +74,7 @@ def make_elevenlabs_router(engine) -> APIRouter:
     Returns:
         Configured APIRouter with ElevenLabs-compatible endpoints.
     """
-    router = APIRouter(tags=["elevenlabs"])
+    router = APIRouter(prefix="/elevenlabs", tags=["elevenlabs"])
 
     @router.get("/v1/voices", response_model=ElevenLabsVoicesResponse)
     def list_voices(

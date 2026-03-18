@@ -11,7 +11,7 @@ from ovos_tts_server.audio_utils import convert_audio
 
 def make_azure_tts_router(engine) -> APIRouter:
     """Create Azure Cognitive Services TTS-compatible router."""
-    router = APIRouter(tags=["azure-tts"])
+    router = APIRouter(prefix="/azure-tts", tags=["azure-tts"])
 
     def _parse_output_format(fmt_header: Optional[str]) -> str:
         """Map Azure X-Microsoft-OutputFormat header to a format string."""

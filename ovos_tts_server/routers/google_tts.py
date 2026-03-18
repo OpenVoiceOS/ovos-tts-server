@@ -50,7 +50,7 @@ class GoogleTTSResponse(BaseModel):
 
 def make_google_tts_router(engine) -> APIRouter:
     """Create Google Cloud TTS-compatible router."""
-    router = APIRouter(tags=["google-tts"])
+    router = APIRouter(prefix="/google-tts", tags=["google-tts"])
 
     _FMT_MAP = {
         "MP3": "mp3",

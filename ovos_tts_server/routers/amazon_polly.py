@@ -23,7 +23,7 @@ class PollyRequest(BaseModel):
 
 def make_amazon_polly_router(engine) -> APIRouter:
     """Create Amazon Polly-compatible router."""
-    router = APIRouter(tags=["amazon-polly"])
+    router = APIRouter(prefix="/amazon-polly", tags=["amazon-polly"])
 
     _FMT_MAP = {"mp3": "mp3", "ogg_vorbis": "ogg", "pcm": "wav", "json": "mp3"}
     _MIME_MAP = {"mp3": "audio/mpeg", "ogg_vorbis": "audio/ogg", "pcm": "audio/pcm", "json": "audio/mpeg"}

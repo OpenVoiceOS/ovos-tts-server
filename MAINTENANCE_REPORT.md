@@ -1,5 +1,24 @@
 # MAINTENANCE_REPORT — ovos-tts-server
 
+## 2026-03-18 — Compat router documentation and test coverage
+
+- **AI Model**: claude-sonnet-4-6
+- **Oversight**: Human-reviewed task specification; agent executed changes locally, no push.
+
+### Actions Taken
+
+1. **Updated `docs/index.md`** — added Compatibility Routers section with API table and links to new docs.
+
+2. **Created `docs/api-compatibility.md`** — full reference for all 7 compat APIs with curl examples, auth notes, and format tables.
+
+3. **Created `docs/audio-formats.md`** — documents `convert_audio()` (`audio_utils.py:6`) with format/MIME table, pydub fallback behavior, and ElevenLabs `output_format` mapping.
+
+4. **Created `docs/configuration.md`** — documents how `voice=` and `lang=` kwargs flow from each compat router through to `engine.synthesize()`.
+
+5. **Updated `FAQ.md`** — added 8 new Q&As covering all compat API vendors, audio format support, and authentication behavior.
+
+---
+
 ## 2026-03-17 — Refactoring: CORS, workflow updates, docs
 
 - **AI Model**: claude-sonnet-4-6

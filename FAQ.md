@@ -50,3 +50,57 @@ Any plugin discoverable by `ovos-plugin-manager` via the `opm.plugin.tts` entry 
 ## Why does `/voices` only return one entry?
 
 OVOS TTS plugins do not yet expose a standard `available_voices` property. The endpoint returns a single `default` entry as a placeholder. See comment in `ovos_tts_server/__init__.py:132`.
+
+## How do I use an ElevenLabs-compatible client with this server?
+
+Point the client's base URL to `http://localhost:9666/elevenlabs`. Any API key is accepted.
+
+```python
+from elevenlabs.client import ElevenLabs
+client = ElevenLabs(api_key="fake", base_url="http://localhost:9666/elevenlabs")
+audio = client.text_to_speech.convert(voice_id="default", text="hello world")
+```
+
+See `routers/elevenlabs.py` and [docs/api-compatibility.md](api-compatibility.md).
+
+## How do I use an OpenAI TTS client with this server?
+
+```python
+from openai import OpenAI
+client = OpenAI(api_key="fake", base_url="http://localhost:9666/openai/v1")
+resp = client.audio.speech.create(model="tts-1", input="hello", voice="alloy")
+resp.stream_to_file("out.mp3")
+```
+
+## How do I use a Coqui TTS client with this server?
+
+```bash
+curl "http://localhost:9666/coqui/api/tts?text=hello+world&speaker_id=voice1" -o out.wav
+```
+
+Any HTTP client that calls `GET /api/tts?text=...` will work.
+
+## How do I use a Google Cloud TTS client with this server?
+
+```python
+from google.cloud import texttospeech
+client = texttospeech.TextToSpeechClient(
+    client_options={"api_endpoint": "localhost:9666/google-tts"}
+)
+```
+
+Or via REST with any API key (ignored).
+
+## What audio formats are supported?
+
+WAV is always available. MP3, OGG, FLAC, and AAC are available when `pydub` is installed (`pip install ovos-tts-server[audio]`). If pydub is absent, non-WAV requests fall back to WAV bytes silently.
+
+See [docs/audio-formats.md](audio-formats.md).
+
+## Does authentication matter for the compat routers?
+
+No. All API keys, Bearer tokens, and auth headers are accepted and silently ignored. The compat routers are designed for local/private deployments.
+
+## What port does the server run on?
+
+Default port is **9666**. Override with `--port <n>`.

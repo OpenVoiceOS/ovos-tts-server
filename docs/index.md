@@ -33,3 +33,25 @@ ovos-tts-server --engine <plugin_name> [--host 0.0.0.0] [--port 9666] [--cache]
 ## CORS
 
 All origins are allowed unconditionally (`CORSMiddleware(allow_origins=["*"])`).
+
+## Compatibility Routers
+
+Seven vendor-prefixed routers make the server a drop-in replacement for popular TTS APIs:
+
+| Vendor | Prefix | Key Endpoint |
+| :--- | :--- | :--- |
+| ElevenLabs | `/elevenlabs` | `POST /elevenlabs/v1/text-to-speech/{voice_id}` |
+| OpenAI TTS | `/openai` | `POST /openai/v1/audio/speech` |
+| Coqui TTS | `/coqui` | `GET /coqui/api/tts?text=...` |
+| Google Cloud TTS | `/google-tts` | `POST /google-tts/v1/text:synthesize` |
+| Amazon Polly | `/amazon-polly` | `POST /amazon-polly/v1/speech` |
+| Azure Cognitive TTS | `/azure-tts` | `POST /azure-tts/cognitiveservices/v1` |
+| Piper | `/piper` | `GET /piper/?text=...` |
+
+Authentication is accepted but ignored — any key/token/header works.
+
+## Documentation
+
+- [API Compatibility Reference](api-compatibility.md)
+- [Audio Format Conversion](audio-formats.md)
+- [Voice & Language Configuration](configuration.md)

@@ -53,12 +53,12 @@ curl -G http://localhost:9666/marytts/process \
 
 MaryTTS clients are configured with a base URL. Set it to where this server runs (path prefix `/marytts`).
 
-**Mycroft / OVOS** (`mycroft.conf` — uses [neon-tts-plugin-marytts](https://github.com/NeonGeckoCom/neon-tts-plugin-marytts) or similar):
+**Mycroft / OVOS** (`mycroft.conf` — any TTS plugin that speaks MaryTTS HTTP and accepts a `url` setting):
 ```json
 {
   "tts": {
-    "module": "neon-tts-plugin-marytts",
-    "neon-tts-plugin-marytts": { "url": "http://localhost:9666/marytts" }
+    "module": "<your-marytts-plugin>",
+    "<your-marytts-plugin>": { "url": "http://localhost:9666/marytts" }
   }
 }
 ```

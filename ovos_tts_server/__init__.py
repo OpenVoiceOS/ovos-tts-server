@@ -1,9 +1,9 @@
 from typing import Optional, Tuple
-
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from ovos_config import Configuration
 from ovos_plugin_manager.tts import load_tts_plugin
+from ovos_config import Configuration
 
 
 class TTSEngineWrapper:
@@ -35,6 +35,16 @@ class TTSEngineWrapper:
         """
         return self.engine.available_languages or [self.lang]
 
+    @property
+    def voices(self):
+        """
+        Attempt to retrieve available voices from the plugin.
+        Returns a list of dictionaries or strings depending on the plugin.
+        """
+        if hasattr(self.engine, "available_voices"):
+            return self.engine.available_voices
+        return []
+
     def synthesize(self, utterance: str, **kwargs) -> Tuple[str, Optional[str]]:
         """
         Synthesize spoken audio from the given text or SSML.
@@ -62,6 +72,7 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         FastAPI: Configured FastAPI application exposing /status, legacy /synthesize/{utterance}, and /v2/synthesize endpoints.
     """
     app = FastAPI(title="OVOS TTS Server")
+    app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
     @app.get("/status")
     def status() -> dict:
@@ -87,7 +98,8 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
             "default_voice": config.get("voice")
         }
 
-    # legacy OVOS endpoints
+    # --- Legacy OVOS Endpoints ---
+
     @app.get("/synthesize/{utterance}")
     async def synth_legacy(utterance: str, request: Request) -> FileResponse:
         """

@@ -1,7 +1,34 @@
+# --- Python build artifacts ---
+*.pyc
+*.pyo
 __pycache__/
-*.py[cod]
 *.egg-info/
+*.egg
 build/
 dist/
-.pytest_cache/
+.eggs/
+*.so
+
+# --- Virtual environments ---
 .venv/
+venv/
+env/
+
+# --- IDE / editor ---
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Testing / coverage ---
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+coverage.json
+htmlcov/
+*.cover

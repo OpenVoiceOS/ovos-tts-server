@@ -41,3 +41,30 @@ Response: `{"audioContent": "<base64-encoded audio>"}`.
 Either `input.text` or `input.ssml` must be provided.
 
 ---
+
+### Pointing apps at this server
+
+The Google Cloud TTS Python SDK accepts a custom `api_endpoint` in `client_options`. Set it to this server (note: SDKs assume HTTPS — use a reverse proxy with TLS for production, or stick to direct REST calls).
+
+**REST / curl** (drop-in: change only the host):
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"input":{"text":"hello"},"voice":{"languageCode":"en-US"},"audioConfig":{"audioEncoding":"MP3"}}' \
+  http://localhost:9666/google-tts/v1/text:synthesize
+```
+
+The response is `{"audioContent": "<base64 mp3/wav>"}` — same shape as the real API; decode with `base64 -d`.
+
+**Home Assistant** (`google_translate` won't work — different API; for Google Cloud TTS the official integration requires a service-account JSON and HTTPS endpoint, so this compat layer is best used via custom integrations / scripts that hit the REST endpoint directly).
+
+**Python (raw `requests`)** instead of the SDK:
+```python
+import base64, requests
+r = requests.post(
+    "http://localhost:9666/google-tts/v1/text:synthesize",
+    json={"input": {"text": "hello"},
+          "voice": {"languageCode": "en-US"},
+          "audioConfig": {"audioEncoding": "MP3"}},
+)
+open("out.mp3", "wb").write(base64.b64decode(r.json()["audioContent"]))
+```

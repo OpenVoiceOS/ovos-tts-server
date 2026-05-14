@@ -135,6 +135,9 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         audio_path, _ = tts_engine.synthesize(utterance, **plugin_params)
         return FileResponse(audio_path)
 
+    from ovos_tts_server.routers.amazon_polly import make_amazon_polly_router
+    app.include_router(make_amazon_polly_router(tts_engine))
+
     return app
 
 

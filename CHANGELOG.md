@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.1.0a2) (2026-05-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.1.0a1...1.1.0a2)
+
+**Merged pull requests:**
+
+- docs: drop Neon references from README [\#96](https://github.com/OpenVoiceOS/ovos-tts-server/pull/96) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.1.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.1.0a1) (2026-05-14)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.0.0a1...1.1.0a1)

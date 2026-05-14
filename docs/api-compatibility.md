@@ -38,3 +38,28 @@ curl -X POST \
 Body must be valid SSML XML. Voice name and `xml:lang` are extracted via regex and forwarded as `voice=` and `lang=`.
 
 ---
+
+### Pointing apps at this server
+
+The Azure Speech SDK uses `SpeechConfig.from_endpoint()` to override the default region host. Point it at `http://localhost:9666/azure-tts`.
+
+**Python SDK** ([`azure-cognitiveservices-speech`](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/get-started-text-to-speech)):
+```python
+import azure.cognitiveservices.speech as speechsdk
+config = speechsdk.SpeechConfig(
+    endpoint="http://localhost:9666/azure-tts/cognitiveservices/v1",
+    subscription="ignored",
+)
+synthesizer = speechsdk.SpeechSynthesizer(speech_config=config)
+synthesizer.speak_text_async("hello").get()
+```
+
+**Home Assistant** (`microsoft` TTS integration): the built-in integration hardcodes regional hosts, so use a reverse proxy (nginx) to rewrite `*.tts.speech.microsoft.com` → this server, or use a community integration that exposes a `host` option.
+
+**curl** (SSML body required by upstream):
+```bash
+curl -X POST -H "Content-Type: application/ssml+xml" \
+  -H "X-Microsoft-OutputFormat: riff-24khz-16bit-mono-pcm" \
+  --data '<speak version="1.0" xml:lang="en-US"><voice name="default">hello</voice></speak>' \
+  http://localhost:9666/azure-tts/cognitiveservices/v1 -o out.wav
+```

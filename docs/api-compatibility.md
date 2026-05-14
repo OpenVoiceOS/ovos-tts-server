@@ -43,3 +43,31 @@ curl -X POST \
 `output_format` values: `mp3_44100_128`, `pcm_16000`, `ulaw_8000`, etc. Falls back to WAV if pydub absent.
 
 ---
+
+### Pointing apps at this server
+
+ElevenLabs SDKs accept a custom base URL. Point it at `http://localhost:9666/elevenlabs`.
+
+**Python SDK** ([`elevenlabs`](https://github.com/elevenlabs/elevenlabs-python)):
+```python
+from elevenlabs.client import ElevenLabs
+client = ElevenLabs(api_key="ignored", base_url="http://localhost:9666/elevenlabs")
+```
+
+**Environment variable** (community convention used by many apps):
+```bash
+export ELEVENLABS_BASE_URL=http://localhost:9666/elevenlabs
+export ELEVENLABS_API_KEY=ignored
+```
+
+**Node SDK** (`@elevenlabs/elevenlabs-js`):
+```js
+new ElevenLabsClient({ apiKey: "ignored", baseUrl: "http://localhost:9666/elevenlabs" });
+```
+
+**curl**:
+```bash
+curl -X POST -H "xi-api-key: x" -H "Content-Type: application/json" \
+  -d '{"text": "hello"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default" -o out.mp3
+```

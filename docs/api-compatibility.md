@@ -40,3 +40,33 @@ Valid `model` values: `tts-1`, `tts-1-hd`.
 `input` max length: 4096 characters.
 
 ---
+
+### Pointing apps at this server
+
+The OpenAI SDK reads `OPENAI_BASE_URL` (or the `base_url=` constructor arg).
+Point it at `http://localhost:9666/openai/v1`.
+
+**Python SDK** ([`openai`](https://github.com/openai/openai-python)):
+```python
+from openai import OpenAI
+client = OpenAI(api_key="ignored", base_url="http://localhost:9666/openai/v1")
+client.audio.speech.create(model="tts-1", voice="alloy", input="hello")
+```
+
+**Environment variables** (works with most OpenAI-compatible clients incl. LangChain, LiteLLM, OpenWebUI, etc.):
+```bash
+export OPENAI_BASE_URL=http://localhost:9666/openai/v1
+export OPENAI_API_KEY=ignored
+```
+
+**Node SDK** (`openai`):
+```js
+new OpenAI({ apiKey: "ignored", baseURL: "http://localhost:9666/openai/v1" });
+```
+
+**curl**:
+```bash
+curl -X POST -H "Authorization: Bearer x" -H "Content-Type: application/json" \
+  -d '{"model":"tts-1","voice":"alloy","input":"hello"}' \
+  http://localhost:9666/openai/v1/audio/speech -o out.mp3
+```

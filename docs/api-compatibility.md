@@ -36,3 +36,32 @@ curl -X POST \
 `OutputFormat` values: `mp3`, `ogg_vorbis`, `pcm`, `json` (json → WAV stub).
 
 ---
+
+### Pointing apps at this server
+
+AWS SDKs honour the `AWS_ENDPOINT_URL` env var (and `endpoint_url=` constructor arg) to redirect to a custom host. Point it at `http://localhost:9666/amazon-polly`.
+
+**boto3** ([`amazon-polly`](https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html)):
+```python
+import boto3
+polly = boto3.client(
+    "polly",
+    endpoint_url="http://localhost:9666/amazon-polly",
+    aws_access_key_id="ignored", aws_secret_access_key="ignored",
+    region_name="us-east-1",
+)
+audio = polly.synthesize_speech(Text="hello", VoiceId="Joanna", OutputFormat="mp3")
+open("out.mp3", "wb").write(audio["AudioStream"].read())
+```
+
+**Environment variable** (auto-picked by all AWS SDKs):
+```bash
+export AWS_ENDPOINT_URL=http://localhost:9666/amazon-polly
+```
+
+**curl**:
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"Text":"hello","VoiceId":"Joanna","OutputFormat":"mp3"}' \
+  http://localhost:9666/amazon-polly/v1/speech -o out.mp3
+```

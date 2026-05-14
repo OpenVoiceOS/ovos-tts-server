@@ -28,3 +28,27 @@ curl "http://localhost:9666/piper/?text=hello+world&voice=voice1" -o out.wav
 ```
 
 Query params: `text` (required), `voice` (optional).
+
+### Pointing apps at this server
+
+The upstream Piper HTTP server uses bare paths. Point clients at `http://localhost:9666/piper`.
+
+**Mycroft / OVOS** ([`ovos-tts-plugin-piper-http`](https://github.com/OpenVoiceOS/ovos-tts-plugin-piper-http)):
+```json
+{
+  "tts": {
+    "module": "ovos-tts-plugin-piper-http",
+    "ovos-tts-plugin-piper-http": { "url": "http://localhost:9666/piper" }
+  }
+}
+```
+
+**Home Assistant** ([`piper-tts` add-on or wyoming-piper](https://github.com/rhasspy/wyoming-piper)) — use a script/REST helper to hit:
+```bash
+curl "http://localhost:9666/piper/?text=hello" -o out.wav
+```
+
+**curl**:
+```bash
+curl "http://localhost:9666/piper/?text=hello&voice=default" -o out.wav
+```

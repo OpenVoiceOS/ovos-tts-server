@@ -32,9 +32,13 @@ def engine():
 
 
 def _make_app(engine) -> FastAPI:
-    from ovos_tts_server.routers.marytts import make_marytts_router
+    from ovos_tts_server.routers.marytts import (
+        make_marytts_router,
+        make_marytts_root_router,
+    )
     app = FastAPI()
     app.include_router(make_marytts_router(engine))
+    app.include_router(make_marytts_root_router(engine))
     return app
 
 
@@ -76,4 +80,27 @@ class TestMaryTTSRouter:
             "/marytts/process",
             params={"INPUT_TEXT": "hi", "LOCALE": "en_US", "VOICE": "some_voice"},
         )
+        assert r.status_code == 200
+
+
+class TestMaryTTSRootAlias:
+    """Bare-path aliases for legacy assistive-tech clients."""
+
+    def test_root_locales(self, client):
+        r = client.get("/locales")
+        assert r.status_code == 200
+        assert "en-us" in r.text
+
+    def test_root_voices(self, client):
+        r = client.get("/voices")
+        assert r.status_code == 200
+        assert "default" in r.text
+
+    def test_root_process_get(self, client):
+        r = client.get("/process", params={"INPUT_TEXT": "hello"})
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "audio/wav"
+
+    def test_root_process_post(self, client):
+        r = client.post("/process", params={"INPUT_TEXT": "hello"})
         assert r.status_code == 200

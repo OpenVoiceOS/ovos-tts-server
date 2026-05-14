@@ -22,6 +22,23 @@ The MaryTTS compat router exposes the classic MaryTTS HTTP endpoints so apps tha
 | GET | `/marytts/voices` | Newline-separated voices, format `name locale gender plugin` |
 | GET/POST | `/marytts/process` | Synthesize — returns `audio/wav` |
 
+#### Root-path aliases
+
+Because MaryTTS predates modern API gateways and is heavily used in
+**accessibility / assistive tech** (screen-reader bridges, NVDA/Orca TTS
+adaptors, Home Assistant's `marytts` integration), the same three endpoints
+are **also exposed at the server root** so legacy clients that hardcode
+bare paths work out of the box:
+
+| Method | Path | Same as |
+| :--- | :--- | :--- |
+| GET | `/locales` | `/marytts/locales` |
+| GET | `/voices` | `/marytts/voices` |
+| GET/POST | `/process` | `/marytts/process` |
+
+Prefer the `/marytts/...` paths in new code — the bare aliases exist
+purely for drop-in compatibility with software that can't be reconfigured.
+
 ### `/marytts/process` parameters
 
 | Name | Type | Notes |

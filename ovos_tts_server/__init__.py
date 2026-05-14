@@ -135,8 +135,13 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         audio_path, _ = tts_engine.synthesize(utterance, **plugin_params)
         return FileResponse(audio_path)
 
-    from ovos_tts_server.routers.marytts import make_marytts_router
+    from ovos_tts_server.routers.marytts import (
+        make_marytts_router,
+        make_marytts_root_router,
+    )
     app.include_router(make_marytts_router(tts_engine))
+    # Root aliases for legacy assistive-tech that hardcodes bare MaryTTS paths
+    app.include_router(make_marytts_root_router(tts_engine))
 
     return app
 

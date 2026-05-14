@@ -1,9 +1,17 @@
 """MaryTTS-compatible HTTP endpoints.
 
 Exposes /process, /locales and /voices so apps already speaking MaryTTS can
-use any OVOS TTS plugin as a drop-in replacement. Mounted under /marytts to
-stay consistent with every other compat router (so multiple compat layers
-can coexist in one FastAPI app without path collisions).
+use any OVOS TTS plugin as a drop-in replacement.
+
+Two routers are exposed:
+- `make_marytts_router(engine)` mounts under `/marytts` — consistent with
+  every other compat router so multiple compat layers can coexist.
+- `make_marytts_root_router(engine)` mounts the same handlers at the root
+  (no prefix) for legacy assistive tech (Orca, NVDA bridges, screen-reader
+  TTS adaptors, Home Assistant's `marytts` integration) that hardcode the
+  bare upstream paths and can't be reconfigured to a sub-path.
+
+Both routers expose identical behaviour; register either or both.
 """
 from typing import Literal, Optional
 
@@ -22,10 +30,7 @@ class MaryTTSInput(BaseModel):
     AUDIO: str = "WAVE_FILE"
 
 
-def make_marytts_router(engine) -> APIRouter:
-    """Build a MaryTTS-compatible router bound to `engine`."""
-    router = APIRouter(prefix="/marytts", tags=["marytts"])
-
+def _register_marytts_routes(router: APIRouter, engine) -> None:
     @router.get("/locales")
     def mary_locales() -> Response:
         return Response(content="\n".join(engine.langs), media_type="text/plain")
@@ -45,4 +50,21 @@ def make_marytts_router(engine) -> APIRouter:
         audio_path, _ = engine.synthesize(params.INPUT_TEXT, **synth_kwargs)
         return FileResponse(audio_path, media_type="audio/wav")
 
+
+def make_marytts_router(engine) -> APIRouter:
+    """MaryTTS-compatible router mounted under /marytts."""
+    router = APIRouter(prefix="/marytts", tags=["marytts"])
+    _register_marytts_routes(router, engine)
+    return router
+
+
+def make_marytts_root_router(engine) -> APIRouter:
+    """MaryTTS-compatible router mounted at the root.
+
+    Use this for legacy assistive-tech clients that hardcode bare upstream
+    paths (`/process`, `/voices`, `/locales`) and cannot be pointed at a
+    sub-path.
+    """
+    router = APIRouter(tags=["marytts (root alias)"])
+    _register_marytts_routes(router, engine)
     return router

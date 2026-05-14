@@ -31,3 +31,24 @@ curl "http://localhost:9666/coqui/api/tts?text=hello+world&speaker_id=voice1&lan
 Query params: `text` (required), `speaker_id` → `voice=`, `language_id` → `lang=`.
 
 ---
+
+### Pointing apps at this server
+
+Coqui's official `tts-server` exposes a single root URL. Point your client at `http://localhost:9666/coqui`.
+
+**Home Assistant** (`coqui` custom component / community integration): set host/port to `localhost:9666` and the path prefix to `/coqui`.
+
+**Mycroft / OVOS** (`mycroft.conf` — using a Coqui TTS plugin that accepts a URL):
+```json
+{
+  "tts": {
+    "module": "ovos-tts-plugin-coqui-remote",
+    "ovos-tts-plugin-coqui-remote": { "url": "http://localhost:9666/coqui" }
+  }
+}
+```
+
+**curl**:
+```bash
+curl "http://localhost:9666/coqui/api/tts?text=hello&speaker_id=default" -o out.wav
+```

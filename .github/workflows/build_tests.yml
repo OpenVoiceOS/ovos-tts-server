@@ -1,0 +1,12 @@
+name: Build Tests
+
+on:
+  pull_request:
+    branches: [dev, master]
+  push:
+    branches: [dev]
+
+jobs:
+  build_tests:
+    uses: OpenVoiceOS/gh-automations/.github/workflows/build-tests.yml@dev
+    secrets: inherit

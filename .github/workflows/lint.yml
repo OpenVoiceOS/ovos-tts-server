@@ -1,0 +1,12 @@
+name: Lint
+
+on:
+  pull_request:
+    branches: [dev, master]
+  push:
+    branches: [dev]
+
+jobs:
+  lint:
+    uses: OpenVoiceOS/gh-automations/.github/workflows/lint.yml@dev
+    secrets: inherit

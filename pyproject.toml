@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ovos-tts-server"
+dynamic = ["version"]
+description = "simple FastAPI server to host TTS plugins as a service"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{name = "JarbasAi", email = "jarbasai@mailfence.com"}]
+requires-python = ">=3.9"
+
+keywords = [
+    "plugin",
+    "TTS",
+    "OVOS",
+    "OpenVoiceOS",
+]
+dependencies = [
+    "ovos-plugin-manager>=2.1.0,<3.0.0",
+    "fastapi~=0.115",
+    "uvicorn~=0.34",
+    "ovos-utils>=0.0.38",
+    "pydantic",
+]
+
+[project.optional-dependencies]
+audio = ["pydub"]
+
+[project.urls]
+Homepage = "https://github.com/OpenVoiceOS/ovos-tts-server"
+Repository = "https://github.com/OpenVoiceOS/ovos-tts-server"
+
+[project.scripts]
+ovos-tts-server = "ovos_tts_server.__main__:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["ovos_tts_server*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "ovos_tts_server.version.__version__"}

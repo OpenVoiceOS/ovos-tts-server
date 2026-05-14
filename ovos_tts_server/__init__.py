@@ -1,22 +1,9 @@
-from typing import Optional, Tuple, Literal
-from fastapi import FastAPI, Request, Depends, Response
+from typing import Optional, Tuple
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
 from ovos_plugin_manager.tts import load_tts_plugin
 from ovos_config import Configuration
-
-class MaryTTSInput(BaseModel):
-    """
-    Pydantic model for validating MaryTTS /process API requests.
-    Supports both standard MaryTTS params and basic defaults.
-    """
-    INPUT_TEXT: str = Field(..., description="The text to synthesize")
-    INPUT_TYPE: Literal["TEXT", "SSML"] = "TEXT"
-    LOCALE: Optional[str] = Field(None, description="Target Locale (e.g. en_US)")
-    VOICE: Optional[str] = Field(None, description="Target Voice name")
-    OUTPUT_TYPE: str = "AUDIO"
-    AUDIO: str = "WAVE_FILE"
 
 
 class TTSEngineWrapper:
@@ -110,51 +97,6 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
             "default_model": config.get("model"),
             "default_voice": config.get("voice")
         }
-
-    # --- MaryTTS Compatibility Endpoints ---
-
-    @app.get("/locales")
-    def mary_locales():
-        """
-        MaryTTS Compatibility: Returns a newline-separated list of supported locales.
-        Format: [locale]\n...
-        """
-        # Ensure we return plain text, not JSON
-        return Response(content="\n".join(tts_engine.langs), media_type="text/plain")
-
-    @app.get("/voices")
-    def mary_voices():
-        """
-        MaryTTS Compatibility: Returns a list of supported voices.
-        Format: [name] [locale] [gender]\n...
-        Note: Name must be space-free.
-        """
-        lines = []
-
-        # plugins don't report specific voices - TODO - add available_voices/models property to TTS plugins
-        lines.append(f"default {tts_engine.lang} m {tts_engine.plugin_name}")
-
-        return Response(content="\n".join(lines), media_type="text/plain")
-
-    @app.api_route("/process", methods=["GET", "POST"])
-    def mary_process(params: MaryTTSInput = Depends()):
-        """
-        MaryTTS Compatibility: Processes input text and returns a wav file.
-        Accepts both GET and POST parameters validated by Pydantic.
-        """
-        # Map MaryTTS specific params to OVOS synthesize params
-        synth_kwargs = {}
-
-        if params.LOCALE:
-            synth_kwargs["lang"] = params.LOCALE
-
-        if params.VOICE:
-            # Revert the space sanitization if the plugin needs real spaces
-            # (Though most OVOS plugins map by ID, strict names might differ)
-            synth_kwargs["voice"] = params.VOICE.replace("_", " ")
-
-        audio_path, _ = tts_engine.synthesize(params.INPUT_TEXT, **synth_kwargs)
-        return FileResponse(audio_path, media_type="audio/wav")
 
     # --- Legacy OVOS Endpoints ---
 

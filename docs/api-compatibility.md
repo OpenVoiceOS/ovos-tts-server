@@ -8,21 +8,21 @@ All routers accept any auth token / API key supplied by the client and silently 
 
 Audio format conversion across `wav`, `mp3`, `ogg`, `flac`, `pcm`, etc. is provided by `ovos_tts_server.audio_utils.convert_audio()`. Install the `[audio]` extra (`pip install ovos-tts-server[audio]`) to enable non-WAV outputs via `pydub`.
 
-This document currently covers: **MaryTTS** (no prefix — mounted at root).
+This document currently covers: **MaryTTS** (mounted under `/marytts`).
 
 ---
 
-## MaryTTS
+## MaryTTS (`/marytts`)
 
-The MaryTTS compat router exposes the classic MaryTTS HTTP endpoints at the server root, so apps that already speak MaryTTS can swap in OVOS without changes.
+The MaryTTS compat router exposes the classic MaryTTS HTTP endpoints so apps that already speak MaryTTS can swap in OVOS without code changes.
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| GET | `/locales` | Newline-separated supported locales |
-| GET | `/voices` | Newline-separated voices, format `name locale gender plugin` |
-| GET/POST | `/process` | Synthesize — returns `audio/wav` |
+| GET | `/marytts/locales` | Newline-separated supported locales |
+| GET | `/marytts/voices` | Newline-separated voices, format `name locale gender plugin` |
+| GET/POST | `/marytts/process` | Synthesize — returns `audio/wav` |
 
-### `/process` parameters
+### `/marytts/process` parameters
 
 | Name | Type | Notes |
 | :--- | :--- | :--- |
@@ -37,14 +37,43 @@ The MaryTTS compat router exposes the classic MaryTTS HTTP endpoints at the serv
 
 ```bash
 # List locales
-curl http://localhost:9666/locales
+curl http://localhost:9666/marytts/locales
 
 # List voices
-curl http://localhost:9666/voices
+curl http://localhost:9666/marytts/voices
 
 # Synthesize
-curl -G http://localhost:9666/process \
+curl -G http://localhost:9666/marytts/process \
   --data-urlencode "INPUT_TEXT=hello world" \
   --data-urlencode "LOCALE=en_US" \
   -o out.wav
+```
+
+### Pointing apps at this server
+
+MaryTTS clients are configured with a base URL. Set it to where this server runs (path prefix `/marytts`).
+
+**Mycroft / OVOS** (`mycroft.conf` — uses [neon-tts-plugin-marytts](https://github.com/NeonGeckoCom/neon-tts-plugin-marytts) or similar):
+```json
+{
+  "tts": {
+    "module": "neon-tts-plugin-marytts",
+    "neon-tts-plugin-marytts": { "url": "http://localhost:9666/marytts" }
+  }
+}
+```
+
+**Home Assistant** (`configuration.yaml`, `marytts` integration — note: built-in integration expects bare paths, so put nginx or a similar reverse proxy in front to strip `/marytts/` if you can't override the base path):
+```yaml
+tts:
+  - platform: marytts
+    host: localhost
+    port: 9666
+    # base_url: http://localhost:9666/marytts   # (if integration supports it)
+```
+
+**curl**:
+```bash
+curl -G http://localhost:9666/marytts/process \
+  --data-urlencode "INPUT_TEXT=hello" -o out.wav
 ```

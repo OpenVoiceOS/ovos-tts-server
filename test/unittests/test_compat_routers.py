@@ -45,35 +45,35 @@ def client(engine):
 
 class TestMaryTTSRouter:
     def test_locales_returns_plain_text(self, client):
-        r = client.get("/locales")
+        r = client.get("/marytts/locales")
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("text/plain")
         assert "en-us" in r.text
         assert "de-de" in r.text
 
     def test_voices_returns_plain_text(self, client):
-        r = client.get("/voices")
+        r = client.get("/marytts/voices")
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("text/plain")
         assert "default" in r.text
         assert "fake-tts" in r.text
 
     def test_process_get_returns_wav(self, client):
-        r = client.get("/process", params={"INPUT_TEXT": "hello"})
+        r = client.get("/marytts/process", params={"INPUT_TEXT": "hello"})
         assert r.status_code == 200
         assert r.headers["content-type"] == "audio/wav"
 
     def test_process_post_returns_wav(self, client):
-        r = client.post("/process", params={"INPUT_TEXT": "hello"})
+        r = client.post("/marytts/process", params={"INPUT_TEXT": "hello"})
         assert r.status_code == 200
 
     def test_process_requires_input_text(self, client):
-        r = client.get("/process")
+        r = client.get("/marytts/process")
         assert r.status_code == 422
 
     def test_process_accepts_locale_and_voice(self, client):
         r = client.get(
-            "/process",
+            "/marytts/process",
             params={"INPUT_TEXT": "hi", "LOCALE": "en_US", "VOICE": "some_voice"},
         )
         assert r.status_code == 200

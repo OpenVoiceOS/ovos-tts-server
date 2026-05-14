@@ -1,8 +1,9 @@
 """MaryTTS-compatible HTTP endpoints.
 
 Exposes /process, /locales and /voices so apps already speaking MaryTTS can
-use any OVOS TTS plugin as a drop-in replacement. Mounted at the root (no
-prefix) because the upstream MaryTTS HTTP API uses bare paths.
+use any OVOS TTS plugin as a drop-in replacement. Mounted under /marytts to
+stay consistent with every other compat router (so multiple compat layers
+can coexist in one FastAPI app without path collisions).
 """
 from typing import Literal, Optional
 
@@ -23,7 +24,7 @@ class MaryTTSInput(BaseModel):
 
 def make_marytts_router(engine) -> APIRouter:
     """Build a MaryTTS-compatible router bound to `engine`."""
-    router = APIRouter(tags=["MaryTTS"])
+    router = APIRouter(prefix="/marytts", tags=["marytts"])
 
     @router.get("/locales")
     def mary_locales() -> Response:

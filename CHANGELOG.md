@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.1.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.1.0a1) (2026-05-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.0.0a1...1.1.0a1)
+
+**Merged pull requests:**
+
+- feat: modernize server foundation \(CORS, /status, workflows, audio\_utils, docs\) [\#86](https://github.com/OpenVoiceOS/ovos-tts-server/pull/86) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.0.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.0.0a1) (2026-01-26)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.4a5...1.0.0a1)
+
+**Breaking changes:**
+
+- refactor!: deprecate gradio, improve /status , encapsulate tts plugin… [\#79](https://github.com/OpenVoiceOS/ovos-tts-server/pull/79) ([JarbasAl](https://github.com/JarbasAl))
+
+## [0.1.4a5](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.4a5) (2026-01-26)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.4a4...0.1.4a5)
+
+**Merged pull requests:**
+
+- chore\(deps\): update actions/setup-python action to v6 [\#76](https://github.com/OpenVoiceOS/ovos-tts-server/pull/76) ([renovate[bot]](https://github.com/apps/renovate))
+- chore\(deps\): update actions/checkout action to v6 [\#73](https://github.com/OpenVoiceOS/ovos-tts-server/pull/73) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.1.4a4](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.4a4) (2025-12-20)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.4a3...0.1.4a4)
@@ -19,10 +44,6 @@
 ## [0.1.4a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/0.1.4a2) (2025-12-18)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/0.1.4a1...0.1.4a2)
-
-**Implemented enhancements:**
-
-- report languages supported by the loaded plugin [\#68](https://github.com/OpenVoiceOS/ovos-tts-server/issues/68)
 
 **Merged pull requests:**
 

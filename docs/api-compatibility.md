@@ -19,6 +19,12 @@ Other vendor sections are added by their respective compat-router PRs.
 
 ## OpenAI TTS (`/openai`)
 
+**Upstream sources**:
+- Python SDK: [openai/openai-python — `resources/audio/speech.py`](https://github.com/openai/openai-python/blob/main/src/openai/resources/audio/speech.py)
+- API reference: [OpenAI Audio Speech docs](https://platform.openai.com/docs/api-reference/audio/createSpeech)
+- Node SDK: [openai/openai-node](https://github.com/openai/openai-node)
+
+
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | POST | `/openai/v1/audio/speech` | Synthesize speech |

@@ -1,6 +1,6 @@
 # Licensed under the Apache License, Version 2.0
 """Amazon Polly-compatible TTS endpoint."""
-from typing import Literal, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Header
 from fastapi.responses import Response
@@ -13,11 +13,36 @@ class PollyRequest(BaseModel):
     """Request body for POST /v1/speech (Amazon Polly)."""
 
     Text: str = Field(..., min_length=1)
-    VoiceId: str = Field(default="Joanna", min_length=1)
-    OutputFormat: Literal["mp3", "ogg_vorbis", "pcm", "json"] = "mp3"
-    Engine: Optional[Literal["standard", "neural", "long-form", "generative"]] = None
+    VoiceId: str = Field(
+        default="Joanna",
+        min_length=1,
+        description=(
+            "Voice identifier. Polly canonical voices (Joanna, Matthew, "
+            "Ivy, ...) are accepted, but so is any string — the OVOS "
+            "plugin decides what to do with it."
+        ),
+    )
+    OutputFormat: str = Field(
+        default="mp3",
+        description=(
+            "Output audio format. Polly canonical values: 'mp3', "
+            "'ogg_vorbis', 'pcm', 'json'. Any string is accepted; "
+            "unknown formats fall back to WAV when pydub can't encode."
+        ),
+    )
+    Engine: Optional[str] = Field(
+        default=None,
+        description=(
+            "Engine variant. Polly canonical: 'standard', 'neural', "
+            "'long-form', 'generative'. Forwarded to the OVOS plugin "
+            "as-is — any string is allowed."
+        ),
+    )
     LanguageCode: Optional[str] = Field(default=None, min_length=1)
-    TextType: Literal["text", "ssml"] = "text"
+    TextType: str = Field(
+        default="text",
+        description="'text' or 'ssml'. Forwarded to the plugin; any value accepted.",
+    )
     SampleRate: Optional[str] = None
 
 

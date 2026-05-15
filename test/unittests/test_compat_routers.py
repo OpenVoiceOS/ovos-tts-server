@@ -76,12 +76,13 @@ class TestAmazonPollyRouter:
         )
         assert resp.status_code == 200
 
-    def test_speech_invalid_format(self, client):
+    def test_speech_arbitrary_format_accepted(self, client):
+        """Any OutputFormat string is forwarded to convert_audio."""
         resp = client.post(
             "/amazon-polly/v1/speech",
             json={"Text": "hello", "VoiceId": "Joanna", "OutputFormat": "flac"},
         )
-        assert resp.status_code == 422
+        assert resp.status_code == 200
 
 
 # ---------------------------------------------------------------------------

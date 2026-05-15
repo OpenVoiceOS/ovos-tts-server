@@ -69,12 +69,28 @@ def client(engine):
 # ---------------------------------------------------------------------------
 
 class TestAzureTTSRouter:
+    SSML = b'<speak><voice name="en-US-JennyNeural" xml:lang="en-US">hi</voice></speak>'
+
     def test_ssml_basic(self, client):
-        ssml = b'<speak><voice name="en-US-JennyNeural" xml:lang="en-US">hello</voice></speak>'
         resp = client.post(
             "/azure-tts/cognitiveservices/v1",
-            content=ssml,
+            content=self.SSML,
             headers={"Content-Type": "application/ssml+xml"},
+        )
+        assert resp.status_code == 200
+
+    @pytest.mark.parametrize("fmt", [
+        "riff-24khz-16bit-mono-pcm",
+        "ogg-24khz-16bit-mono-opus",
+        "riff-8khz-8bit-mono-alaw",
+        "audio-24khz-48kbitrate-mono-mp3",
+    ])
+    def test_output_format_header(self, client, fmt):
+        resp = client.post(
+            "/azure-tts/cognitiveservices/v1",
+            content=self.SSML,
+            headers={"Content-Type": "application/ssml+xml",
+                     "X-Microsoft-OutputFormat": fmt},
         )
         assert resp.status_code == 200
 

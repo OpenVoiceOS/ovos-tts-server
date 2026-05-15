@@ -19,6 +19,10 @@ Other vendor sections are added by their respective compat-router PRs.
 
 ## Coqui TTS (`/coqui`)
 
+**Upstream sources** (no canonical Python client — clients hand-roll HTTP):
+- Reference server: [coqui-ai/TTS — `TTS/server/server.py`](https://github.com/coqui-ai/TTS/blob/dev/TTS/server/server.py)
+- Route definitions (`/api/tts`, `/details`, `/api/list_speaker_idxs`, etc.) live in the Flask app in that file.
+
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | GET | `/coqui/api/tts` | Synthesize speech |

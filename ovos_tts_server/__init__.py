@@ -136,7 +136,9 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         return FileResponse(audio_path)
 
     from ovos_tts_server.routers.azure_tts import make_azure_tts_router
+    from ovos_tts_server.routers.azure_ws import make_azure_ws_router
     app.include_router(make_azure_tts_router(tts_engine))
+    app.include_router(make_azure_ws_router(tts_engine))
 
     return app
 

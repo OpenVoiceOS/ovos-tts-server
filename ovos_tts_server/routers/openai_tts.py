@@ -1,6 +1,6 @@
 # Licensed under the Apache License, Version 2.0
 """OpenAI-compatible TTS endpoint."""
-from typing import Literal, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Header
 from fastapi.responses import Response
@@ -12,10 +12,32 @@ from ovos_tts_server.audio_utils import convert_audio
 class OpenAITTSRequest(BaseModel):
     """Request body for OpenAI /v1/audio/speech."""
 
-    model: Literal["tts-1", "tts-1-hd"] = "tts-1"
+    model: str = Field(
+        default="tts-1",
+        description=(
+            "Model identifier. OpenAI canonical values include 'tts-1', "
+            "'tts-1-hd', 'gpt-4o-mini-tts'. Any string is accepted and "
+            "forwarded to the underlying OVOS plugin to interpret."
+        ),
+    )
     input: str = Field(..., min_length=1, max_length=4096)
-    voice: Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"] = "alloy"
-    response_format: Literal["mp3", "opus", "aac", "flac", "wav", "pcm"] = "mp3"
+    voice: str = Field(
+        default="alloy",
+        description=(
+            "Voice identifier. OpenAI canonical voices (alloy, echo, "
+            "fable, onyx, nova, shimmer, ash, ballad, coral, sage, verse) "
+            "are accepted, but so is any other string — the OVOS plugin "
+            "decides what to do with it."
+        ),
+    )
+    response_format: str = Field(
+        default="mp3",
+        description=(
+            "Output audio format. Common: 'mp3', 'opus', 'aac', 'flac', "
+            "'wav', 'pcm'. Unknown values fall back to WAV when pydub "
+            "can't encode them."
+        ),
+    )
     speed: float = Field(default=1.0, ge=0.25, le=4.0)
 
 

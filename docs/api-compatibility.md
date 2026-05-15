@@ -1,9 +1,42 @@
 # Third-Party API Compatibility
 
-`ovos-tts-server` can expose its underlying OVOS TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs. This lets existing apps that already speak a vendor's HTTP API use OVOS as a drop-in replacement — no client code changes required.
+`ovos-tts-server` exposes its underlying OVOS TTS plugin behind drop-in
+compatibility endpoints for popular cloud TTS APIs. Each vendor lives
+under its own URL prefix so multiple compat layers coexist with no path
+collisions.
 
-Each vendor's endpoints live under a dedicated URL prefix so multiple compat layers can coexist in one FastAPI app with no path collisions. Concrete vendor sections (request schema, query params, response shape, curl examples) are added by each compat-router PR as it lands.
+All routers accept any auth token / API key supplied by the client and
+silently ignore it — authentication is the responsibility of your
+reverse proxy.
 
-All routers accept any auth token / API key supplied by the client and silently ignore it — authentication is the responsibility of your reverse proxy.
+Audio format conversion across `wav`, `mp3`, `ogg`, `flac`, `pcm`, etc.
+is provided by `ovos_tts_server.audio_utils.convert_audio()`. Install
+the `[audio]` extra (`pip install ovos-tts-server[audio]`) to enable
+non-WAV outputs via `pydub`.
 
-Audio format conversion across `wav`, `mp3`, `ogg`, `flac`, `pcm`, etc. is provided by `ovos_tts_server.audio_utils.convert_audio()`. Install the `[audio]` extra (`pip install ovos-tts-server[audio]`) to enable non-WAV outputs via `pydub`.
+The shared network-redirect concept lives in
+[`voice-pihole.md`](voice-pihole.md); per-vendor sections cross-reference
+it.
+
+Status reflects merge state into `dev`:
+
+- ✅ **merged** — full per-vendor docs section below the index.
+- 🟡 **open** — PR is up; full docs on the feature branch.
+
+## Commercial cloud TTS
+
+| Vendor | Prefix | Status | PR |
+| :--- | :--- | :--- | :--- |
+| ElevenLabs | `/elevenlabs` | 🟡 open | [#87](https://github.com/OpenVoiceOS/ovos-tts-server/pull/87) |
+| OpenAI TTS | `/openai` | 🟡 open | [#88](https://github.com/OpenVoiceOS/ovos-tts-server/pull/88) |
+| Google Cloud TTS | `/google-tts` | 🟡 open | [#90](https://github.com/OpenVoiceOS/ovos-tts-server/pull/90) |
+| Amazon Polly | `/amazon-polly` | 🟡 open | [#91](https://github.com/OpenVoiceOS/ovos-tts-server/pull/91) |
+| Microsoft Azure TTS | `/azure-tts` (REST + WS) | 🟡 open | [#92](https://github.com/OpenVoiceOS/ovos-tts-server/pull/92) |
+
+## Self-hosted / OSS server protocols
+
+| Server | Prefix | Status | PR |
+| :--- | :--- | :--- | :--- |
+| Coqui TTS server | `/coqui` | 🟡 open | [#89](https://github.com/OpenVoiceOS/ovos-tts-server/pull/89) |
+| Piper HTTP server | `/piper` | 🟡 open | [#93](https://github.com/OpenVoiceOS/ovos-tts-server/pull/93) |
+| MaryTTS | `/marytts` + root aliases | 🟡 open | [#94](https://github.com/OpenVoiceOS/ovos-tts-server/pull/94) |

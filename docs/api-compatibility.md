@@ -19,6 +19,12 @@ Other vendor sections are added by their respective compat-router PRs.
 
 ## Google Cloud TTS (`/google-tts`)
 
+**Upstream sources**:
+- Python SDK: [googleapis/python-texttospeech](https://github.com/googleapis/python-texttospeech) — REST transport in [`services/text_to_speech/transports/rest.py`](https://github.com/googleapis/python-texttospeech/blob/main/google/cloud/texttospeech_v1/services/text_to_speech/transports/rest.py)
+- API reference: [`texttospeech.googleapis.com/v1/text:synthesize`](https://cloud.google.com/text-to-speech/docs/reference/rest/v1/text/synthesize)
+- Proto definitions: [googleapis/googleapis — `google/cloud/texttospeech/v1/cloud_tts.proto`](https://github.com/googleapis/googleapis/blob/master/google/cloud/texttospeech/v1/cloud_tts.proto)
+
+
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | POST | `/google-tts/v1/text:synthesize` | Synthesize speech |

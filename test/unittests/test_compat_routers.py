@@ -97,19 +97,21 @@ class TestOpenAITTSRouter:
         )
         assert resp.status_code == 422
 
-    def test_speech_invalid_voice_rejected(self, client):
+    def test_speech_arbitrary_voice_accepted(self, client):
+        """Any voice string is forwarded to the OVOS plugin to interpret."""
         resp = client.post(
             "/openai/v1/audio/speech",
-            json={"model": "tts-1", "input": "hi", "voice": "unknown_voice"},
+            json={"model": "tts-1", "input": "hi", "voice": "my-plugin-voice"},
         )
-        assert resp.status_code == 422
+        assert resp.status_code == 200
 
-    def test_speech_invalid_model_rejected(self, client):
+    def test_speech_arbitrary_model_accepted(self, client):
+        """Any model string is forwarded to the OVOS plugin to interpret."""
         resp = client.post(
             "/openai/v1/audio/speech",
-            json={"model": "gpt-4", "input": "hi", "voice": "alloy"},
+            json={"model": "gpt-4o-mini-tts", "input": "hi", "voice": "alloy"},
         )
-        assert resp.status_code == 422
+        assert resp.status_code == 200
 
     def test_speech_speed_out_of_range(self, client):
         resp = client.post(

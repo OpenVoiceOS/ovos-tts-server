@@ -27,7 +27,7 @@ The MaryTTS compat router exposes the classic MaryTTS HTTP endpoints so apps tha
 | GET | `/marytts/voices` | Newline-separated voices, format `name locale gender plugin` |
 | GET/POST | `/marytts/process` | Synthesize — returns `audio/wav` |
 
-#### Root-path aliases
+### Root-path aliases
 
 Because MaryTTS predates modern API gateways and is heavily used in
 **accessibility / assistive tech** (screen-reader bridges, NVDA/Orca TTS
@@ -85,13 +85,15 @@ MaryTTS clients are configured with a base URL. Set it to where this server runs
 }
 ```
 
-**Home Assistant** (`configuration.yaml`, `marytts` integration — note: built-in integration expects bare paths, so put nginx or a similar reverse proxy in front to strip `/marytts/` if you can't override the base path):
+**Home Assistant** (`configuration.yaml`, `marytts` integration). HA's built-in
+integration hardcodes bare paths (`/process`, `/voices`, `/locales`) — point
+it directly at the server, no path-stripping proxy needed because the
+root-alias router handles those:
 ```yaml
 tts:
   - platform: marytts
     host: localhost
     port: 9666
-    # base_url: http://localhost:9666/marytts   # (if integration supports it)
 ```
 
 **curl**:

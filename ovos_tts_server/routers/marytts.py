@@ -15,7 +15,7 @@ Both routers expose identical behaviour; register either or both.
 """
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -26,8 +26,9 @@ class MaryTTSInput(BaseModel):
     INPUT_TYPE: str = Field(
         default="TEXT",
         description=(
-            "MaryTTS canonical values: 'TEXT' or 'SSML'. Any string is "
-            "accepted and forwarded to the OVOS plugin."
+            "MaryTTS canonical values: 'TEXT' or 'SSML'. Accepted and "
+            "echoed for protocol compatibility; the OVOS plugin handles "
+            "SSML detection itself if it supports it."
         ),
     )
     LOCALE: Optional[str] = Field(None, description="Target Locale (e.g. en_US)")
@@ -39,7 +40,8 @@ class MaryTTSInput(BaseModel):
 def _register_marytts_routes(router: APIRouter, engine) -> None:
     @router.get("/locales")
     def mary_locales() -> Response:
-        return Response(content="\n".join(engine.langs), media_type="text/plain")
+        langs = getattr(engine, "langs", None) or [engine.lang]
+        return Response(content="\n".join(langs), media_type="text/plain")
 
     @router.get("/voices")
     def mary_voices() -> Response:
@@ -65,7 +67,13 @@ def _register_marytts_routes(router: APIRouter, engine) -> None:
             synth_kwargs["lang"] = params.LOCALE
         if params.VOICE:
             synth_kwargs["voice"] = params.VOICE.replace("_", " ")
-        audio_path, _ = engine.synthesize(params.INPUT_TEXT, **synth_kwargs)
+        try:
+            audio_path, _ = engine.synthesize(params.INPUT_TEXT, **synth_kwargs)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"synthesis failed: {exc}",
+            ) from exc
         return FileResponse(audio_path, media_type="audio/wav")
 
 

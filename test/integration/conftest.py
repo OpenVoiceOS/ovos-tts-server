@@ -6,8 +6,6 @@ import time
 import wave
 from typing import List, Optional, Tuple
 
-import pytest
-
 
 class FakeEngine:
     plugin_name: str = "fake-tts"

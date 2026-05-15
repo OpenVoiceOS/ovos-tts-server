@@ -35,7 +35,7 @@ def base_url():
 
 class TestMaryTTSWireProtocol:
     def test_locales_plaintext(self, base_url):
-        r = requests.get(f"{base_url}/marytts/locales")
+        r = requests.get(f"{base_url}/marytts/locales", timeout=10)
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("text/plain")
         # Newline-separated locales, e.g. "en-us\nde-de"
@@ -43,7 +43,7 @@ class TestMaryTTSWireProtocol:
         assert "en-us" in locales
 
     def test_voices_plaintext(self, base_url):
-        r = requests.get(f"{base_url}/marytts/voices")
+        r = requests.get(f"{base_url}/marytts/voices", timeout=10)
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("text/plain")
         # Format: "<name> <locale> <gender> <plugin>"
@@ -60,6 +60,7 @@ class TestMaryTTSWireProtocol:
                 "AUDIO": "WAVE_FILE",
                 "LOCALE": "en_US",
             },
+            timeout=10,
         )
         assert r.status_code == 200
         assert r.headers["content-type"] == "audio/wav"
@@ -77,6 +78,7 @@ class TestMaryTTSWireProtocol:
                 "OUTPUT_TYPE": "AUDIO",
                 "AUDIO": "WAVE_FILE",
             },
+            timeout=10,
         )
         assert r.status_code == 200
         assert r.content.startswith(b"RIFF")
@@ -86,6 +88,7 @@ class TestMaryTTSWireProtocol:
         r = requests.get(
             f"{base_url}/process",
             params={"INPUT_TEXT": "screen reader test"},
+            timeout=10,
         )
         assert r.status_code == 200
         assert r.headers["content-type"] == "audio/wav"
@@ -95,5 +98,6 @@ class TestMaryTTSWireProtocol:
         r = requests.get(
             f"{base_url}/marytts/process",
             params={"INPUT_TEXT": "hi", "VOICE": "some_voice_name"},
+            timeout=10,
         )
         assert r.status_code == 200

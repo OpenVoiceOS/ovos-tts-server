@@ -16,6 +16,11 @@ This document currently covers: **MaryTTS** (mounted under `/marytts`).
 
 The MaryTTS compat router exposes the classic MaryTTS HTTP endpoints so apps that already speak MaryTTS can swap in OVOS without code changes.
 
+**Upstream sources** (no canonical Python SDK — most clients hand-roll HTTP):
+- Reference server: [marytts/marytts — `MaryHttpServer.java`](https://github.com/marytts/marytts/blob/master/marytts-runtime/src/main/java/marytts/server/http/MaryHttpServer.java)
+- Request handler defining `/process`, `/voices`, `/locales`: [`InfoRequestHandler.java`](https://github.com/marytts/marytts/blob/master/marytts-runtime/src/main/java/marytts/server/http/InfoRequestHandler.java)
+- Home Assistant client: [`homeassistant/components/marytts/tts.py`](https://github.com/home-assistant/core/blob/dev/homeassistant/components/marytts/tts.py)
+
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | GET | `/marytts/locales` | Newline-separated supported locales |

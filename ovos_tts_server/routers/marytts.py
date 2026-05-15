@@ -13,7 +13,7 @@ Two routers are exposed:
 
 Both routers expose identical behaviour; register either or both.
 """
-from typing import Literal, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import FileResponse
@@ -23,7 +23,13 @@ from pydantic import BaseModel, Field
 class MaryTTSInput(BaseModel):
     """Pydantic model for validating MaryTTS /process API requests."""
     INPUT_TEXT: str = Field(..., description="The text to synthesize")
-    INPUT_TYPE: Literal["TEXT", "SSML"] = "TEXT"
+    INPUT_TYPE: str = Field(
+        default="TEXT",
+        description=(
+            "MaryTTS canonical values: 'TEXT' or 'SSML'. Any string is "
+            "accepted and forwarded to the OVOS plugin."
+        ),
+    )
     LOCALE: Optional[str] = Field(None, description="Target Locale (e.g. en_US)")
     VOICE: Optional[str] = Field(None, description="Target Voice name")
     OUTPUT_TYPE: str = "AUDIO"

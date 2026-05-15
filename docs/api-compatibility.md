@@ -19,6 +19,12 @@ Other vendor sections are added by their respective compat-router PRs.
 
 ## Amazon Polly (`/amazon-polly`)
 
+**Upstream sources**:
+- boto3 client: [boto3 Polly `synthesize_speech` docs](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/polly/client/synthesize_speech.html)
+- Service model: [botocore — `data/polly/.../service-2.json`](https://github.com/boto/botocore/blob/develop/botocore/data/polly/2016-06-10/service-2.json)
+- API reference: [Amazon Polly SynthesizeSpeech](https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html)
+
+
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | POST | `/amazon-polly/v1/speech` | Synthesize speech |

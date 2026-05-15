@@ -59,7 +59,10 @@ class TestMaryTTSRouter:
         r = client.get("/marytts/voices")
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("text/plain")
-        assert "default" in r.text
+        # FakeEngine.voices=['voice1','voice2'], one line per voice/lang
+        # pair in MaryTTS wire format: "<voice> <lang> <gender> <plugin>"
+        assert "voice1" in r.text
+        assert "voice2" in r.text
         assert "fake-tts" in r.text
 
     def test_process_get_returns_wav(self, client):
@@ -94,7 +97,7 @@ class TestMaryTTSRootAlias:
     def test_root_voices(self, client):
         r = client.get("/voices")
         assert r.status_code == 200
-        assert "default" in r.text
+        assert "voice1" in r.text
 
     def test_root_process_get(self, client):
         r = client.get("/process", params={"INPUT_TEXT": "hello"})

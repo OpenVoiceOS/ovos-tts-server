@@ -43,7 +43,19 @@ def _register_marytts_routes(router: APIRouter, engine) -> None:
 
     @router.get("/voices")
     def mary_voices() -> Response:
-        lines = [f"default {engine.lang} m {engine.plugin_name}"]
+        """Emit one line per voice in MaryTTS's wire format:
+            <voice> <lang> <gender> <plugin>
+        Real MaryTTS clients (e.g. ovos-tts-plugin-marytts) parse this
+        line-by-line to populate their valid_voices / valid_langs sets.
+        """
+        voices = getattr(engine, "voices", None) or ["default"]
+        langs = getattr(engine, "langs", None) or [engine.lang]
+        # Pair each voice with each lang so any (voice, lang) combo the
+        # plugin tries is in the discovered set.
+        lines = [
+            f"{voice} {lang} m {engine.plugin_name}"
+            for voice in voices for lang in langs
+        ]
         return Response(content="\n".join(lines), media_type="text/plain")
 
     @router.api_route("/process", methods=["GET", "POST"])

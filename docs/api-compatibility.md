@@ -19,6 +19,13 @@ Other vendor sections are added by their respective compat-router PRs.
 
 ## Azure Cognitive Services TTS (`/azure-tts`)
 
+**Upstream sources**:
+- Python Speech SDK: [Azure-Samples/cognitive-services-speech-sdk](https://github.com/Azure-Samples/cognitive-services-speech-sdk) (samples)
+- REST API reference: [Speech service REST text-to-speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-text-to-speech)
+- WebSocket protocol notes: [`websockets`](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/websockets) (handshake + framing)
+- Open-source protocol implementation (useful for the WS bridge): [rany2/edge-tts](https://github.com/rany2/edge-tts)
+
+
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | POST | `/azure-tts/cognitiveservices/v1` | Synthesize from SSML |

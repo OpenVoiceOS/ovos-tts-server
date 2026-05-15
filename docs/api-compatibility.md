@@ -19,6 +19,11 @@ Other vendor sections are added by their respective compat-router PRs.
 
 ## Piper (`/piper`)
 
+**Upstream sources** (no canonical client — bare HTTP):
+- Reference server: [rhasspy/piper — `src/python_run/piper/http_server.py`](https://github.com/rhasspy/piper/blob/master/src/python_run/piper/http_server.py)
+- Wyoming bridge (used by Home Assistant's add-on): [rhasspy/wyoming-piper](https://github.com/rhasspy/wyoming-piper)
+- OVOS plugin client: [`ovos-tts-plugin-piper-http`](https://github.com/OpenVoiceOS/ovos-tts-plugin-piper-http)
+
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | GET | `/piper/` | Synthesize speech |

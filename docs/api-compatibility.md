@@ -19,6 +19,12 @@ Other vendor sections are added by their respective compat-router PRs.
 
 ## ElevenLabs (`/elevenlabs`)
 
+**Upstream sources**:
+- Python SDK: [elevenlabs/elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) — `text_to_speech.convert()` builds `POST /v1/text-to-speech/{voice_id}`
+- API reference: [ElevenLabs Text-to-Speech docs](https://elevenlabs.io/docs/api-reference/text-to-speech)
+- Node SDK: [elevenlabs/elevenlabs-js](https://github.com/elevenlabs/elevenlabs-js)
+
+
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | GET | `/elevenlabs/v1/voices` | List available voices |

@@ -1,7 +1,7 @@
 # Licensed under the Apache License, Version 2.0
 """Google Cloud TTS-compatible endpoint."""
 import base64
-from typing import Literal, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Header, Query
 from pydantic import BaseModel, Field
@@ -21,13 +21,27 @@ class GoogleTTSVoice(BaseModel):
 
     languageCode: str = Field(default="en-US", min_length=1)
     name: Optional[str] = Field(default=None, min_length=1)
-    ssmlGender: Optional[Literal["SSML_VOICE_GENDER_UNSPECIFIED", "MALE", "FEMALE", "NEUTRAL"]] = None
+    ssmlGender: Optional[str] = Field(
+        default=None,
+        description=(
+            "Google canonical values: 'SSML_VOICE_GENDER_UNSPECIFIED', "
+            "'MALE', 'FEMALE', 'NEUTRAL'. Any string accepted and "
+            "forwarded to the OVOS plugin."
+        ),
+    )
 
 
 class GoogleTTSAudioConfig(BaseModel):
     """Audio encoding configuration."""
 
-    audioEncoding: Literal["MP3", "LINEAR16", "OGG_OPUS", "MULAW", "ALAW"] = "MP3"
+    audioEncoding: str = Field(
+        default="MP3",
+        description=(
+            "Output audio encoding. Google canonical values: 'MP3', "
+            "'LINEAR16', 'OGG_OPUS', 'MULAW', 'ALAW'. Any string accepted; "
+            "unknown values fall back to WAV when pydub can't encode."
+        ),
+    )
     speakingRate: Optional[float] = Field(default=None, ge=0.25, le=4.0)
     pitch: Optional[float] = Field(default=None, ge=-20.0, le=20.0)
     volumeGainDb: Optional[float] = Field(default=None, ge=-96.0, le=16.0)

@@ -18,9 +18,9 @@ this box** instead of a third-party cloud.
 
 ## Compat coverage matrix
 
-- ✅ **merged** — landed on `dev`; per-vendor docs inlined in [`api-compatibility.md`](api-compatibility.md).
-- 🟡 **open** — PR up; per-vendor docs on the feature branch.
-- ⚪ **planned** — see [TODO / WIP](#todo--wip).
+- ✅ **merged** — landed on `dev`
+- 🟡 **open** — PR up
+- ⚪ **planned**
 
 ### Commercial cloud TTS
 
@@ -40,54 +40,35 @@ this box** instead of a third-party cloud.
 | Piper HTTP server | `/piper` | 🟡 open | [#93](https://github.com/OpenVoiceOS/ovos-tts-server/pull/93) |
 | MaryTTS | `/marytts` + root aliases | 🟡 open | [#94](https://github.com/OpenVoiceOS/ovos-tts-server/pull/94) |
 
-> :information_source: Status reflects merge-into-`dev`. Until a PR lands,
-> its per-vendor docs section lives on the feature branch — click the PR
-> link.
-
 ## Voice-pihole
 
 [voice-pihole.md](voice-pihole.md) collects every DNS-rewrite + reverse-proxy
-+ CA-trust recipe across all the above vendors. Use it when you want
-unmodified consumer apps to transparently hit this server with zero
-client-side configuration.
++ CA-trust recipe across all the above vendors.
 
 ---
 
-## TODO / WIP
+## TODO
 
 ### Streaming partial audio
 
-The OpenAI/ElevenLabs/Azure SDKs all support streaming synthesis (audio
-chunks delivered as the model generates them). Our compat routers
-currently emit the entire WAV body in one response after the OVOS plugin
-finishes — which is what OVOS TTS plugins natively produce. True chunked
-streaming would need either:
-
-- A streaming-aware plugin contract (OPM change), OR
-- Server-side chunking of the produced WAV (latency only, no first-byte
-  win)
+The OpenAI / ElevenLabs / Azure SDKs all support streaming synthesis
+(audio chunks delivered as the model generates them). Our compat routers
+emit the entire WAV body in one response after the OVOS plugin finishes
+— which is what OVOS TTS plugins natively produce. True chunked
+streaming needs either a streaming-aware plugin contract (OPM change) or
+server-side chunking of the produced WAV.
 
 ### Vendor coverage gaps
 
-- **Cartesia / PlayHT / Resemble / Murf** — emerging neural-TTS APIs.
-- **Microsoft Speech SDK WebSocket synthesis** — implemented (PR #92),
-  but the `output_format` enum doesn't cover every Microsoft profile.
-- **Mimic 3 / Mycroft Mimic server** — historical OVOS-adjacent
-  protocols; useful for self-hoster migration paths.
-- **Festival / espeak-ng HTTP wrappers** — niche, mostly accessibility.
+- Cartesia / PlayHT / Resemble / Murf — emerging neural-TTS APIs.
+- Microsoft Speech SDK WS — the `output_format` enum doesn't cover every
+  Microsoft profile.
+- Mimic 3 / Mycroft Mimic server.
+- Festival / espeak-ng HTTP wrappers.
 
-### Documentation TODOs
+### Docs
 
-- One-pager per use-case (Raspberry Pi, Tailscale, Caddy alternative).
+- One-pager per deployment (Raspberry Pi, Tailscale, Caddy alternative).
 - mkcert / step-ca walkthrough.
-- Per-vendor migration guide (SDK → drop-in mode).
-- Native `/v2/synthesize` deep-dive: streaming responses, cache busting,
-  voice listing.
-
-### Process
-
-Each open compat PR rebases on `dev` after this hub merges and in its
-diff:
-
-1. Removes its row's PR link from the index in `api-compatibility.md`.
-2. Inlines its full per-vendor docs section below the index.
+- Per-vendor migration guide (SDK → drop-in).
+- Native `/v2/synthesize` deep-dive.

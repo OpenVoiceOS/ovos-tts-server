@@ -15,13 +15,10 @@ the `[audio]` extra (`pip install ovos-tts-server[audio]`) to enable
 non-WAV outputs via `pydub`.
 
 The shared network-redirect concept lives in
-[`voice-pihole.md`](voice-pihole.md); per-vendor sections cross-reference
-it.
+[`voice-pihole.md`](voice-pihole.md).
 
-Status reflects merge state into `dev`:
-
-- ✅ **merged** — full per-vendor docs section below the index.
-- 🟡 **open** — PR is up; full docs on the feature branch.
+- ✅ **merged** — landed on `dev`
+- 🟡 **open** — PR up
 
 ## Commercial cloud TTS
 

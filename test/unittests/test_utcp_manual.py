@@ -159,3 +159,70 @@ class TestUtcpEndpoint:
             assert url.startswith("http://testserver"), (
                 f"Expected testserver base, got: {url}"
             )
+
+
+# ---------------------------------------------------------------------------
+# URL correctness per advertised tool
+# ---------------------------------------------------------------------------
+
+class TestUtcpToolUrlCorrectness:
+    BASE = "http://myserver:9666"
+
+    def _tools_by_name(self, engine):
+        manual = build_utcp_manual(engine, self.BASE)
+        return {t["name"]: t for t in manual["tools"]}
+
+    def test_status_url_is_slash_status(self, engine):
+        tools = self._tools_by_name(engine)
+        assert tools["tts_status"]["tool_call_template"]["url"] == f"{self.BASE}/status"
+
+    def test_status_method_is_get(self, engine):
+        tools = self._tools_by_name(engine)
+        assert tools["tts_status"]["tool_call_template"]["http_method"] == "GET"
+
+    def test_v2_synthesize_url_contains_v2_synthesize(self, engine):
+        tools = self._tools_by_name(engine)
+        url = tools["tts_synthesize_v2"]["tool_call_template"]["url"]
+        assert url == f"{self.BASE}/v2/synthesize"
+
+    def test_v2_synthesize_method_is_get(self, engine):
+        tools = self._tools_by_name(engine)
+        assert tools["tts_synthesize_v2"]["tool_call_template"]["http_method"] == "GET"
+
+    def test_legacy_synthesize_url_contains_utterance_template(self, engine):
+        tools = self._tools_by_name(engine)
+        url = tools["tts_synthesize_legacy"]["tool_call_template"]["url"]
+        assert "{utterance}" in url, f"Expected {{utterance}} in legacy URL, got: {url!r}"
+        assert url.startswith(f"{self.BASE}/synthesize/")
+
+    def test_legacy_synthesize_method_is_get(self, engine):
+        tools = self._tools_by_name(engine)
+        assert tools["tts_synthesize_legacy"]["tool_call_template"]["http_method"] == "GET"
+
+    def test_no_double_slash_in_any_url(self, engine):
+        manual = build_utcp_manual(engine, self.BASE)
+        for tool in manual["tools"]:
+            url = tool["tool_call_template"]["url"]
+            # Allow double-slash only in protocol part
+            without_proto = url.split("://", 1)[-1]
+            assert "//" not in without_proto, f"Double slash in URL for {tool['name']!r}: {url!r}"
+
+    def test_v2_synthesize_has_content_type_octet_stream(self, engine):
+        tools = self._tools_by_name(engine)
+        tpl = tools["tts_synthesize_v2"]["tool_call_template"]
+        assert tpl.get("content_type") == "application/octet-stream"
+
+    def test_legacy_tool_has_synthesize_tag(self, engine):
+        tools = self._tools_by_name(engine)
+        assert "synthesize" in tools["tts_synthesize_legacy"].get("tags", [])
+
+    def test_status_inputs_has_no_required_fields(self, engine):
+        tools = self._tools_by_name(engine)
+        required = tools["tts_status"]["inputs"].get("required", [])
+        assert required == [], f"tts_status should require no inputs, got: {required}"
+
+    def test_manual_version_format(self, engine):
+        manual = build_utcp_manual(engine, self.BASE)
+        parts = manual["manual_version"].split(".")
+        assert len(parts) == 3
+        assert all(p.isdigit() for p in parts)

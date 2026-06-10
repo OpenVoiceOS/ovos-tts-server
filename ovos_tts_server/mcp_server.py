@@ -32,7 +32,7 @@ import base64
 import os
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -71,7 +71,7 @@ def _build_mcp(engine: "TTSEngineWrapper"):
         text: str,
         voice: Optional[str] = None,
         lang: Optional[str] = None,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """Synthesize *text* and return the audio as a base64 artifact.
 
         Args:

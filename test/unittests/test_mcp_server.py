@@ -185,6 +185,7 @@ class TestBuildMcp:
 class TestMountMcp:
     def test_mount_mcp_adds_route(self, engine):
         """mount_mcp mounts the real streamable-HTTP app at exactly *path*."""
+        pytest.importorskip("mcp", reason="mcp extra not installed")
         import ovos_tts_server.mcp_server as mcp_server_mod
         app = FastAPI()
         mcp_server_mod.mount_mcp(app, engine, path="/mcp")
@@ -193,6 +194,7 @@ class TestMountMcp:
 
     def test_mount_mcp_chains_lifespan(self, engine):
         """The host app lifespan is wrapped so the MCP session manager runs."""
+        pytest.importorskip("mcp", reason="mcp extra not installed")
         import ovos_tts_server.mcp_server as mcp_server_mod
         app = FastAPI()
         before = app.router.lifespan_context
@@ -203,6 +205,7 @@ class TestMountMcp:
 
     def test_mount_mcp_lifespan_boots(self, engine):
         """Entering the app lifespan (as uvicorn would) must not raise."""
+        pytest.importorskip("mcp", reason="mcp extra not installed")
         from fastapi.testclient import TestClient
         import ovos_tts_server.mcp_server as mcp_server_mod
         app = FastAPI()

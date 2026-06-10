@@ -26,7 +26,7 @@ class TestCLI:
              patch("ovos_tts_server.__main__.uvicorn") as uv:
             start.return_value = (MagicMock(name="app"), MagicMock(name="engine"))
             cli.main()
-            start.assert_called_once_with("fake-plugin", cache=True)
+            start.assert_called_once_with("fake-plugin", cache=True, enable_mcp=False)
             uv.run.assert_called_once()
             _, kwargs = uv.run.call_args
             assert kwargs["host"] == "127.0.0.1"
@@ -41,7 +41,7 @@ class TestCLI:
             _, kwargs = uv.run.call_args
             assert kwargs["host"] == "0.0.0.0"
             assert kwargs["port"] == 9666
-            start.assert_called_once_with("x", cache=False)
+            start.assert_called_once_with("x", cache=False, enable_mcp=False)
 
     def test_help_exits_zero(self, monkeypatch):
         monkeypatch.setattr(sys, "argv", ["ovos-tts-server", "--help"])

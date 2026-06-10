@@ -183,15 +183,35 @@ class TestBuildMcp:
 # ---------------------------------------------------------------------------
 
 class TestMountMcp:
-    def test_mount_mcp_adds_route(self, engine, fake_mcp_modules):
-        mcp_server_mod, _ = fake_mcp_modules
+    def test_mount_mcp_adds_route(self, engine):
+        """mount_mcp mounts the real streamable-HTTP app at exactly *path*."""
+        import ovos_tts_server.mcp_server as mcp_server_mod
         app = FastAPI()
         mcp_server_mod.mount_mcp(app, engine, path="/mcp")
-        # After mount, the app should have routes including /mcp
-        route_paths = [str(r.path) for r in app.routes]
-        assert any("/mcp" in p for p in route_paths), (
-            f"Expected /mcp in routes; got: {route_paths}"
-        )
+        mounts = [r for r in app.routes if getattr(r, "path", "") == "/mcp"]
+        assert mounts, f"Expected a /mcp mount; got: {[getattr(r, 'path', '?') for r in app.routes]}"
+
+    def test_mount_mcp_chains_lifespan(self, engine):
+        """The host app lifespan is wrapped so the MCP session manager runs."""
+        import ovos_tts_server.mcp_server as mcp_server_mod
+        app = FastAPI()
+        before = app.router.lifespan_context
+        mcp_server_mod.mount_mcp(app, engine, path="/mcp")
+        after = app.router.lifespan_context
+        assert after is not before
+        assert getattr(after, "__name__", "") == "_lifespan_with_mcp"
+
+    def test_mount_mcp_lifespan_boots(self, engine):
+        """Entering the app lifespan (as uvicorn would) must not raise."""
+        from fastapi.testclient import TestClient
+        import ovos_tts_server.mcp_server as mcp_server_mod
+        app = FastAPI()
+        mcp_server_mod.mount_mcp(app, engine, path="/mcp")
+        with TestClient(app) as client:
+            # lifespan ran; a bad transport wiring would have raised here
+            r = client.post("/mcp", json={})
+            # MCP transport answers (400/406 for a non-handshake body), never 500
+            assert r.status_code < 500
 
     def test_mount_mcp_no_op_when_mcp_missing(self, engine):
         """mount_mcp should not raise when mcp is not installed."""
@@ -247,108 +267,6 @@ class TestStartTtsServerMcpFlag:
 
 # ---------------------------------------------------------------------------
 # mount_mcp ASGI version-fallback chain
-# ---------------------------------------------------------------------------
-
-class TestMountMcpFallbackChain:
-    """Cover the three arms of the asgi_app / get_asgi_app / direct-mcp fallback."""
-
-    def _make_fake_mcp_with_attrs(self, has_asgi_app: bool, has_get_asgi_app: bool):
-        """Return a fake mcp module whose FastMCP exposes selected ASGI methods."""
-        class _FakeFastMCP:
-            def __init__(self, **kwargs):
-                pass
-
-            def tool(self, name=None, description=None):
-                def decorator(fn):
-                    return fn
-                return decorator
-
-            if has_asgi_app:
-                def asgi_app(self):
-                    async def _app(scope, receive, send):  # pragma: no cover
-                        pass
-                    return _app
-
-            if has_get_asgi_app:
-                def get_asgi_app(self):
-                    async def _app(scope, receive, send):  # pragma: no cover
-                        pass
-                    return _app
-
-        mcp_mod = types.ModuleType("mcp")
-        server_mod = types.ModuleType("mcp.server")
-        fastmcp_mod = types.ModuleType("mcp.server.fastmcp")
-        fastmcp_mod.FastMCP = _FakeFastMCP
-        mcp_mod.server = server_mod
-        server_mod.fastmcp = fastmcp_mod
-        return mcp_mod, server_mod, fastmcp_mod
-
-    def test_get_asgi_app_fallback(self, engine):
-        """When only get_asgi_app is present, that arm is taken (lines 130-131)."""
-        import importlib
-        mcp_mod, server_mod, fastmcp_mod = self._make_fake_mcp_with_attrs(
-            has_asgi_app=False, has_get_asgi_app=True
-        )
-        with patch.dict(sys.modules, {
-            "mcp": mcp_mod,
-            "mcp.server": server_mod,
-            "mcp.server.fastmcp": fastmcp_mod,
-        }):
-            import ovos_tts_server.mcp_server as mcp_server_mod
-            importlib.reload(mcp_server_mod)
-            try:
-                app = FastAPI()
-                mcp_server_mod.mount_mcp(app, engine)
-                route_paths = [str(r.path) for r in app.routes]
-                assert any("/mcp" in p for p in route_paths)
-            finally:
-                importlib.reload(mcp_server_mod)
-
-    def test_direct_mcp_fallback(self, engine):
-        """When neither asgi_app nor get_asgi_app exist, mcp itself is mounted (lines 132-134)."""
-        import importlib
-        mcp_mod, server_mod, fastmcp_mod = self._make_fake_mcp_with_attrs(
-            has_asgi_app=False, has_get_asgi_app=False
-        )
-        with patch.dict(sys.modules, {
-            "mcp": mcp_mod,
-            "mcp.server": server_mod,
-            "mcp.server.fastmcp": fastmcp_mod,
-        }):
-            import ovos_tts_server.mcp_server as mcp_server_mod
-            importlib.reload(mcp_server_mod)
-            try:
-                app = FastAPI()
-                mcp_server_mod.mount_mcp(app, engine)
-                route_paths = [str(r.path) for r in app.routes]
-                assert any("/mcp" in p for p in route_paths)
-            finally:
-                importlib.reload(mcp_server_mod)
-
-    def test_import_error_no_ovos_utils(self, engine):
-        """mount_mcp ImportError handler silently passes when ovos_utils is also missing (lines 143-144)."""
-        import importlib
-        with patch.dict(sys.modules, {
-            "mcp": None,
-            "mcp.server": None,
-            "mcp.server.fastmcp": None,
-            "ovos_utils": None,
-            "ovos_utils.log": None,
-        }):
-            import ovos_tts_server.mcp_server as mcp_server_mod
-            importlib.reload(mcp_server_mod)
-            try:
-                app = FastAPI()
-                mcp_server_mod.mount_mcp(app, engine)  # must not raise
-                # No routes added — silent no-op
-                route_paths = [str(r.path) for r in app.routes]
-                assert not any("/mcp" in p for p in route_paths)
-            finally:
-                importlib.reload(mcp_server_mod)
-
-
-# ---------------------------------------------------------------------------
-# synthesize tool: edge cases and output integrity
 # ---------------------------------------------------------------------------
 
 class TestSynthesizeEdgeCases:

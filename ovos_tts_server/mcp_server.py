@@ -123,16 +123,24 @@ def mount_mcp(app: "FastAPI", engine: "TTSEngineWrapper", path: str = "/mcp") ->
     """
     try:
         mcp = _build_mcp(engine)
-        # FastMCP exposes an ASGI app via .asgi_app() or .get_asgi_app()
-        # depending on the mcp version; try both.
-        if hasattr(mcp, "asgi_app"):
-            asgi = mcp.asgi_app()
-        elif hasattr(mcp, "get_asgi_app"):
-            asgi = mcp.get_asgi_app()
-        else:
-            # Fallback: FastMCP itself may be ASGI-compatible directly
-            asgi = mcp
-        app.mount(path, asgi)
+        # Serve the MCP streamable-HTTP transport at the mount root so the
+        # endpoint is exactly *path* (FastMCP defaults to an internal /mcp
+        # sub-path, which would yield /mcp/mcp when mounted).
+        mcp.settings.streamable_http_path = "/"
+        app.mount(path, mcp.streamable_http_app())
+
+        # Starlette does not propagate lifespan events to mounted sub-apps,
+        # and the streamable transport requires its session manager running.
+        from contextlib import asynccontextmanager
+        _original_lifespan = app.router.lifespan_context
+
+        @asynccontextmanager
+        async def _lifespan_with_mcp(host_app):
+            async with _original_lifespan(host_app):
+                async with mcp.session_manager.run():
+                    yield
+
+        app.router.lifespan_context = _lifespan_with_mcp
     except ImportError:
         try:
             from ovos_utils.log import LOG

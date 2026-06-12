@@ -63,6 +63,7 @@ def run_live_server(register):
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
 
+    # Wait for startup (uvicorn sets .started after the lifespan handshake)
     for _ in range(100):
         if server.started:
             break

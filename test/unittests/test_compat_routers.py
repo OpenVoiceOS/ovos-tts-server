@@ -47,11 +47,11 @@ def engine():
     return FakeEngine()
 
 def _make_app(engine) -> FastAPI:
-    """Build a minimal FastAPI app with only the openai compat router."""
-    from ovos_tts_server.routers.openai_tts import make_openai_tts_router
+    """Build a minimal FastAPI app with only the elevenlabs compat router."""
+    from ovos_tts_server.routers.elevenlabs import make_elevenlabs_router
 
     app = FastAPI()
-    app.include_router(make_openai_tts_router(engine))
+    app.include_router(make_elevenlabs_router(engine))
     return app
 
 
@@ -65,62 +65,67 @@ def client(engine):
 
 
 # ---------------------------------------------------------------------------
+# ElevenLabs  (prefix: /elevenlabs)
+# ---------------------------------------------------------------------------
+
+class TestElevenLabsRouter:
+    def test_list_voices_returns_voices(self, client):
+        resp = client.get("/elevenlabs/v1/voices")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert "voices" in body
+        assert len(body["voices"]) >= 1
+        assert "voice_id" in body["voices"][0]
+        assert "name" in body["voices"][0]
+
+    def test_list_voices_api_key_ignored(self, client):
+        resp = client.get("/elevenlabs/v1/voices", headers={"xi-api-key": "fake-key"})
+        assert resp.status_code == 200
+
+    def test_list_models(self, client):
+        resp = client.get("/elevenlabs/v1/models")
+        assert resp.status_code == 200
+        models = resp.json()
+        assert isinstance(models, list)
+        assert len(models) >= 1
+        assert models[0]["model_id"] == "fake-tts"
+
+    def test_tts_default_voice(self, client):
+        resp = client.post(
+            "/elevenlabs/v1/text-to-speech/default",
+            json={"text": "hello world"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_named_voice(self, client):
+        resp = client.post(
+            "/elevenlabs/v1/text-to-speech/voice1",
+            json={"text": "test"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_output_format_mp3(self, client):
+        resp = client.post(
+            "/elevenlabs/v1/text-to-speech/default?output_format=mp3_44100_128",
+            json={"text": "test"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_empty_text_rejected(self, client):
+        resp = client.post(
+            "/elevenlabs/v1/text-to-speech/default",
+            json={"text": ""},
+        )
+        assert resp.status_code == 422
+
+    def test_tts_voice_settings_accepted(self, client):
+        resp = client.post(
+            "/elevenlabs/v1/text-to-speech/default",
+            json={"text": "hello", "voice_settings": {"stability": 0.5, "similarity_boost": 0.8}},
+        )
+        assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
 # OpenAI TTS  (prefix: /openai)
-# ---------------------------------------------------------------------------
-
-class TestOpenAITTSRouter:
-    def test_speech_default(self, client):
-        resp = client.post(
-            "/openai/v1/audio/speech",
-            json={"model": "tts-1", "input": "hello world", "voice": "alloy"},
-        )
-        assert resp.status_code == 200
-
-    def test_speech_hd_model(self, client):
-        resp = client.post(
-            "/openai/v1/audio/speech",
-            json={"model": "tts-1-hd", "input": "hello", "voice": "nova"},
-        )
-        assert resp.status_code == 200
-
-    def test_speech_empty_input_rejected(self, client):
-        resp = client.post(
-            "/openai/v1/audio/speech",
-            json={"model": "tts-1", "input": "", "voice": "alloy"},
-        )
-        assert resp.status_code == 422
-
-    def test_speech_input_too_long_rejected(self, client):
-        resp = client.post(
-            "/openai/v1/audio/speech",
-            json={"model": "tts-1", "input": "x" * 4097, "voice": "alloy"},
-        )
-        assert resp.status_code == 422
-
-    def test_speech_arbitrary_voice_accepted(self, client):
-        """Any voice string is forwarded to the OVOS plugin to interpret."""
-        resp = client.post(
-            "/openai/v1/audio/speech",
-            json={"model": "tts-1", "input": "hi", "voice": "my-plugin-voice"},
-        )
-        assert resp.status_code == 200
-
-    def test_speech_arbitrary_model_accepted(self, client):
-        """Any model string is forwarded to the OVOS plugin to interpret."""
-        resp = client.post(
-            "/openai/v1/audio/speech",
-            json={"model": "gpt-4o-mini-tts", "input": "hi", "voice": "alloy"},
-        )
-        assert resp.status_code == 200
-
-    def test_speech_speed_out_of_range(self, client):
-        resp = client.post(
-            "/openai/v1/audio/speech",
-            json={"model": "tts-1", "input": "hi", "voice": "alloy", "speed": 5.0},
-        )
-        assert resp.status_code == 422
-
-
-# ---------------------------------------------------------------------------
-# Coqui  (prefix: /coqui)
 # ---------------------------------------------------------------------------

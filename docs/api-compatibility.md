@@ -12,67 +12,68 @@ Audio format conversion is provided by `ovos_tts_server.audio_utils.convert_audi
 Install the `[audio]` extra (`pip install ovos-tts-server[audio]`) to enable
 non-WAV outputs via `pydub`.
 
-This document currently covers: **OpenAI TTS (`/openai`)**.
+This document currently covers: **ElevenLabs (`/elevenlabs`)**.
 Other vendor sections are added by their respective compat-router PRs.
 
 ---
 
-## OpenAI TTS (`/openai`)
+## ElevenLabs (`/elevenlabs`)
 
 **Upstream sources**:
-- Python SDK: [openai/openai-python — `resources/audio/speech.py`](https://github.com/openai/openai-python/blob/main/src/openai/resources/audio/speech.py)
-- API reference: [OpenAI Audio Speech docs](https://platform.openai.com/docs/api-reference/audio/createSpeech)
-- Node SDK: [openai/openai-node](https://github.com/openai/openai-node)
+- Python SDK: [elevenlabs/elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) — `text_to_speech.convert()` builds `POST /v1/text-to-speech/{voice_id}`
+- API reference: [ElevenLabs Text-to-Speech docs](https://elevenlabs.io/docs/api-reference/text-to-speech)
+- Node SDK: [elevenlabs/elevenlabs-js](https://github.com/elevenlabs/elevenlabs-js)
 
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| POST | `/openai/v1/audio/speech` | Synthesize speech |
+| GET | `/elevenlabs/v1/voices` | List available voices |
+| GET | `/elevenlabs/v1/models` | List available models |
+| POST | `/elevenlabs/v1/text-to-speech/{voice_id}` | Synthesize speech |
 
-**Auth:** `Authorization: Bearer <any>` (ignored).
+**Auth:** `xi-api-key` header (ignored).
 
 ```bash
+# List voices
+curl -H "xi-api-key: fake" http://localhost:9666/elevenlabs/v1/voices
+
+# Synthesize
 curl -X POST \
-  -H "Authorization: Bearer fake" \
+  -H "xi-api-key: fake" \
   -H "Content-Type: application/json" \
-  -d '{"model": "tts-1", "input": "hello world", "voice": "alloy", "response_format": "mp3"}' \
-  http://localhost:9666/openai/v1/audio/speech \
+  -d '{"text": "hello world"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default?output_format=mp3_44100_128" \
   -o out.mp3
 ```
 
-Valid `voice` values: `alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer`.
-Valid `model` values: `tts-1`, `tts-1-hd`.
-`speed` range: 0.25–4.0.
-`input` max length: 4096 characters.
+`output_format` values: `mp3_44100_128`, `pcm_16000`, `ulaw_8000`, etc. Falls back to WAV if pydub absent.
 
 ---
 
 ### Pointing apps at this server
 
-The OpenAI SDK reads `OPENAI_BASE_URL` (or the `base_url=` constructor arg).
-Point it at `http://localhost:9666/openai/v1`.
+ElevenLabs SDKs accept a custom base URL. Point it at `http://localhost:9666/elevenlabs`.
 
-**Python SDK** ([`openai`](https://github.com/openai/openai-python)):
+**Python SDK** ([`elevenlabs`](https://github.com/elevenlabs/elevenlabs-python)):
 ```python
-from openai import OpenAI
-client = OpenAI(api_key="ignored", base_url="http://localhost:9666/openai/v1")
-client.audio.speech.create(model="tts-1", voice="alloy", input="hello")
+from elevenlabs.client import ElevenLabs
+client = ElevenLabs(api_key="ignored", base_url="http://localhost:9666/elevenlabs")
 ```
 
-**Environment variables** (works with most OpenAI-compatible clients incl. LangChain, LiteLLM, OpenWebUI, etc.):
+**Environment variable** (community convention used by many apps):
 ```bash
-export OPENAI_BASE_URL=http://localhost:9666/openai/v1
-export OPENAI_API_KEY=ignored
+export ELEVENLABS_BASE_URL=http://localhost:9666/elevenlabs
+export ELEVENLABS_API_KEY=ignored
 ```
 
-**Node SDK** (`openai`):
+**Node SDK** (`@elevenlabs/elevenlabs-js`):
 ```js
-new OpenAI({ apiKey: "ignored", baseURL: "http://localhost:9666/openai/v1" });
+new ElevenLabsClient({ apiKey: "ignored", baseUrl: "http://localhost:9666/elevenlabs" });
 ```
 
 **curl**:
 ```bash
-curl -X POST -H "Authorization: Bearer x" -H "Content-Type: application/json" \
-  -d '{"model":"tts-1","voice":"alloy","input":"hello"}' \
-  http://localhost:9666/openai/v1/audio/speech -o out.mp3
+curl -X POST -H "xi-api-key: x" -H "Content-Type: application/json" \
+  -d '{"text": "hello"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default" -o out.mp3
 ```

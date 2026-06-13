@@ -12,61 +12,68 @@ Audio format conversion is provided by `ovos_tts_server.audio_utils.convert_audi
 Install the `[audio]` extra (`pip install ovos-tts-server[audio]`) to enable
 non-WAV outputs via `pydub`.
 
-This document currently covers: **Azure Cognitive Services TTS (`/azure-tts`)**.
+This document currently covers: **ElevenLabs (`/elevenlabs`)**.
 Other vendor sections are added by their respective compat-router PRs.
 
 ---
 
-## Azure Cognitive Services TTS (`/azure-tts`)
+## ElevenLabs (`/elevenlabs`)
 
 **Upstream sources**:
-- Python Speech SDK: [Azure-Samples/cognitive-services-speech-sdk](https://github.com/Azure-Samples/cognitive-services-speech-sdk) (samples)
-- REST API reference: [Speech service REST text-to-speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-text-to-speech)
-- WebSocket protocol notes: [`websockets`](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/websockets) (handshake + framing)
-- Open-source protocol implementation (useful for the WS bridge): [rany2/edge-tts](https://github.com/rany2/edge-tts)
+- Python SDK: [elevenlabs/elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) — `text_to_speech.convert()` builds `POST /v1/text-to-speech/{voice_id}`
+- API reference: [ElevenLabs Text-to-Speech docs](https://elevenlabs.io/docs/api-reference/text-to-speech)
+- Node SDK: [elevenlabs/elevenlabs-js](https://github.com/elevenlabs/elevenlabs-js)
 
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| POST | `/azure-tts/cognitiveservices/v1` | Synthesize from SSML |
+| GET | `/elevenlabs/v1/voices` | List available voices |
+| GET | `/elevenlabs/v1/models` | List available models |
+| POST | `/elevenlabs/v1/text-to-speech/{voice_id}` | Synthesize speech |
 
-**Auth:** `Ocp-Apim-Subscription-Key` header (accepted, ignored).
+**Auth:** `xi-api-key` header (ignored).
 
 ```bash
+# List voices
+curl -H "xi-api-key: fake" http://localhost:9666/elevenlabs/v1/voices
+
+# Synthesize
 curl -X POST \
-  -H "Ocp-Apim-Subscription-Key: fake" \
-  -H "Content-Type: application/ssml+xml" \
-  -H "X-Microsoft-OutputFormat: audio-24khz-48kbitrate-mono-mp3" \
-  -d '<speak><voice name="en-US-JennyNeural" xml:lang="en-US">hello</voice></speak>' \
-  http://localhost:9666/azure-tts/cognitiveservices/v1 \
+  -H "xi-api-key: fake" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "hello world"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default?output_format=mp3_44100_128" \
   -o out.mp3
 ```
 
-Body must be valid SSML XML. Voice name and `xml:lang` are extracted via regex and forwarded as `voice=` and `lang=`.
+`output_format` values: `mp3_44100_128`, `pcm_16000`, `ulaw_8000`, etc. Falls back to WAV if pydub absent.
 
 ---
 
 ### Pointing apps at this server
 
-The Azure Speech SDK uses `SpeechConfig.from_endpoint()` to override the default region host. Point it at `http://localhost:9666/azure-tts`.
+ElevenLabs SDKs accept a custom base URL. Point it at `http://localhost:9666/elevenlabs`.
 
-**Python SDK** ([`azure-cognitiveservices-speech`](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/get-started-text-to-speech)):
+**Python SDK** ([`elevenlabs`](https://github.com/elevenlabs/elevenlabs-python)):
 ```python
-import azure.cognitiveservices.speech as speechsdk
-config = speechsdk.SpeechConfig(
-    endpoint="http://localhost:9666/azure-tts/cognitiveservices/v1",
-    subscription="ignored",
-)
-synthesizer = speechsdk.SpeechSynthesizer(speech_config=config)
-synthesizer.speak_text_async("hello").get()
+from elevenlabs.client import ElevenLabs
+client = ElevenLabs(api_key="ignored", base_url="http://localhost:9666/elevenlabs")
 ```
 
-**Home Assistant** (`microsoft` TTS integration): the built-in integration hardcodes regional hosts, so use a reverse proxy (nginx) to rewrite `*.tts.speech.microsoft.com` → this server, or use a community integration that exposes a `host` option.
-
-**curl** (SSML body required by upstream):
+**Environment variable** (community convention used by many apps):
 ```bash
-curl -X POST -H "Content-Type: application/ssml+xml" \
-  -H "X-Microsoft-OutputFormat: riff-24khz-16bit-mono-pcm" \
-  --data '<speak version="1.0" xml:lang="en-US"><voice name="default">hello</voice></speak>' \
-  http://localhost:9666/azure-tts/cognitiveservices/v1 -o out.wav
+export ELEVENLABS_BASE_URL=http://localhost:9666/elevenlabs
+export ELEVENLABS_API_KEY=ignored
+```
+
+**Node SDK** (`@elevenlabs/elevenlabs-js`):
+```js
+new ElevenLabsClient({ apiKey: "ignored", baseUrl: "http://localhost:9666/elevenlabs" });
+```
+
+**curl**:
+```bash
+curl -X POST -H "xi-api-key: x" -H "Content-Type: application/json" \
+  -d '{"text": "hello"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default" -o out.mp3
 ```

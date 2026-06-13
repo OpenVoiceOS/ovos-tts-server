@@ -64,7 +64,28 @@ CORS is enabled for all origins.
 
 ### Third-party API compatibility
 
-The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, and Piper. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
+The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, Piper, Kokoro, Cartesia, Deepgram Aura, and PlayHT. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
+
+| Vendor | Prefix | Key endpoint |
+|---|---|---|
+| ElevenLabs | `/elevenlabs` | `POST /v1/text-to-speech/{voice_id}` |
+| OpenAI | `/openai` | `POST /v1/audio/speech` |
+| Kokoro | `/kokoro` | `POST /v1/audio/speech` |
+| Cartesia | `/cartesia` | `POST /tts/bytes` |
+| Deepgram Aura | `/deepgram` | `POST /v1/speak?model=...` |
+| PlayHT | `/playht` | `POST /api/v2/tts/stream` |
+| Coqui | `/coqui` | `POST /api/tts` |
+| Google Cloud TTS | `/google` | `POST /v1/text:synthesize` |
+| Amazon Polly | `/polly` | `POST /v1/speech` |
+| Azure TTS | `/azure` | `POST /cognitiveservices/v1` |
+
+**Kokoro** (`/kokoro/v1/audio/speech`) accepts the same JSON shape as OpenAI TTS (`model`, `input`, `voice`, `response_format`, `speed`), making it a drop-in for clients already pointed at an OpenAI-compatible base URL.
+
+**Cartesia** (`/cartesia/tts/bytes`) accepts `model_id`, `transcript`, `voice` (object with optional `id` key), and `output_format` (object with `container` field).
+
+**Deepgram Aura** (`/deepgram/v1/speak`) accepts the model as a query parameter (`?model=aura-asteria-en`) and the text as a JSON body `{"text": "..."}`.
+
+**PlayHT** (`/playht/api/v2/tts/stream`) accepts `text`, `voice`, `output_format`, `quality`, `speed`, and `sample_rate`.
 
 See [docs/api-compatibility.md](docs/api-compatibility.md) for the full reference.
 

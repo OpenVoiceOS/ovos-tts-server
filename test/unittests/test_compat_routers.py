@@ -129,3 +129,279 @@ class TestElevenLabsRouter:
 # ---------------------------------------------------------------------------
 # OpenAI TTS  (prefix: /openai)
 # ---------------------------------------------------------------------------
+
+
+def _make_openai_app(engine) -> FastAPI:
+    from ovos_tts_server.routers.openai_tts import make_openai_tts_router
+    app = FastAPI()
+    app.include_router(make_openai_tts_router(engine))
+    return app
+
+
+@pytest.fixture(scope="module")
+def openai_client(engine):
+    return TestClient(_make_openai_app(engine))
+
+
+class TestOpenAITTSRouter:
+    def test_speech_success(self, openai_client):
+        resp = openai_client.post(
+            "/openai/v1/audio/speech",
+            json={"model": "tts-1", "input": "hello world", "voice": "alloy"},
+        )
+        assert resp.status_code == 200
+        assert len(resp.content) > 0
+
+    def test_speech_empty_input_rejected(self, openai_client):
+        resp = openai_client.post(
+            "/openai/v1/audio/speech",
+            json={"model": "tts-1", "input": "", "voice": "alloy"},
+        )
+        assert resp.status_code == 422
+
+    def test_speech_api_key_ignored(self, openai_client):
+        resp = openai_client.post(
+            "/openai/v1/audio/speech",
+            json={"input": "hi", "model": "tts-1", "voice": "nova"},
+            headers={"Authorization": "Bearer sk-fake"},
+        )
+        assert resp.status_code == 200
+
+    def test_speech_wav_format(self, openai_client):
+        resp = openai_client.post(
+            "/openai/v1/audio/speech",
+            json={"input": "test", "model": "tts-1", "voice": "alloy", "response_format": "wav"},
+        )
+        assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Kokoro  (prefix: /kokoro)
+# ---------------------------------------------------------------------------
+
+
+def _make_kokoro_app(engine) -> FastAPI:
+    from ovos_tts_server.routers.kokoro import make_kokoro_router
+    app = FastAPI()
+    app.include_router(make_kokoro_router(engine))
+    return app
+
+
+@pytest.fixture(scope="module")
+def kokoro_client(engine):
+    return TestClient(_make_kokoro_app(engine))
+
+
+class TestKokoroRouter:
+    def test_speech_success(self, kokoro_client):
+        resp = kokoro_client.post(
+            "/kokoro/v1/audio/speech",
+            json={"model": "kokoro", "input": "hello world", "voice": "af_heart"},
+        )
+        assert resp.status_code == 200
+        assert len(resp.content) > 0
+
+    def test_speech_empty_input_rejected(self, kokoro_client):
+        resp = kokoro_client.post(
+            "/kokoro/v1/audio/speech",
+            json={"model": "kokoro", "input": "", "voice": "af_heart"},
+        )
+        assert resp.status_code == 422
+
+    def test_speech_named_voice(self, kokoro_client):
+        resp = kokoro_client.post(
+            "/kokoro/v1/audio/speech",
+            json={"input": "test", "model": "kokoro", "voice": "af_bella"},
+        )
+        assert resp.status_code == 200
+
+    def test_speech_wav_format(self, kokoro_client):
+        resp = kokoro_client.post(
+            "/kokoro/v1/audio/speech",
+            json={"input": "test", "model": "kokoro", "voice": "af_heart", "response_format": "wav"},
+        )
+        assert resp.status_code == 200
+
+    def test_speech_api_key_ignored(self, kokoro_client):
+        resp = kokoro_client.post(
+            "/kokoro/v1/audio/speech",
+            json={"input": "hi", "model": "kokoro", "voice": "af_heart"},
+            headers={"Authorization": "Bearer sk-fake"},
+        )
+        assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Cartesia  (prefix: /cartesia)
+# ---------------------------------------------------------------------------
+
+
+def _make_cartesia_app(engine) -> FastAPI:
+    from ovos_tts_server.routers.cartesia import make_cartesia_router
+    app = FastAPI()
+    app.include_router(make_cartesia_router(engine))
+    return app
+
+
+@pytest.fixture(scope="module")
+def cartesia_client(engine):
+    return TestClient(_make_cartesia_app(engine))
+
+
+class TestCartesiaRouter:
+    def test_tts_bytes_success(self, cartesia_client):
+        resp = cartesia_client.post(
+            "/cartesia/tts/bytes",
+            json={"model_id": "sonic-english", "transcript": "hello world"},
+        )
+        assert resp.status_code == 200
+        assert len(resp.content) > 0
+
+    def test_tts_bytes_empty_transcript_rejected(self, cartesia_client):
+        resp = cartesia_client.post(
+            "/cartesia/tts/bytes",
+            json={"model_id": "sonic-english", "transcript": ""},
+        )
+        assert resp.status_code == 422
+
+    def test_tts_bytes_with_voice(self, cartesia_client):
+        resp = cartesia_client.post(
+            "/cartesia/tts/bytes",
+            json={
+                "model_id": "sonic-english",
+                "transcript": "test",
+                "voice": {"id": "voice1", "mode": "id"},
+            },
+        )
+        assert resp.status_code == 200
+
+    def test_tts_bytes_mp3_format(self, cartesia_client):
+        resp = cartesia_client.post(
+            "/cartesia/tts/bytes",
+            json={
+                "model_id": "sonic-english",
+                "transcript": "test",
+                "output_format": {"container": "mp3"},
+            },
+        )
+        assert resp.status_code == 200
+
+    def test_tts_bytes_api_key_ignored(self, cartesia_client):
+        resp = cartesia_client.post(
+            "/cartesia/tts/bytes",
+            json={"model_id": "sonic-english", "transcript": "hi"},
+            headers={"X-API-Key": "fake-key"},
+        )
+        assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Deepgram Aura  (prefix: /deepgram)
+# ---------------------------------------------------------------------------
+
+
+def _make_deepgram_app(engine) -> FastAPI:
+    from ovos_tts_server.routers.deepgram_aura import make_deepgram_aura_router
+    app = FastAPI()
+    app.include_router(make_deepgram_aura_router(engine))
+    return app
+
+
+@pytest.fixture(scope="module")
+def deepgram_client(engine):
+    return TestClient(_make_deepgram_app(engine))
+
+
+class TestDeepgramAuraRouter:
+    def test_speak_success(self, deepgram_client):
+        resp = deepgram_client.post(
+            "/deepgram/v1/speak",
+            json={"text": "hello world"},
+        )
+        assert resp.status_code == 200
+        assert len(resp.content) > 0
+
+    def test_speak_empty_text_rejected(self, deepgram_client):
+        resp = deepgram_client.post(
+            "/deepgram/v1/speak",
+            json={"text": ""},
+        )
+        assert resp.status_code == 422
+
+    def test_speak_with_model_query(self, deepgram_client):
+        resp = deepgram_client.post(
+            "/deepgram/v1/speak?model=aura-luna-en",
+            json={"text": "test"},
+        )
+        assert resp.status_code == 200
+
+    def test_speak_mp3_encoding(self, deepgram_client):
+        resp = deepgram_client.post(
+            "/deepgram/v1/speak?encoding=mp3",
+            json={"text": "test"},
+        )
+        assert resp.status_code == 200
+
+    def test_speak_api_key_ignored(self, deepgram_client):
+        resp = deepgram_client.post(
+            "/deepgram/v1/speak",
+            json={"text": "hi"},
+            headers={"Authorization": "Token fake-key"},
+        )
+        assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# PlayHT  (prefix: /playht)
+# ---------------------------------------------------------------------------
+
+
+def _make_playht_app(engine) -> FastAPI:
+    from ovos_tts_server.routers.playht import make_playht_router
+    app = FastAPI()
+    app.include_router(make_playht_router(engine))
+    return app
+
+
+@pytest.fixture(scope="module")
+def playht_client(engine):
+    return TestClient(_make_playht_app(engine))
+
+
+class TestPlayHTRouter:
+    def test_tts_stream_success(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": "hello world"},
+        )
+        assert resp.status_code == 200
+        assert len(resp.content) > 0
+
+    def test_tts_stream_empty_text_rejected(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": ""},
+        )
+        assert resp.status_code == 422
+
+    def test_tts_stream_with_voice(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": "test", "voice": "s3://voice-cloning-zero-shot/demo"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_stream_mp3_format(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": "test", "output_format": "mp3"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_stream_api_key_ignored(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": "hi"},
+            headers={"Authorization": "fake-secret", "X-USER-ID": "user123"},
+        )
+        assert resp.status_code == 200

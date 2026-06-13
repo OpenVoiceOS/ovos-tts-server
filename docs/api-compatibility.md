@@ -12,48 +12,68 @@ Audio format conversion is provided by `ovos_tts_server.audio_utils.convert_audi
 Install the `[audio]` extra (`pip install ovos-tts-server[audio]`) to enable
 non-WAV outputs via `pydub`.
 
-This document currently covers: **Piper (`/piper`)**.
+This document currently covers: **ElevenLabs (`/elevenlabs`)**.
 Other vendor sections are added by their respective compat-router PRs.
 
 ---
 
-## Piper (`/piper`)
+## ElevenLabs (`/elevenlabs`)
 
-**Upstream sources** (no canonical client — bare HTTP):
-- Reference server: [rhasspy/piper — `src/python_run/piper/http_server.py`](https://github.com/rhasspy/piper/blob/master/src/python_run/piper/http_server.py)
-- Wyoming bridge (used by Home Assistant's add-on): [rhasspy/wyoming-piper](https://github.com/rhasspy/wyoming-piper)
-- OVOS plugin client: [`ovos-tts-plugin-piper-http`](https://github.com/OpenVoiceOS/ovos-tts-plugin-piper-http)
+**Upstream sources**:
+- Python SDK: [elevenlabs/elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) — `text_to_speech.convert()` builds `POST /v1/text-to-speech/{voice_id}`
+- API reference: [ElevenLabs Text-to-Speech docs](https://elevenlabs.io/docs/api-reference/text-to-speech)
+- Node SDK: [elevenlabs/elevenlabs-js](https://github.com/elevenlabs/elevenlabs-js)
+
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| GET | `/piper/` | Synthesize speech |
+| GET | `/elevenlabs/v1/voices` | List available voices |
+| GET | `/elevenlabs/v1/models` | List available models |
+| POST | `/elevenlabs/v1/text-to-speech/{voice_id}` | Synthesize speech |
+
+**Auth:** `xi-api-key` header (ignored).
 
 ```bash
-curl "http://localhost:9666/piper/?text=hello+world&voice=voice1" -o out.wav
+# List voices
+curl -H "xi-api-key: fake" http://localhost:9666/elevenlabs/v1/voices
+
+# Synthesize
+curl -X POST \
+  -H "xi-api-key: fake" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "hello world"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default?output_format=mp3_44100_128" \
+  -o out.mp3
 ```
 
-Query params: `text` (required), `voice` (optional).
+`output_format` values: `mp3_44100_128`, `pcm_16000`, `ulaw_8000`, etc. Falls back to WAV if pydub absent.
+
+---
 
 ### Pointing apps at this server
 
-The upstream Piper HTTP server uses bare paths. Point clients at `http://localhost:9666/piper`.
+ElevenLabs SDKs accept a custom base URL. Point it at `http://localhost:9666/elevenlabs`.
 
-**Mycroft / OVOS** ([`ovos-tts-plugin-piper-http`](https://github.com/OpenVoiceOS/ovos-tts-plugin-piper-http)):
-```json
-{
-  "tts": {
-    "module": "ovos-tts-plugin-piper-http",
-    "ovos-tts-plugin-piper-http": { "url": "http://localhost:9666/piper" }
-  }
-}
+**Python SDK** ([`elevenlabs`](https://github.com/elevenlabs/elevenlabs-python)):
+```python
+from elevenlabs.client import ElevenLabs
+client = ElevenLabs(api_key="ignored", base_url="http://localhost:9666/elevenlabs")
 ```
 
-**Home Assistant** ([`piper-tts` add-on or wyoming-piper](https://github.com/rhasspy/wyoming-piper)) — use a script/REST helper to hit:
+**Environment variable** (community convention used by many apps):
 ```bash
-curl "http://localhost:9666/piper/?text=hello" -o out.wav
+export ELEVENLABS_BASE_URL=http://localhost:9666/elevenlabs
+export ELEVENLABS_API_KEY=ignored
+```
+
+**Node SDK** (`@elevenlabs/elevenlabs-js`):
+```js
+new ElevenLabsClient({ apiKey: "ignored", baseUrl: "http://localhost:9666/elevenlabs" });
 ```
 
 **curl**:
 ```bash
-curl "http://localhost:9666/piper/?text=hello&voice=default" -o out.wav
+curl -X POST -H "xi-api-key: x" -H "Content-Type: application/json" \
+  -d '{"text": "hello"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default" -o out.mp3
 ```

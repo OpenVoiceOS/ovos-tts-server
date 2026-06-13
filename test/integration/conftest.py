@@ -1,4 +1,12 @@
-"""Shared fixtures for integration tests."""
+"""Shared fixtures for integration tests.
+
+Each integration test runs the compat router(s) behind a real uvicorn
+server on a random local port, then drives it with the vendor's official
+SDK to prove drop-in compatibility.
+
+Tests skip automatically when the vendor SDK isn't installed; install
+them with `pip install -e .[live]`.
+"""
 import socket
 import tempfile
 import threading
@@ -10,6 +18,8 @@ import pytest
 
 
 class FakeEngine:
+    """Stand-in for TTSEngineWrapper; produces a valid silent WAV."""
+
     plugin_name: str = "fake-tts"
     lang: str = "en-us"
     langs: List[str] = ["en-us", "de-de"]
@@ -35,6 +45,11 @@ def _free_port() -> int:
 
 
 def run_live_server(register):
+    """Yield a base URL for a uvicorn server that ran `register(app, engine)`.
+
+    `register` is a callable that takes (FastAPI app, FakeEngine) and mounts
+    the compat router under test.
+    """
     import uvicorn
     from fastapi import FastAPI
 
@@ -48,6 +63,7 @@ def run_live_server(register):
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
 
+    # Wait for startup (uvicorn sets .started after the lifespan handshake)
     for _ in range(100):
         if server.started:
             break

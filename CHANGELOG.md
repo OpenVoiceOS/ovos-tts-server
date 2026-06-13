@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.7.0a2) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.7.0a1...1.7.0a2)
+
+**Merged pull requests:**
+
+- test: run the official-SDK e2e tests in CI \(add vendor SDKs to test extra\) [\#108](https://github.com/OpenVoiceOS/ovos-tts-server/pull/108) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.7.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.7.0a1) (2026-06-13)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.6.0a1...1.7.0a1)

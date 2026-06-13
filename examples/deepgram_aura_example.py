@@ -1,37 +1,29 @@
-"""Drive ovos-tts-server using the Deepgram Aura-compatible endpoint.
+"""Drive the official Deepgram Python SDK (Aura TTS) against ovos-tts-server.
 
-The endpoint mirrors Deepgram's POST /v1/speak API.
+The Deepgram SDK accepts a custom base URL via ``DeepgramClientOptions(url=...)``
+— point it at the server's ``/deepgram`` prefix so ``speak`` POSTs to
+``/deepgram/v1/speak``.
 
 Prerequisites:
+    pip install deepgram-sdk
     ovos-tts-server --engine <some-ovos-tts-plugin> --port 9666
 
 Usage:
     python examples/deepgram_aura_example.py "hello world" out.wav
-
-Equivalent curl:
-    curl -X POST "http://localhost:9666/deepgram/v1/speak?model=aura-asteria-en" \\
-         -H "Content-Type: application/json" \\
-         -H "Authorization: Token ignored" \\
-         -d '{"text":"hello world"}' \\
-         --output out.wav
 """
 import sys
 
-import requests
+from deepgram import DeepgramClient, DeepgramClientOptions, SpeakOptions
+
 
 OVOS_HOST = "http://localhost:9666"
 
 
 def main(text: str, out_path: str) -> None:
-    resp = requests.post(
-        f"{OVOS_HOST}/deepgram/v1/speak",
-        params={"model": "aura-asteria-en"},
-        json={"text": text},
-        headers={"Authorization": "Token ignored"},
-    )
-    resp.raise_for_status()
-    with open(out_path, "wb") as f:
-        f.write(resp.content)
+    opts = DeepgramClientOptions(api_key="ignored", url=f"{OVOS_HOST}/deepgram")
+    client = DeepgramClient("ignored", opts)
+    options = SpeakOptions(model="aura-asteria-en", encoding="linear16")
+    client.speak.rest.v("1").save(out_path, {"text": text}, options)
     print(f"wrote {out_path}")
 
 

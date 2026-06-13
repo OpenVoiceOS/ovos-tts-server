@@ -1,39 +1,33 @@
-"""Drive ovos-tts-server using the Kokoro-compatible endpoint.
+"""Drive the official OpenAI Python SDK (Kokoro-compatible) against ovos-tts-server.
 
-The endpoint accepts the same body as OpenAI /v1/audio/speech with Kokoro voice names.
+Kokoro / kokoro-fastapi expose the OpenAI ``/v1/audio/speech`` shape, so the
+official ``openai`` SDK is the canonical client — point ``base_url`` at the
+server's ``/kokoro`` prefix.
 
 Prerequisites:
+    pip install openai
     ovos-tts-server --engine <some-ovos-tts-plugin> --port 9666
 
 Usage:
     python examples/kokoro_example.py "hello world" out.wav
-
-Equivalent curl:
-    curl -X POST http://localhost:9666/kokoro/v1/audio/speech \\
-         -H "Content-Type: application/json" \\
-         -d '{"model":"kokoro","input":"hello world","voice":"af_heart","response_format":"wav"}' \\
-         --output out.wav
 """
 import sys
 
-import requests
+from openai import OpenAI
+
 
 OVOS_HOST = "http://localhost:9666"
 
 
 def main(text: str, out_path: str) -> None:
-    resp = requests.post(
-        f"{OVOS_HOST}/kokoro/v1/audio/speech",
-        json={
-            "model": "kokoro",
-            "input": text,
-            "voice": "af_heart",
-            "response_format": "wav",
-        },
-    )
-    resp.raise_for_status()
-    with open(out_path, "wb") as f:
-        f.write(resp.content)
+    client = OpenAI(base_url=f"{OVOS_HOST}/kokoro/v1", api_key="ignored")
+    with client.audio.speech.with_streaming_response.create(
+        model="kokoro",
+        voice="af_heart",
+        input=text,
+        response_format="wav",
+    ) as response:
+        response.stream_to_file(out_path)
     print(f"wrote {out_path}")
 
 

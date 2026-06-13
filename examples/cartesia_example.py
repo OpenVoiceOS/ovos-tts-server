@@ -1,41 +1,34 @@
-"""Drive ovos-tts-server using the Cartesia Sonic-compatible endpoint.
+"""Drive the official Cartesia Python SDK against an ovos-tts-server instance.
 
-The endpoint mirrors Cartesia's POST /tts/bytes API.
+The Cartesia SDK accepts a ``base_url`` override — point it at the server's
+``/cartesia`` prefix and it will POST to ``/cartesia/tts/bytes``.
 
 Prerequisites:
+    pip install cartesia
     ovos-tts-server --engine <some-ovos-tts-plugin> --port 9666
 
 Usage:
     python examples/cartesia_example.py "hello world" out.wav
-
-Equivalent curl:
-    curl -X POST http://localhost:9666/cartesia/tts/bytes \\
-         -H "Content-Type: application/json" \\
-         -H "X-API-Key: ignored" \\
-         -d '{"model_id":"sonic-english","transcript":"hello world","output_format":{"container":"wav"}}' \\
-         --output out.wav
 """
 import sys
 
-import requests
+from cartesia import Cartesia
+
 
 OVOS_HOST = "http://localhost:9666"
 
 
 def main(text: str, out_path: str) -> None:
-    resp = requests.post(
-        f"{OVOS_HOST}/cartesia/tts/bytes",
-        json={
-            "model_id": "sonic-english",
-            "transcript": text,
-            "voice": {"id": "default", "mode": "id"},
-            "output_format": {"container": "wav"},
-        },
-        headers={"X-API-Key": "ignored"},
+    client = Cartesia(api_key="ignored", base_url=f"{OVOS_HOST}/cartesia")
+    chunks = client.tts.bytes(
+        model_id="sonic-2",
+        transcript=text,
+        voice={"mode": "id", "id": "default"},
+        output_format={"container": "wav", "sample_rate": 22050, "encoding": "pcm_s16le"},
     )
-    resp.raise_for_status()
     with open(out_path, "wb") as f:
-        f.write(resp.content)
+        for chunk in chunks:
+            f.write(chunk)
     print(f"wrote {out_path}")
 
 

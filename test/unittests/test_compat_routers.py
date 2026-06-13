@@ -129,3 +129,31 @@ class TestElevenLabsRouter:
 # ---------------------------------------------------------------------------
 # OpenAI TTS  (prefix: /openai)
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Piper  (prefix: /piper)
+# ---------------------------------------------------------------------------
+
+class TestPiperRouter:
+    @pytest.fixture(scope="class")
+    def piper_client(self, engine):
+        from ovos_tts_server.routers.piper import make_piper_router
+        app = FastAPI()
+        app.include_router(make_piper_router(engine))
+        return TestClient(app)
+
+    def test_tts_basic_returns_wav(self, piper_client):
+        resp = piper_client.get("/piper/", params={"text": "hello piper"})
+        assert resp.status_code == 200
+        assert resp.headers["content-type"] == "audio/wav"
+        assert resp.content  # non-empty audio body
+
+    def test_tts_with_voice(self, piper_client):
+        resp = piper_client.get("/piper/", params={"text": "hi", "voice": "voice1"})
+        assert resp.status_code == 200
+        assert resp.headers["content-type"] == "audio/wav"
+
+    def test_tts_missing_text_rejected(self, piper_client):
+        resp = piper_client.get("/piper/")
+        assert resp.status_code == 422

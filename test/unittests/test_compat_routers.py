@@ -176,62 +176,6 @@ class TestOpenAITTSRouter:
 
 
 # ---------------------------------------------------------------------------
-# Kokoro  (prefix: /kokoro)
-# ---------------------------------------------------------------------------
-
-
-def _make_kokoro_app(engine) -> FastAPI:
-    from ovos_tts_server.routers.kokoro import make_kokoro_router
-    app = FastAPI()
-    app.include_router(make_kokoro_router(engine))
-    return app
-
-
-@pytest.fixture(scope="module")
-def kokoro_client(engine):
-    return TestClient(_make_kokoro_app(engine))
-
-
-class TestKokoroRouter:
-    def test_speech_success(self, kokoro_client):
-        resp = kokoro_client.post(
-            "/kokoro/v1/audio/speech",
-            json={"model": "kokoro", "input": "hello world", "voice": "af_heart"},
-        )
-        assert resp.status_code == 200
-        assert len(resp.content) > 0
-
-    def test_speech_empty_input_rejected(self, kokoro_client):
-        resp = kokoro_client.post(
-            "/kokoro/v1/audio/speech",
-            json={"model": "kokoro", "input": "", "voice": "af_heart"},
-        )
-        assert resp.status_code == 422
-
-    def test_speech_named_voice(self, kokoro_client):
-        resp = kokoro_client.post(
-            "/kokoro/v1/audio/speech",
-            json={"input": "test", "model": "kokoro", "voice": "af_bella"},
-        )
-        assert resp.status_code == 200
-
-    def test_speech_wav_format(self, kokoro_client):
-        resp = kokoro_client.post(
-            "/kokoro/v1/audio/speech",
-            json={"input": "test", "model": "kokoro", "voice": "af_heart", "response_format": "wav"},
-        )
-        assert resp.status_code == 200
-
-    def test_speech_api_key_ignored(self, kokoro_client):
-        resp = kokoro_client.post(
-            "/kokoro/v1/audio/speech",
-            json={"input": "hi", "model": "kokoro", "voice": "af_heart"},
-            headers={"Authorization": "Bearer sk-fake"},
-        )
-        assert resp.status_code == 200
-
-
-# ---------------------------------------------------------------------------
 # Cartesia  (prefix: /cartesia)
 # ---------------------------------------------------------------------------
 

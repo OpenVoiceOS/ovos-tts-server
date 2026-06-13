@@ -64,13 +64,12 @@ CORS is enabled for all origins.
 
 ### Third-party API compatibility
 
-The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, Piper, Kokoro, Cartesia, Deepgram Aura, and PlayHT. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
+The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, Piper, Cartesia, Deepgram Aura, and PlayHT. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
 
 | Vendor | Prefix | Key endpoint |
 |---|---|---|
 | ElevenLabs | `/elevenlabs` | `POST /v1/text-to-speech/{voice_id}` |
 | OpenAI | `/openai` | `POST /v1/audio/speech` |
-| Kokoro | `/kokoro` | `POST /v1/audio/speech` |
 | Cartesia | `/cartesia` | `POST /tts/bytes` |
 | Deepgram Aura | `/deepgram` | `POST /v1/speak?model=...` |
 | PlayHT | `/playht` | `POST /api/v2/tts/stream` |
@@ -79,7 +78,7 @@ The server can additionally expose its underlying TTS plugin behind drop-in comp
 | Amazon Polly | `/polly` | `POST /v1/speech` |
 | Azure TTS | `/azure` | `POST /cognitiveservices/v1` |
 
-**Kokoro** (`/kokoro/v1/audio/speech`) accepts the same JSON shape as OpenAI TTS (`model`, `input`, `voice`, `response_format`, `speed`), making it a drop-in for clients already pointed at an OpenAI-compatible base URL.
+**Kokoro / kokoro-fastapi** are OpenAI-compatible and need no dedicated router — point the `openai` SDK (or any OpenAI-compatible client) at the `/openai` prefix (`/openai/v1/audio/speech`).
 
 **Cartesia** (`/cartesia/tts/bytes`) accepts `model_id`, `transcript`, `voice` (object with optional `id` key), and `output_format` (object with `container` field).
 

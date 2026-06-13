@@ -1,12 +1,12 @@
-"""Call the PlayHT-compatible endpoint on an ovos-tts-server instance.
+"""Drive the official PlayHT SDK (pyht) against an ovos-tts-server instance.
 
-Note: PlayHT's official ``pyht`` SDK hard-codes play.ht's own API/gRPC hosts and
-offers no base-URL override, so it cannot be pointed at a self-hosted server.
-This script therefore issues the same ``POST /api/v2/tts/stream`` request the SDK
-would send, using ``requests``.
+pyht hard-codes play.ht's hosts and exposes no base-URL option, so we
+monkey-patch its HTTP API base to point at the server's ``/playht`` prefix.
+The attribute name can vary between pyht versions — adjust the patch below to
+match your installed version (inspect ``pyht.client``).
 
 Prerequisites:
-    pip install requests
+    pip install pyht
     ovos-tts-server --engine <some-ovos-tts-plugin> --port 9666
 
 Usage:
@@ -14,21 +14,24 @@ Usage:
 """
 import sys
 
-import requests
+import pyht.client as _pyht_client
+from pyht import Client, TTSOptions
+from pyht.client import Format
 
 
 OVOS_HOST = "http://localhost:9666"
 
+# --- monkey-patch: repoint pyht's HTTP API base at the OVOS /playht prefix ---
+_pyht_client.API_URL = f"{OVOS_HOST}/playht/api/v2"
+
 
 def main(text: str, out_path: str) -> None:
-    resp = requests.post(
-        f"{OVOS_HOST}/playht/api/v2/tts/stream",
-        json={"text": text, "voice": "default", "output_format": "wav"},
-        headers={"Authorization": "Bearer ignored", "X-User-ID": "ignored"},
-    )
-    resp.raise_for_status()
+    client = Client(user_id="ignored", api_key="ignored")
+    opts = TTSOptions(voice="default", format=Format.FORMAT_WAV)
     with open(out_path, "wb") as f:
-        f.write(resp.content)
+        for chunk in client.tts(text, opts):
+            f.write(chunk)
+    client.close()
     print(f"wrote {out_path}")
 
 

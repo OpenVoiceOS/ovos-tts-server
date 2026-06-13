@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.4.0a1) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.3.0a1...1.4.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add coqui-compatible TTS endpoints \(/coqui\) [\#89](https://github.com/OpenVoiceOS/ovos-tts-server/pull/89) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.3.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.3.0a1) (2026-06-13)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.2.0a1...1.3.0a1)

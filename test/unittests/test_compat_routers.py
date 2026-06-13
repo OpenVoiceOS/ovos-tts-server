@@ -47,11 +47,11 @@ def engine():
     return FakeEngine()
 
 def _make_app(engine) -> FastAPI:
-    """Build a minimal FastAPI app with only the google compat router."""
-    from ovos_tts_server.routers.google_tts import make_google_tts_router
+    """Build a minimal FastAPI app with only the elevenlabs compat router."""
+    from ovos_tts_server.routers.elevenlabs import make_elevenlabs_router
 
     app = FastAPI()
-    app.include_router(make_google_tts_router(engine))
+    app.include_router(make_elevenlabs_router(engine))
     return app
 
 
@@ -65,32 +65,67 @@ def client(engine):
 
 
 # ---------------------------------------------------------------------------
-# Google Cloud TTS  (prefix: /google-tts)
+# ElevenLabs  (prefix: /elevenlabs)
 # ---------------------------------------------------------------------------
 
-class TestGoogleTTSRouter:
-    def test_synthesize_basic(self, client):
-        resp = client.post(
-            "/google-tts/v1/text:synthesize",
-            json={
-                "input": {"text": "hello"},
-                "voice": {"languageCode": "en-US", "name": "en-US-Standard-A"},
-                "audioConfig": {"audioEncoding": "LINEAR16"},
-            },
-        )
+class TestElevenLabsRouter:
+    def test_list_voices_returns_voices(self, client):
+        resp = client.get("/elevenlabs/v1/voices")
         assert resp.status_code == 200
         body = resp.json()
-        assert "audioContent" in body
-        base64.b64decode(body["audioContent"])
+        assert "voices" in body
+        assert len(body["voices"]) >= 1
+        assert "voice_id" in body["voices"][0]
+        assert "name" in body["voices"][0]
 
-    def test_synthesize_missing_input_rejected(self, client):
+    def test_list_voices_api_key_ignored(self, client):
+        resp = client.get("/elevenlabs/v1/voices", headers={"xi-api-key": "fake-key"})
+        assert resp.status_code == 200
+
+    def test_list_models(self, client):
+        resp = client.get("/elevenlabs/v1/models")
+        assert resp.status_code == 200
+        models = resp.json()
+        assert isinstance(models, list)
+        assert len(models) >= 1
+        assert models[0]["model_id"] == "fake-tts"
+
+    def test_tts_default_voice(self, client):
         resp = client.post(
-            "/google-tts/v1/text:synthesize",
-            json={"voice": {"languageCode": "en-US"}, "audioConfig": {"audioEncoding": "MP3"}},
+            "/elevenlabs/v1/text-to-speech/default",
+            json={"text": "hello world"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_named_voice(self, client):
+        resp = client.post(
+            "/elevenlabs/v1/text-to-speech/voice1",
+            json={"text": "test"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_output_format_mp3(self, client):
+        resp = client.post(
+            "/elevenlabs/v1/text-to-speech/default?output_format=mp3_44100_128",
+            json={"text": "test"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_empty_text_rejected(self, client):
+        resp = client.post(
+            "/elevenlabs/v1/text-to-speech/default",
+            json={"text": ""},
         )
         assert resp.status_code == 422
 
+    def test_tts_voice_settings_accepted(self, client):
+        resp = client.post(
+            "/elevenlabs/v1/text-to-speech/default",
+            json={"text": "hello", "voice_settings": {"stability": 0.5, "similarity_boost": 0.8}},
+        )
+        assert resp.status_code == 200
+
 
 # ---------------------------------------------------------------------------
-# Amazon Polly  (prefix: /amazon-polly)
+# OpenAI TTS  (prefix: /openai)
 # ---------------------------------------------------------------------------

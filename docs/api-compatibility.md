@@ -12,65 +12,68 @@ Audio format conversion is provided by `ovos_tts_server.audio_utils.convert_audi
 Install the `[audio]` extra (`pip install ovos-tts-server[audio]`) to enable
 non-WAV outputs via `pydub`.
 
-This document currently covers: **Google Cloud TTS (`/google-tts`)**.
+This document currently covers: **ElevenLabs (`/elevenlabs`)**.
 Other vendor sections are added by their respective compat-router PRs.
 
 ---
 
-## Google Cloud TTS (`/google-tts`)
+## ElevenLabs (`/elevenlabs`)
 
 **Upstream sources**:
-- Python SDK: [googleapis/python-texttospeech](https://github.com/googleapis/python-texttospeech) — REST transport in [`services/text_to_speech/transports/rest.py`](https://github.com/googleapis/python-texttospeech/blob/main/google/cloud/texttospeech_v1/services/text_to_speech/transports/rest.py)
-- API reference: [`texttospeech.googleapis.com/v1/text:synthesize`](https://cloud.google.com/text-to-speech/docs/reference/rest/v1/text/synthesize)
-- Proto definitions: [googleapis/googleapis — `google/cloud/texttospeech/v1/cloud_tts.proto`](https://github.com/googleapis/googleapis/blob/master/google/cloud/texttospeech/v1/cloud_tts.proto)
+- Python SDK: [elevenlabs/elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) — `text_to_speech.convert()` builds `POST /v1/text-to-speech/{voice_id}`
+- API reference: [ElevenLabs Text-to-Speech docs](https://elevenlabs.io/docs/api-reference/text-to-speech)
+- Node SDK: [elevenlabs/elevenlabs-js](https://github.com/elevenlabs/elevenlabs-js)
 
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| POST | `/google-tts/v1/text:synthesize` | Synthesize speech |
+| GET | `/elevenlabs/v1/voices` | List available voices |
+| GET | `/elevenlabs/v1/models` | List available models |
+| POST | `/elevenlabs/v1/text-to-speech/{voice_id}` | Synthesize speech |
 
-**Auth:** `Authorization: Bearer <any>` or `x-goog-api-key` header (ignored).
+**Auth:** `xi-api-key` header (ignored).
 
 ```bash
+# List voices
+curl -H "xi-api-key: fake" http://localhost:9666/elevenlabs/v1/voices
+
+# Synthesize
 curl -X POST \
+  -H "xi-api-key: fake" \
   -H "Content-Type: application/json" \
-  -d '{
-    "input": {"text": "hello world"},
-    "voice": {"languageCode": "en-US", "name": "en-US-Standard-A"},
-    "audioConfig": {"audioEncoding": "LINEAR16"}
-  }' \
-  http://localhost:9666/google-tts/v1/text:synthesize
+  -d '{"text": "hello world"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default?output_format=mp3_44100_128" \
+  -o out.mp3
 ```
 
-Response: `{"audioContent": "<base64-encoded audio>"}`.
-`audioEncoding` values: `LINEAR16`, `MP3`, `OGG_OPUS`, `MULAW`, `ALAW`.
-Either `input.text` or `input.ssml` must be provided.
+`output_format` values: `mp3_44100_128`, `pcm_16000`, `ulaw_8000`, etc. Falls back to WAV if pydub absent.
 
 ---
 
 ### Pointing apps at this server
 
-The Google Cloud TTS Python SDK accepts a custom `api_endpoint` in `client_options`. Set it to this server (note: SDKs assume HTTPS — use a reverse proxy with TLS for production, or stick to direct REST calls).
+ElevenLabs SDKs accept a custom base URL. Point it at `http://localhost:9666/elevenlabs`.
 
-**REST / curl** (drop-in: change only the host):
-```bash
-curl -X POST -H "Content-Type: application/json" \
-  -d '{"input":{"text":"hello"},"voice":{"languageCode":"en-US"},"audioConfig":{"audioEncoding":"MP3"}}' \
-  http://localhost:9666/google-tts/v1/text:synthesize
+**Python SDK** ([`elevenlabs`](https://github.com/elevenlabs/elevenlabs-python)):
+```python
+from elevenlabs.client import ElevenLabs
+client = ElevenLabs(api_key="ignored", base_url="http://localhost:9666/elevenlabs")
 ```
 
-The response is `{"audioContent": "<base64 mp3/wav>"}` — same shape as the real API; decode with `base64 -d`.
+**Environment variable** (community convention used by many apps):
+```bash
+export ELEVENLABS_BASE_URL=http://localhost:9666/elevenlabs
+export ELEVENLABS_API_KEY=ignored
+```
 
-**Home Assistant** (`google_translate` won't work — different API; for Google Cloud TTS the official integration requires a service-account JSON and HTTPS endpoint, so this compat layer is best used via custom integrations / scripts that hit the REST endpoint directly).
+**Node SDK** (`@elevenlabs/elevenlabs-js`):
+```js
+new ElevenLabsClient({ apiKey: "ignored", baseUrl: "http://localhost:9666/elevenlabs" });
+```
 
-**Python (raw `requests`)** instead of the SDK:
-```python
-import base64, requests
-r = requests.post(
-    "http://localhost:9666/google-tts/v1/text:synthesize",
-    json={"input": {"text": "hello"},
-          "voice": {"languageCode": "en-US"},
-          "audioConfig": {"audioEncoding": "MP3"}},
-)
-open("out.mp3", "wb").write(base64.b64decode(r.json()["audioContent"]))
+**curl**:
+```bash
+curl -X POST -H "xi-api-key: x" -H "Content-Type: application/json" \
+  -d '{"text": "hello"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default" -o out.mp3
 ```

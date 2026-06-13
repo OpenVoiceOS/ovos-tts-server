@@ -141,6 +141,9 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     from ovos_tts_server.routers.openai_tts import make_openai_tts_router
     app.include_router(make_openai_tts_router(tts_engine))
 
+    from ovos_tts_server.routers.coqui import make_coqui_router
+    app.include_router(make_coqui_router(tts_engine))
+
     return app
 
 

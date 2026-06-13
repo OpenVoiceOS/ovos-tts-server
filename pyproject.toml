@@ -27,7 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 audio = ["pydub"]
-test = ["pytest", "httpx"]
+test = ["pytest", "httpx", "cartesia", "deepgram-sdk"]
 
 [project.urls]
 Homepage = "https://github.com/OpenVoiceOS/ovos-tts-server"

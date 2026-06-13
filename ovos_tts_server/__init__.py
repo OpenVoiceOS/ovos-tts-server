@@ -147,6 +147,9 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     from ovos_tts_server.routers.google_tts import make_google_tts_router
     app.include_router(make_google_tts_router(tts_engine))
 
+    from ovos_tts_server.routers.amazon_polly import make_amazon_polly_router
+    app.include_router(make_amazon_polly_router(tts_engine))
+
     return app
 
 

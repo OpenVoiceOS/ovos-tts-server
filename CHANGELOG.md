@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.6.0a1) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.5.0a1...1.6.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add amazon-polly-compatible TTS endpoints \(/amazon-polly\) [\#91](https://github.com/OpenVoiceOS/ovos-tts-server/pull/91) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.5.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.5.0a1) (2026-06-13)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.4.0a1...1.5.0a1)

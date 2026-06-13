@@ -44,10 +44,10 @@ options:
   --cache          save every synth to disk
 ```
 
-Example — serve the [GladosTTS plugin](https://github.com/NeonGeckoCom/neon-tts-plugin-glados):
+Example — serve the [Piper plugin](https://github.com/OpenVoiceOS/ovos-tts-plugin-piper):
 
 ```bash
-ovos-tts-server --engine neon-tts-plugin-glados --cache
+ovos-tts-server --engine ovos-tts-plugin-piper --cache
 ```
 
 Then GET `http://localhost:9666/synthesize/hello`.

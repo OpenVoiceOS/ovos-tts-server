@@ -12,47 +12,68 @@ Audio format conversion is provided by `ovos_tts_server.audio_utils.convert_audi
 Install the `[audio]` extra (`pip install ovos-tts-server[audio]`) to enable
 non-WAV outputs via `pydub`.
 
-This document currently covers: **Coqui TTS (`/coqui`)**.
+This document currently covers: **ElevenLabs (`/elevenlabs`)**.
 Other vendor sections are added by their respective compat-router PRs.
 
 ---
 
-## Coqui TTS (`/coqui`)
+## ElevenLabs (`/elevenlabs`)
 
-**Upstream sources** (no canonical Python client — clients hand-roll HTTP):
-- Reference server: [coqui-ai/TTS — `TTS/server/server.py`](https://github.com/coqui-ai/TTS/blob/dev/TTS/server/server.py)
-- Route definitions (`/api/tts`, `/details`, `/api/list_speaker_idxs`, etc.) live in the Flask app in that file.
+**Upstream sources**:
+- Python SDK: [elevenlabs/elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) — `text_to_speech.convert()` builds `POST /v1/text-to-speech/{voice_id}`
+- API reference: [ElevenLabs Text-to-Speech docs](https://elevenlabs.io/docs/api-reference/text-to-speech)
+- Node SDK: [elevenlabs/elevenlabs-js](https://github.com/elevenlabs/elevenlabs-js)
+
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| GET | `/coqui/api/tts` | Synthesize speech |
+| GET | `/elevenlabs/v1/voices` | List available voices |
+| GET | `/elevenlabs/v1/models` | List available models |
+| POST | `/elevenlabs/v1/text-to-speech/{voice_id}` | Synthesize speech |
+
+**Auth:** `xi-api-key` header (ignored).
 
 ```bash
-curl "http://localhost:9666/coqui/api/tts?text=hello+world&speaker_id=voice1&language_id=en-us" \
-  -o out.wav
+# List voices
+curl -H "xi-api-key: fake" http://localhost:9666/elevenlabs/v1/voices
+
+# Synthesize
+curl -X POST \
+  -H "xi-api-key: fake" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "hello world"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default?output_format=mp3_44100_128" \
+  -o out.mp3
 ```
 
-Query params: `text` (required), `speaker_id` → `voice=`, `language_id` → `lang=`.
+`output_format` values: `mp3_44100_128`, `pcm_16000`, `ulaw_8000`, etc. Falls back to WAV if pydub absent.
 
 ---
 
 ### Pointing apps at this server
 
-Coqui's official `tts-server` exposes a single root URL. Point your client at `http://localhost:9666/coqui`.
+ElevenLabs SDKs accept a custom base URL. Point it at `http://localhost:9666/elevenlabs`.
 
-**Home Assistant** (`coqui` custom component / community integration): set host/port to `localhost:9666` and the path prefix to `/coqui`.
+**Python SDK** ([`elevenlabs`](https://github.com/elevenlabs/elevenlabs-python)):
+```python
+from elevenlabs.client import ElevenLabs
+client = ElevenLabs(api_key="ignored", base_url="http://localhost:9666/elevenlabs")
+```
 
-**Mycroft / OVOS** (`mycroft.conf` — using a Coqui TTS plugin that accepts a URL):
-```json
-{
-  "tts": {
-    "module": "ovos-tts-plugin-coqui-remote",
-    "ovos-tts-plugin-coqui-remote": { "url": "http://localhost:9666/coqui" }
-  }
-}
+**Environment variable** (community convention used by many apps):
+```bash
+export ELEVENLABS_BASE_URL=http://localhost:9666/elevenlabs
+export ELEVENLABS_API_KEY=ignored
+```
+
+**Node SDK** (`@elevenlabs/elevenlabs-js`):
+```js
+new ElevenLabsClient({ apiKey: "ignored", baseUrl: "http://localhost:9666/elevenlabs" });
 ```
 
 **curl**:
 ```bash
-curl "http://localhost:9666/coqui/api/tts?text=hello&speaker_id=default" -o out.wav
+curl -X POST -H "xi-api-key: x" -H "Content-Type: application/json" \
+  -d '{"text": "hello"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default" -o out.mp3
 ```

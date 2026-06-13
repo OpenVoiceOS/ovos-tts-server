@@ -135,6 +135,12 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         audio_path, _ = tts_engine.synthesize(utterance, **plugin_params)
         return FileResponse(audio_path)
 
+    from ovos_tts_server.routers.elevenlabs import make_elevenlabs_router
+    app.include_router(make_elevenlabs_router(tts_engine))
+
+    from ovos_tts_server.routers.openai_tts import make_openai_tts_router
+    app.include_router(make_openai_tts_router(tts_engine))
+
     from ovos_tts_server.routers.coqui import make_coqui_router
     app.include_router(make_coqui_router(tts_engine))
 

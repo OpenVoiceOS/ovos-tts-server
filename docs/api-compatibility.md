@@ -12,62 +12,68 @@ Audio format conversion is provided by `ovos_tts_server.audio_utils.convert_audi
 Install the `[audio]` extra (`pip install ovos-tts-server[audio]`) to enable
 non-WAV outputs via `pydub`.
 
-This document currently covers: **Amazon Polly (`/amazon-polly`)**.
+This document currently covers: **ElevenLabs (`/elevenlabs`)**.
 Other vendor sections are added by their respective compat-router PRs.
 
 ---
 
-## Amazon Polly (`/amazon-polly`)
+## ElevenLabs (`/elevenlabs`)
 
 **Upstream sources**:
-- boto3 client: [boto3 Polly `synthesize_speech` docs](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/polly/client/synthesize_speech.html)
-- Service model: [botocore — `data/polly/.../service-2.json`](https://github.com/boto/botocore/blob/develop/botocore/data/polly/2016-06-10/service-2.json)
-- API reference: [Amazon Polly SynthesizeSpeech](https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html)
+- Python SDK: [elevenlabs/elevenlabs-python](https://github.com/elevenlabs/elevenlabs-python) — `text_to_speech.convert()` builds `POST /v1/text-to-speech/{voice_id}`
+- API reference: [ElevenLabs Text-to-Speech docs](https://elevenlabs.io/docs/api-reference/text-to-speech)
+- Node SDK: [elevenlabs/elevenlabs-js](https://github.com/elevenlabs/elevenlabs-js)
 
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| POST | `/amazon-polly/v1/speech` | Synthesize speech |
+| GET | `/elevenlabs/v1/voices` | List available voices |
+| GET | `/elevenlabs/v1/models` | List available models |
+| POST | `/elevenlabs/v1/text-to-speech/{voice_id}` | Synthesize speech |
 
-**Auth:** `Authorization` header with AWS SigV4 (accepted, ignored).
+**Auth:** `xi-api-key` header (ignored).
 
 ```bash
+# List voices
+curl -H "xi-api-key: fake" http://localhost:9666/elevenlabs/v1/voices
+
+# Synthesize
 curl -X POST \
+  -H "xi-api-key: fake" \
   -H "Content-Type: application/json" \
-  -d '{"Text": "hello world", "VoiceId": "Joanna", "OutputFormat": "mp3"}' \
-  http://localhost:9666/amazon-polly/v1/speech \
+  -d '{"text": "hello world"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default?output_format=mp3_44100_128" \
   -o out.mp3
 ```
 
-`OutputFormat` values: `mp3`, `ogg_vorbis`, `pcm`, `json` (json → WAV stub).
+`output_format` values: `mp3_44100_128`, `pcm_16000`, `ulaw_8000`, etc. Falls back to WAV if pydub absent.
 
 ---
 
 ### Pointing apps at this server
 
-AWS SDKs honour the `AWS_ENDPOINT_URL` env var (and `endpoint_url=` constructor arg) to redirect to a custom host. Point it at `http://localhost:9666/amazon-polly`.
+ElevenLabs SDKs accept a custom base URL. Point it at `http://localhost:9666/elevenlabs`.
 
-**boto3** ([`amazon-polly`](https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html)):
+**Python SDK** ([`elevenlabs`](https://github.com/elevenlabs/elevenlabs-python)):
 ```python
-import boto3
-polly = boto3.client(
-    "polly",
-    endpoint_url="http://localhost:9666/amazon-polly",
-    aws_access_key_id="ignored", aws_secret_access_key="ignored",
-    region_name="us-east-1",
-)
-audio = polly.synthesize_speech(Text="hello", VoiceId="Joanna", OutputFormat="mp3")
-open("out.mp3", "wb").write(audio["AudioStream"].read())
+from elevenlabs.client import ElevenLabs
+client = ElevenLabs(api_key="ignored", base_url="http://localhost:9666/elevenlabs")
 ```
 
-**Environment variable** (auto-picked by all AWS SDKs):
+**Environment variable** (community convention used by many apps):
 ```bash
-export AWS_ENDPOINT_URL=http://localhost:9666/amazon-polly
+export ELEVENLABS_BASE_URL=http://localhost:9666/elevenlabs
+export ELEVENLABS_API_KEY=ignored
+```
+
+**Node SDK** (`@elevenlabs/elevenlabs-js`):
+```js
+new ElevenLabsClient({ apiKey: "ignored", baseUrl: "http://localhost:9666/elevenlabs" });
 ```
 
 **curl**:
 ```bash
-curl -X POST -H "Content-Type: application/json" \
-  -d '{"Text":"hello","VoiceId":"Joanna","OutputFormat":"mp3"}' \
-  http://localhost:9666/amazon-polly/v1/speech -o out.mp3
+curl -X POST -H "xi-api-key: x" -H "Content-Type: application/json" \
+  -d '{"text": "hello"}' \
+  "http://localhost:9666/elevenlabs/v1/text-to-speech/default" -o out.mp3
 ```

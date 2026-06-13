@@ -45,7 +45,11 @@ def _free_port() -> int:
 
 
 def run_live_server(register):
-    """Yield a base URL for a uvicorn server that ran `register(app, engine)`."""
+    """Yield a base URL for a uvicorn server that ran `register(app, engine)`.
+
+    `register` is a callable that takes (FastAPI app, FakeEngine) and mounts
+    the compat router under test.
+    """
     import uvicorn
     from fastapi import FastAPI
 
@@ -59,6 +63,7 @@ def run_live_server(register):
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
 
+    # Wait for startup (uvicorn sets .started after the lifespan handshake)
     for _ in range(100):
         if server.started:
             break

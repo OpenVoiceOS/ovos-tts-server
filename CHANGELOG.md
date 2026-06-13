@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.4.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.4.0a1) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.3.0a1...1.4.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add coqui-compatible TTS endpoints \(/coqui\) [\#89](https://github.com/OpenVoiceOS/ovos-tts-server/pull/89) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.3.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.3.0a1) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.2.0a1...1.3.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add openai-compatible TTS endpoints \(/openai\) [\#88](https://github.com/OpenVoiceOS/ovos-tts-server/pull/88) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.2.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.2.0a1) (2026-06-12)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.1.0a2...1.2.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add elevenlabs-compatible TTS endpoints \(/elevenlabs\) [\#87](https://github.com/OpenVoiceOS/ovos-tts-server/pull/87) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.1.0a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.1.0a2) (2026-05-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.1.0a1...1.1.0a2)
+
+**Merged pull requests:**
+
+- docs: drop Neon references from README [\#96](https://github.com/OpenVoiceOS/ovos-tts-server/pull/96) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.1.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.1.0a1) (2026-05-14)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.0.0a1...1.1.0a1)

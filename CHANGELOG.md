@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.7.0a3) (2026-06-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.7.0a2...1.7.0a3)
+
+**Merged pull requests:**
+
+- docs: add NGI0 Commons Fund attribution [\#111](https://github.com/OpenVoiceOS/ovos-tts-server/pull/111) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.7.0a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.7.0a2) (2026-06-13)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.7.0a1...1.7.0a2)

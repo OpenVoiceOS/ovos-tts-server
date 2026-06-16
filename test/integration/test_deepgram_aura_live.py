@@ -1,7 +1,6 @@
 """Live test: drive the official Deepgram SDK (Aura TTS) against our /deepgram router."""
 import pytest
-
-pytest.importorskip("deepgram")
+from deepgram import DeepgramClient, DeepgramClientEnvironment
 
 from test.integration.conftest import run_live_server
 
@@ -17,8 +16,6 @@ def base_url():
 
 
 def test_deepgram_speak_generate(base_url):
-    from deepgram import DeepgramClient, DeepgramClientEnvironment
-
     env = DeepgramClientEnvironment(
         base=f"{base_url}/deepgram",
         production=f"{base_url}/deepgram",

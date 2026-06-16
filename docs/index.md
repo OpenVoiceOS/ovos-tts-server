@@ -1,41 +1,87 @@
-# ovos-tts-server
+# ovos-tts-server — Architecture Overview
 
-HTTP server that exposes any OVOS TTS plugin as a REST service using FastAPI.
+An HTTP server that exposes any OVOS TTS plugin as a REST service using
+[FastAPI](https://fastapi.tiangolo.com/). It is **stateless**: each request
+loads a plugin (once, at startup), calls it, and returns the generated audio.
 
-## Overview
+For installation and usage, start with the [README](../README.md).
 
-`ovos-tts-server` loads an OVOS TTS plugin at startup and serves synthesis requests over HTTP. It is stateless: each request calls the plugin and returns the generated audio file.
+## Request flow
 
-## Endpoints
+```
+HTTP request
+   │
+   ▼
+FastAPI route (core endpoint or compat router)
+   │   translate vendor params → voice=/lang= kwargs
+   ▼
+TTSEngineWrapper.synthesize(text, **kwargs)
+   │   → (wav_path, phonemes)
+   ▼
+convert_audio(wav_path, fmt)   # only if a non-WAV format was requested
+   │   → (audio_bytes, mime_type)
+   ▼
+HTTP response (audio file / bytes / base64 JSON, per vendor)
+```
+
+## Native endpoints
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | GET | `/status` | Plugin name, supported languages, default voice/model |
-| GET | `/v2/synthesize?utterance=<text>[&lang=...][&voice=...]` | Primary synthesis endpoint — returns WAV audio |
+| GET | `/v2/synthesize?utterance=<text>[&lang=…][&voice=…]` | Primary synthesis endpoint — returns WAV audio |
 | GET | `/synthesize/<utterance>` | Legacy path-based synthesis endpoint |
 
-Third-party API compatibility endpoints (MaryTTS, ElevenLabs, OpenAI, Coqui, Google, Polly, Azure, Piper) are added by their respective compat-router PRs and live under per-vendor URL prefixes. See [api-compatibility.md](api-compatibility.md).
+Extra query parameters are forwarded to the plugin as synthesis options.
 
-## Key Classes
+## Compatibility routers
 
-- `TTSEngineWrapper` — loads and wraps a TTS plugin for dependency injection
-- `create_app(tts_engine)` — factory that returns the configured FastAPI app
-- `start_tts_server(tts_plugin, cache)` — top-level entry point used by `__main__`
+Drop-in compatibility endpoints for popular cloud TTS APIs are registered
+alongside the native endpoints, each under its own URL prefix:
 
-All defined in `ovos_tts_server/__init__.py`.
+| Vendor | Prefix |
+| :--- | :--- |
+| ElevenLabs | `/elevenlabs` |
+| OpenAI | `/openai` |
+| Coqui | `/coqui` |
+| Google Cloud TTS | `/google-tts` |
+| Amazon Polly | `/amazon-polly` |
+| Azure TTS | `/azure-tts` |
+| Deepgram Aura | `/deepgram` |
 
-## Entry Point
+Routers are wired up in `create_app()` (`ovos_tts_server/__init__.py`). An Azure
+WebSocket bridge router also exists but is not registered by default. See
+[api-compatibility.md](api-compatibility.md) for the full reference.
 
+## Key classes & functions
+
+All defined in `ovos_tts_server/__init__.py`:
+
+- **`TTSEngineWrapper`** — loads and wraps a TTS plugin for dependency
+  injection; exposes `synthesize()`, `voices`, and `langs`.
+- **`create_app(tts_engine) -> FastAPI`** — factory that builds the FastAPI app,
+  wires the native endpoints and every compat router, and enables permissive
+  CORS.
+- **`start_tts_server(tts_plugin, cache=False) -> (FastAPI, TTSEngineWrapper)`** —
+  top-level entry point used by `__main__`; constructs the wrapper and the app.
+
+## Entry point
+
+```bash
+ovos-tts-server --engine <plugin_name> [--host 0.0.0.0] [--port 9666] [--cache] [--lang en-us]
 ```
-ovos-tts-server --engine <plugin_name> [--host 0.0.0.0] [--port 9666] [--cache]
-```
+
+`__main__.py` parses the CLI, calls `start_tts_server(...)`, and runs the app
+with `uvicorn`.
 
 ## CORS
 
-All origins are allowed unconditionally (`CORSMiddleware(allow_origins=["*"])`).
+All origins are allowed unconditionally
+(`CORSMiddleware(allow_origins=["*"])`). Restrict this at your reverse proxy if
+the server is exposed publicly.
 
-## Documentation
+## Documentation map
 
-- [API Compatibility Reference](api-compatibility.md)
-- [Audio Format Conversion](audio-formats.md)
-- [Voice & Language Configuration](configuration.md)
+- [API Compatibility Reference](api-compatibility.md) — every vendor prefix, endpoint, parameter, and SDK snippet
+- [Voice & Language Configuration](configuration.md) — how a request maps to the plugin
+- [Audio Format Conversion](audio-formats.md) — `convert_audio()` and the `[audio]` extra

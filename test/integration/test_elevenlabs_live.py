@@ -3,8 +3,6 @@
 """
 import pytest
 
-elevenlabs = pytest.importorskip("elevenlabs")
-
 from test.integration.conftest import run_live_server
 
 

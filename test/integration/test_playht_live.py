@@ -7,8 +7,9 @@ protocol with ``auto_connect=False`` so the SDK never contacts play.ht's gRPC
 lease/warmup endpoints.
 """
 import pytest
-
-pytest.importorskip("pyht")
+from pyht import Client, TTSOptions
+from pyht.client import Format
+from pyht.inference_coordinates import InferenceCoordinatesOptions
 
 from test.integration.conftest import run_live_server
 
@@ -24,10 +25,6 @@ def base_url():
 
 
 def test_playht_tts_stream(base_url):
-    from pyht import Client, TTSOptions
-    from pyht.client import Format
-    from pyht.inference_coordinates import InferenceCoordinatesOptions
-
     client = Client(
         user_id="ignored",
         api_key="ignored",

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.11.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.11.0a1) (2026-06-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.10.0a1...1.11.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add Deepgram Aura-compatible TTS endpoint [\#114](https://github.com/OpenVoiceOS/ovos-tts-server/pull/114) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.10.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.10.0a1) (2026-06-16)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.9.0a2...1.10.0a1)

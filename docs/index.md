@@ -48,6 +48,8 @@ alongside the native endpoints, each under its own URL prefix:
 | Amazon Polly | `/amazon-polly` |
 | Azure TTS | `/azure-tts` |
 | MaryTTS | `/marytts` (+ root aliases) |
+| Cartesia | `/cartesia` |
+| Deepgram Aura | `/deepgram` |
 | PlayHT | `/playht` |
 
 Routers are wired up in `create_app()` (`ovos_tts_server/__init__.py`). An Azure

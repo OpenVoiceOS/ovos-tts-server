@@ -24,6 +24,8 @@ non-WAV outputs via `pydub`; without it, non-WAV requests fall back to WAV. See
 | [Amazon Polly](#amazon-polly-amazon-polly) | `/amazon-polly` | `POST /v1/speech` | binary audio |
 | [Azure TTS](#azure-tts-azure-tts) | `/azure-tts` | `POST /cognitiveservices/v1` | binary audio |
 | [MaryTTS](#marytts-marytts) | `/marytts` | `GET/POST /process`, `GET /voices`, `GET /locales` (+ root aliases) | binary WAV / text |
+| [Cartesia](#cartesia-cartesia) | `/cartesia` | `POST /tts/bytes` | binary audio |
+| [Deepgram Aura](#deepgram-aura-deepgram) | `/deepgram` | `POST /v1/speak?model=…` | binary audio |
 | [PlayHT](#playht-playht) | `/playht` | `POST /api/v2/tts/stream`, `POST /api/v4/sdk-auth` | binary audio |
 
 > **Kokoro / kokoro-fastapi** is OpenAI-compatible and needs no dedicated
@@ -312,6 +314,86 @@ tts:
   - platform: marytts
     host: localhost
     port: 9666
+```
+
+---
+
+## Cartesia (`/cartesia`)
+
+**Upstream:** [cartesia-ai/cartesia-python](https://github.com/cartesia-ai/cartesia-python) ·
+[API reference](https://docs.cartesia.ai/)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| POST | `/cartesia/tts/bytes` | Synthesize speech |
+
+**Auth:** `X-API-Key` / `Cartesia-Version` headers (accepted, ignored).
+
+JSON body:
+
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `transcript` | str (required) | Text to synthesize |
+| `model_id` | str | Default `sonic-english`; accepted, not forwarded |
+| `voice` | object | `id` is mapped to `voice=`; other keys ignored |
+| `output_format` | object | `container` selects the output: `wav`, `mp3`, or `raw` (→ PCM/WAV) |
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"model_id": "sonic-english", "transcript": "hello world",
+       "output_format": {"container": "wav"}}' \
+  "http://localhost:9666/cartesia/tts/bytes" -o out.wav
+```
+
+**Point the SDK at this server:**
+
+```python
+from cartesia import Cartesia
+client = Cartesia(api_key="ignored", base_url="http://localhost:9666/cartesia")
+audio = b"".join(client.tts.bytes(
+    model_id="sonic-2",
+    transcript="hello world",
+    voice={"mode": "id", "id": "default"},
+    output_format={"container": "wav", "sample_rate": 22050, "encoding": "pcm_s16le"},
+))
+```
+
+---
+
+## Deepgram Aura (`/deepgram`)
+
+**Upstream:** [deepgram/deepgram-python-sdk](https://github.com/deepgram/deepgram-python-sdk) ·
+[Aura TTS reference](https://developers.deepgram.com/reference/text-to-speech-api/speak)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| POST | `/deepgram/v1/speak` | Synthesize speech |
+
+**Auth:** `Authorization` header (accepted, ignored).
+
+The model is a query parameter and the text is a JSON body:
+
+| Parameter | In | Notes |
+| :--- | :--- | :--- |
+| `model` | query | Default `aura-asteria-en`; mapped to `voice=` |
+| `encoding` | query | `linear16`/`mulaw`→wav, `mp3`→mp3, `opus`→ogg, `flac`→flac |
+| `sample_rate` | query | Accepted, not forwarded |
+| `text` | body | Required text to synthesize (`{"text": "…"}`) |
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"text": "hello world"}' \
+  "http://localhost:9666/deepgram/v1/speak?model=aura-asteria-en&encoding=linear16" -o out.wav
+```
+
+**Point the SDK at this server** via a custom base URL:
+
+```python
+from deepgram import DeepgramClient, DeepgramClientOptions, SpeakOptions
+opts = DeepgramClientOptions(api_key="ignored", url="http://localhost:9666/deepgram")
+client = DeepgramClient("ignored", opts)
+client.speak.rest.v("1").save("out.wav", {"text": "hello world"},
+                              SpeakOptions(model="aura-asteria-en", encoding="linear16"))
 ```
 
 ---

@@ -161,6 +161,12 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     # Root aliases for legacy assistive-tech that hardcodes bare MaryTTS paths
     app.include_router(make_marytts_root_router(tts_engine))
 
+    from ovos_tts_server.routers.cartesia import make_cartesia_router
+    app.include_router(make_cartesia_router(tts_engine))
+
+    from ovos_tts_server.routers.deepgram_aura import make_deepgram_aura_router
+    app.include_router(make_deepgram_aura_router(tts_engine))
+
     from ovos_tts_server.routers.playht import make_playht_router
     app.include_router(make_playht_router(tts_engine))
 

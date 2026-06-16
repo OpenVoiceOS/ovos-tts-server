@@ -1,7 +1,6 @@
 """Live test: drive the official Cartesia SDK against our /cartesia router."""
 import pytest
-
-pytest.importorskip("cartesia")
+from cartesia import Cartesia
 
 from test.integration.conftest import run_live_server
 
@@ -17,8 +16,6 @@ def base_url():
 
 
 def test_cartesia_tts_bytes(base_url):
-    from cartesia import Cartesia
-
     client = Cartesia(api_key="ignored", base_url=f"{base_url}/cartesia")
     audio = b"".join(client.tts.bytes(
         model_id="sonic-2",

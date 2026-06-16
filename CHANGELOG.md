@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.8.0a1) (2026-06-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.7.0a3...1.8.0a1)
+
+**Merged pull requests:**
+
+- feat: expose TTS via MCP and UTCP [\#100](https://github.com/OpenVoiceOS/ovos-tts-server/pull/100) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.7.0a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.7.0a3) (2026-06-14)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.7.0a2...1.7.0a3)

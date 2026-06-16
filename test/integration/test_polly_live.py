@@ -10,9 +10,8 @@ service base path. Because our router lives under /amazon-polly/v1/speech
 and boto3 builds the path as `<endpoint>/v1/speech`, we point endpoint_url
 at `<server>/amazon-polly`.
 """
+import boto3
 import pytest
-
-boto3 = pytest.importorskip("boto3")
 
 from test.integration.conftest import run_live_server
 

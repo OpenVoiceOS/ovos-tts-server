@@ -6,12 +6,9 @@ host. We point it at our local server via `SpeechConfig.from_endpoint`,
 giving the SDK a `ws://127.0.0.1:<port>/azure-tts/cognitiveservices/websocket/v1`
 URL. Our WebSocket bridge speaks enough of Microsoft's protocol for
 `speak_text_async()` to complete and return audio bytes.
-
-Skips cleanly when the SDK isn't installed.
 """
+import azure.cognitiveservices.speech as speechsdk
 import pytest
-
-speechsdk = pytest.importorskip("azure.cognitiveservices.speech")
 
 from test.integration.conftest import run_live_server
 

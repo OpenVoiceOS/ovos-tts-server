@@ -47,11 +47,17 @@ def engine():
     return FakeEngine()
 
 def _make_app(engine) -> FastAPI:
-    """Build a minimal FastAPI app with only the elevenlabs compat router."""
+    """Build a FastAPI app with the compat routers exercised here."""
     from ovos_tts_server.routers.elevenlabs import make_elevenlabs_router
+    from ovos_tts_server.routers.marytts import (
+        make_marytts_router,
+        make_marytts_root_router,
+    )
 
     app = FastAPI()
     app.include_router(make_elevenlabs_router(engine))
+    app.include_router(make_marytts_router(engine))
+    app.include_router(make_marytts_root_router(engine))
     return app
 
 
@@ -60,8 +66,6 @@ def client(engine):
     """Return a TestClient wired to the compat router app."""
     app = _make_app(engine)
     return TestClient(app)
-
-
 
 
 # ---------------------------------------------------------------------------
@@ -127,8 +131,71 @@ class TestElevenLabsRouter:
 
 
 # ---------------------------------------------------------------------------
-# OpenAI TTS  (prefix: /openai)
+# MaryTTS  (prefix: /marytts + root aliases)
 # ---------------------------------------------------------------------------
+
+class TestMaryTTSRouter:
+    def test_locales_returns_plain_text(self, client):
+        r = client.get("/marytts/locales")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/plain")
+        assert "en-us" in r.text
+        assert "de-de" in r.text
+
+    def test_voices_returns_plain_text(self, client):
+        r = client.get("/marytts/voices")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/plain")
+        # FakeEngine.voices=['voice1','voice2'], one line per voice/lang
+        # pair in MaryTTS wire format: "<voice> <lang> <gender> <plugin>"
+        assert "voice1" in r.text
+        assert "voice2" in r.text
+        assert "fake-tts" in r.text
+
+    def test_process_get_returns_wav(self, client):
+        r = client.get("/marytts/process", params={"INPUT_TEXT": "hello"})
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "audio/wav"
+
+    def test_process_post_returns_wav(self, client):
+        r = client.post("/marytts/process", params={"INPUT_TEXT": "hello"})
+        assert r.status_code == 200
+
+    def test_process_requires_input_text(self, client):
+        r = client.get("/marytts/process")
+        assert r.status_code == 422
+
+    def test_process_accepts_locale_and_voice(self, client):
+        r = client.get(
+            "/marytts/process",
+            params={"INPUT_TEXT": "hi", "LOCALE": "en_US", "VOICE": "some_voice"},
+        )
+        assert r.status_code == 200
+
+
+class TestMaryTTSRootAlias:
+    """Bare-path aliases for legacy assistive-tech clients."""
+
+    def test_root_locales(self, client):
+        r = client.get("/locales")
+        assert r.status_code == 200
+        assert "en-us" in r.text
+
+    def test_root_voices(self, client):
+        r = client.get("/voices")
+        assert r.status_code == 200
+        assert "voice1" in r.text
+
+    def test_root_process_get(self, client):
+        r = client.get("/process", params={"INPUT_TEXT": "hello"})
+        assert r.status_code == 200
+        assert r.headers["content-type"] == "audio/wav"
+
+    def test_root_process_post(self, client):
+        r = client.post("/process", params={"INPUT_TEXT": "hello"})
+        assert r.status_code == 200
+
+
 # ---------------------------------------------------------------------------
 # PlayHT  (prefix: /playht)
 # ---------------------------------------------------------------------------

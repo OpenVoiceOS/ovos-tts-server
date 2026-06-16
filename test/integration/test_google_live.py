@@ -20,11 +20,7 @@ import base64
 import json
 
 import pytest
-
-texttospeech = pytest.importorskip("google.cloud.texttospeech")
-pytest.importorskip("google.api_core")
-pytest.importorskip("google.auth")
-import requests  # noqa: E402
+import requests
 
 from test.integration.conftest import run_live_server
 

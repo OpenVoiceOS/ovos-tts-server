@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.0a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.9.0a2) (2026-06-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.9.0a1...1.9.0a2)
+
+**Merged pull requests:**
+
+- test: remove all pytest.importorskip; require deps so tests run [\#120](https://github.com/OpenVoiceOS/ovos-tts-server/pull/120) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.9.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.9.0a1) (2026-06-16)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.8.0a2...1.9.0a1)

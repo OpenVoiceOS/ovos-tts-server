@@ -155,21 +155,34 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
 
     from ovos_tts_server.routers.playht import make_playht_router
     app.include_router(make_playht_router(tts_engine))
+    
+    # UTCP manual endpoint (no extra deps required)
+    from ovos_tts_server.utcp_manual import make_utcp_router
+    app.include_router(make_utcp_router(tts_engine))
 
     return app
 
 
-def start_tts_server(tts_plugin: str, cache: bool = False) -> Tuple[FastAPI, TTSEngineWrapper]:
+def start_tts_server(
+    tts_plugin: str,
+    cache: bool = False,
+    enable_mcp: bool = False,
+) -> Tuple[FastAPI, TTSEngineWrapper]:
     """
     Initialize TTS engine and create FastAPI app.
 
     Args:
         tts_plugin: TTS plugin name to load.
         cache: Whether to persist cached audio across reboots.
+        enable_mcp: If True, mount the optional MCP server at ``/mcp``
+            (requires ``pip install "ovos-tts-server[mcp]"``).
 
     Returns:
         Tuple of FastAPI app and TTS engine wrapper.
     """
     tts_engine = TTSEngineWrapper(plugin_name=tts_plugin, cache=cache)
     app = create_app(tts_engine)
+    if enable_mcp:
+        from ovos_tts_server.mcp_server import mount_mcp
+        mount_mcp(app, tts_engine)
     return app, tts_engine

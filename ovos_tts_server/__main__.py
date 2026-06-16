@@ -29,9 +29,14 @@ def main():
                         action="store_true")
     parser.add_argument("--lang", help="default language supported by plugin",
                         default="en-us")
+    parser.add_argument(
+        "--mcp",
+        help="mount MCP server at /mcp (requires ovos-tts-server[mcp])",
+        action="store_true",
+    )
     args = parser.parse_args()
 
-    server, engine = start_tts_server(args.engine, cache=bool(args.cache))
+    server, engine = start_tts_server(args.engine, cache=bool(args.cache), enable_mcp=bool(args.mcp))
     LOG.info("Server Started")
     uvicorn.run(server, host=args.host, port=int(args.port))
 

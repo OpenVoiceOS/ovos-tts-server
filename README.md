@@ -1,23 +1,60 @@
 # OpenVoiceOS TTS Server
 
-Turn any OVOS TTS plugin into a microservice — a small, stateless FastAPI app that exposes a TTS plugin over HTTP.
+[![PyPI](https://img.shields.io/pypi/v/ovos-tts-server)](https://pypi.org/project/ovos-tts-server/)
+[![Python](https://img.shields.io/pypi/pyversions/ovos-tts-server)](https://pypi.org/project/ovos-tts-server/)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE.md)
+
+Turn **any** [OVOS TTS plugin](https://github.com/OpenVoiceOS) into a microservice — a small, stateless [FastAPI](https://fastapi.tiangolo.com/) app that exposes text-to-speech over HTTP.
+
+- 🔌 **Plugin-agnostic** — serve Piper, Coqui, Azure, or any OVOS TTS plugin behind one consistent HTTP API.
+- 🧩 **Drop-in cloud-API compatibility** — speak the ElevenLabs, OpenAI, Coqui, Google, Amazon Polly, and Azure APIs so existing clients and SDKs work unmodified (see [API compatibility](docs/api-compatibility.md)).
+- 🪶 **Stateless & tiny** — each request loads nothing extra; ideal for containers and horizontal scaling.
+- 🎛️ **Format conversion** — return WAV out of the box, or mp3/ogg/flac/… with the optional `[audio]` extra.
+
+---
 
 ## Install
 
 ```bash
 pip install ovos-tts-server
 
-# Optional: enable non-WAV output (mp3, ogg, flac, ...) via pydub
+# Optional: enable non-WAV output (mp3, ogg, flac, …) via pydub
 pip install "ovos-tts-server[audio]"
 ```
 
-## Companion plugin
+You also need at least one TTS plugin, e.g. [Piper](https://github.com/OpenVoiceOS/ovos-tts-plugin-piper):
 
-Use in your voice assistant via the [companion TTS plugin](https://github.com/OpenVoiceOS/ovos-tts-server-plugin).
+```bash
+pip install ovos-tts-plugin-piper
+```
+
+## Quickstart
+
+```bash
+# Start the server with the Piper plugin
+ovos-tts-server --engine ovos-tts-plugin-piper
+
+# Synthesize over HTTP
+curl "http://localhost:9666/v2/synthesize?utterance=hello%20world" -o hello.wav
+```
+
+## Command line
+
+```
+ovos-tts-server [-h] [--engine ENGINE] [--port PORT] [--host HOST] [--cache] [--lang LANG]
+```
+
+| Option | Default | Description |
+| :--- | :--- | :--- |
+| `--engine ENGINE` | — | TTS plugin to load (e.g. `ovos-tts-plugin-piper`) |
+| `--port PORT` | `9666` | Port to bind |
+| `--host HOST` | `0.0.0.0` | Host/interface to bind |
+| `--cache` | off | Persist every synth to disk (cache across requests) |
+| `--lang LANG` | `en-us` | Default language reported by the plugin |
 
 ## Configuration
 
-The plugin is configured the same way as if it were running inside the assistant — through `mycroft.conf`:
+The plugin is configured exactly as it would be inside the assistant — through `mycroft.conf`:
 
 ```json
 {
@@ -30,49 +67,52 @@ The plugin is configured the same way as if it were running inside the assistant
 }
 ```
 
-## Usage
+See [docs/configuration.md](docs/configuration.md) for how voice and language flow from a request to the plugin.
 
-```bash
-ovos-tts-server --help
-usage: ovos-tts-server [-h] [--engine ENGINE] [--port PORT] [--host HOST] [--cache]
+## HTTP API
 
-options:
-  -h, --help       show this help message and exit
-  --engine ENGINE  tts plugin to be used
-  --port PORT      port number (default: 9666)
-  --host HOST      host (default: 0.0.0.0)
-  --cache          save every synth to disk
-```
-
-Example — serve the [Piper plugin](https://github.com/OpenVoiceOS/ovos-tts-plugin-piper):
-
-```bash
-ovos-tts-server --engine ovos-tts-plugin-piper --cache
-```
-
-Then GET `http://localhost:9666/synthesize/hello`.
-
-## Endpoints
+The native OVOS endpoints:
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | GET | `/status` | Plugin name, supported languages, default voice/model |
-| GET | `/v2/synthesize?utterance=<text>[&lang=...][&voice=...]` | Primary synthesis endpoint — returns WAV audio |
+| GET | `/v2/synthesize?utterance=<text>[&lang=…][&voice=…]` | Primary synthesis endpoint — returns a WAV file |
 | GET | `/synthesize/<utterance>` | Legacy path-based synthesis endpoint |
 
-CORS is enabled for all origins.
+Any extra query parameters on the synthesis endpoints are forwarded to the plugin as synthesis options. CORS is enabled for all origins.
+
+```bash
+curl http://localhost:9666/status
+# {"status": "ok", "plugin": "ovos-tts-plugin-piper", "langs": ["en-us"], ...}
+```
 
 ### Third-party API compatibility
 
-The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, and Piper. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
+The server can **additionally** expose the same plugin behind drop-in compatibility endpoints for popular cloud TTS APIs. Each vendor lives under its own URL prefix, so every compat layer is active at once with no path collisions. Auth tokens / API keys are accepted and silently ignored — put real auth in a reverse proxy if you need it.
 
-See [docs/api-compatibility.md](docs/api-compatibility.md) for the full reference.
+| Vendor | Prefix | Key endpoint |
+| :--- | :--- | :--- |
+| ElevenLabs | `/elevenlabs` | `POST /v1/text-to-speech/{voice_id}` |
+| OpenAI | `/openai` | `POST /v1/audio/speech` |
+| Coqui | `/coqui` | `GET /api/tts` |
+| Google Cloud TTS | `/google-tts` | `POST /v1/text:synthesize` |
+| Amazon Polly | `/amazon-polly` | `POST /v1/speech` |
+| Azure TTS | `/azure-tts` | `POST /cognitiveservices/v1` |
 
-## Documentation
+> **Kokoro / kokoro-fastapi** clients are OpenAI-compatible and need no dedicated prefix — point them at `/openai/v1/audio/speech`.
 
-- [Configuration & voice/language flow](docs/configuration.md)
-- [Audio format conversion](docs/audio-formats.md)
-- [API compatibility reference](docs/api-compatibility.md)
+Most official SDKs accept a custom base URL; point them at `http://<host>:9666/<prefix>` and they work unmodified. See **[docs/api-compatibility.md](docs/api-compatibility.md)** for per-vendor endpoints, parameters, SDK snippets, and curl examples.
+
+## Python API
+
+```python
+from ovos_tts_server import start_tts_server
+
+app, engine = start_tts_server("ovos-tts-plugin-piper", cache=False)
+# `app` is a FastAPI instance — mount it, test it, or run it with uvicorn
+```
+
+`create_app(tts_engine)` is also available if you want to build and inject the `TTSEngineWrapper` yourself.
 
 ## Docker
 
@@ -89,11 +129,14 @@ ENTRYPOINT ["ovos-tts-server", "--engine", "{PLUGIN_HERE}", "--cache"]
 ```bash
 docker build . -t my_ovos_tts_plugin
 docker run -p 8080:9666 my_ovos_tts_plugin
+curl "http://localhost:8080/v2/synthesize?utterance=hello" -o hello.wav
 ```
 
-Then GET `http://localhost:8080/synthesize/hello`.
-
 Each plugin can ship its own Dockerfile in its repository using `ovos-tts-server`.
+
+## Companion plugin
+
+Consume this server from a voice assistant via the [companion TTS plugin](https://github.com/OpenVoiceOS/ovos-tts-server-plugin).
 
 ## Development
 
@@ -101,6 +144,13 @@ Each plugin can ship its own Dockerfile in its repository using `ovos-tts-server
 pip install -e ".[audio,test]"
 pytest test/ -v
 ```
+
+## Documentation
+
+- [API compatibility reference](docs/api-compatibility.md) — every vendor prefix, endpoint, and SDK snippet
+- [Voice & language configuration](docs/configuration.md) — how requests map to the plugin
+- [Audio format conversion](docs/audio-formats.md) — `convert_audio()` and the `[audio]` extra
+- [Architecture overview](docs/index.md) — classes, entry points, request flow
 
 ---
 

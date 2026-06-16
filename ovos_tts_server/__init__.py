@@ -167,6 +167,9 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     from ovos_tts_server.routers.deepgram_aura import make_deepgram_aura_router
     app.include_router(make_deepgram_aura_router(tts_engine))
 
+    from ovos_tts_server.routers.playht import make_playht_router
+    app.include_router(make_playht_router(tts_engine))
+
     # UTCP manual endpoint (no extra deps required)
     from ovos_tts_server.utcp_manual import make_utcp_router
     app.include_router(make_utcp_router(tts_engine))

@@ -26,6 +26,7 @@ non-WAV outputs via `pydub`; without it, non-WAV requests fall back to WAV. See
 | [MaryTTS](#marytts-marytts) | `/marytts` | `GET/POST /process`, `GET /voices`, `GET /locales` (+ root aliases) | binary WAV / text |
 | [Cartesia](#cartesia-cartesia) | `/cartesia` | `POST /tts/bytes` | binary audio |
 | [Deepgram Aura](#deepgram-aura-deepgram) | `/deepgram` | `POST /v1/speak?model=…` | binary audio |
+| [PlayHT](#playht-playht) | `/playht` | `POST /api/v2/tts/stream`, `POST /api/v4/sdk-auth` | binary audio |
 
 > **Kokoro / kokoro-fastapi** is OpenAI-compatible and needs no dedicated
 > router — point any OpenAI-compatible client at the `/openai` prefix
@@ -393,6 +394,64 @@ opts = DeepgramClientOptions(api_key="ignored", url="http://localhost:9666/deepg
 client = DeepgramClient("ignored", opts)
 client.speak.rest.v("1").save("out.wav", {"text": "hello world"},
                               SpeakOptions(model="aura-asteria-en", encoding="linear16"))
+```
+
+---
+
+## PlayHT (`/playht`)
+
+**Upstream:** [playht/pyht](https://github.com/playht/pyht) ·
+[API reference](https://docs.play.ht/reference/api-getting-started)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| POST | `/playht/api/v2/tts/stream` | Synthesize speech |
+| POST | `/playht/api/v4/sdk-auth` | Inference-coordinates handshake for the `pyht` SDK |
+
+**Auth:** `Authorization` / `X-USER-ID` headers (accepted, ignored).
+
+`/api/v2/tts/stream` body:
+
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `text` | str **or** list[str] | Text to synthesize (the SDK sends a single-element list) |
+| `voice` | str | Mapped to `voice=` |
+| `output_format` | str | `mp3`/`wav`/`ogg`/`flac`, `raw`→PCM, `mulaw`→wav |
+| `quality` / `speed` / `sample_rate` | — | Accepted, not forwarded |
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"text": "hello world", "voice": "default", "output_format": "wav"}' \
+  "http://localhost:9666/playht/api/v2/tts/stream" -o out.wav
+```
+
+### Using the official `pyht` SDK
+
+`pyht`'s HTTP path first calls `{api_url}/sdk-auth` to fetch "inference
+coordinates" (per-model streaming URLs), then POSTs to the returned URL. The
+`/api/v4/sdk-auth` endpoint implements that handshake and points the SDK back at
+this server, so a stock `pyht.Client` works by overriding only its coordinates
+`api_url`. Use the HTTP protocol with `auto_connect=False` so the SDK never
+contacts play.ht's gRPC lease/warmup endpoints:
+
+```python
+from pyht import Client, TTSOptions
+from pyht.client import Format
+from pyht.inference_coordinates import InferenceCoordinatesOptions
+
+client = Client(
+    user_id="ignored",
+    api_key="ignored",
+    auto_connect=False,
+    advanced=Client.AdvancedOptions(
+        inference_coordinates_options=InferenceCoordinatesOptions(
+            api_url="http://localhost:9666/playht/api/v4",
+        ),
+    ),
+)
+opts = TTSOptions(voice="default", format=Format.FORMAT_WAV)
+audio = b"".join(client.tts("hello world", opts, voice_engine="Play3.0-mini", protocol="http"))
+client.close()
 ```
 
 ---

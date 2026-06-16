@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.12.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.12.0a1) (2026-06-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.11.0a1...1.12.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add PlayHT-compatible TTS endpoints [\#115](https://github.com/OpenVoiceOS/ovos-tts-server/pull/115) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.11.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.11.0a1) (2026-06-16)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.10.0a1...1.11.0a1)

@@ -153,6 +153,14 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     from ovos_tts_server.routers.azure_tts import make_azure_tts_router
     app.include_router(make_azure_tts_router(tts_engine))
 
+    from ovos_tts_server.routers.marytts import (
+        make_marytts_router,
+        make_marytts_root_router,
+    )
+    app.include_router(make_marytts_router(tts_engine))
+    # Root aliases for legacy assistive-tech that hardcodes bare MaryTTS paths
+    app.include_router(make_marytts_root_router(tts_engine))
+
     # UTCP manual endpoint (no extra deps required)
     from ovos_tts_server.utcp_manual import make_utcp_router
     app.include_router(make_utcp_router(tts_engine))

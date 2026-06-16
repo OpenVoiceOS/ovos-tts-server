@@ -7,7 +7,7 @@
 Turn **any** [OVOS TTS plugin](https://github.com/OpenVoiceOS) into a microservice — a small, stateless [FastAPI](https://fastapi.tiangolo.com/) app that exposes text-to-speech over HTTP.
 
 - 🔌 **Plugin-agnostic** — serve Piper, Coqui, Azure, or any OVOS TTS plugin behind one consistent HTTP API.
-- 🧩 **Drop-in cloud-API compatibility** — speak the ElevenLabs, OpenAI, Coqui, Google, Amazon Polly, and Azure APIs so existing clients and SDKs work unmodified (see [API compatibility](docs/api-compatibility.md)).
+- 🧩 **Drop-in cloud-API compatibility** — speak the ElevenLabs, OpenAI, Coqui, Google, Amazon Polly, Azure, and MaryTTS APIs so existing clients and SDKs work unmodified (see [API compatibility](docs/api-compatibility.md)).
 - 🪶 **Stateless & tiny** — each request loads nothing extra; ideal for containers and horizontal scaling.
 - 🎛️ **Format conversion** — return WAV out of the box, or mp3/ogg/flac/… with the optional `[audio]` extra.
 
@@ -98,6 +98,7 @@ The server can **additionally** expose the same plugin behind drop-in compatibil
 | Google Cloud TTS | `/google-tts` | `POST /v1/text:synthesize` |
 | Amazon Polly | `/amazon-polly` | `POST /v1/speech` |
 | Azure TTS | `/azure-tts` | `POST /cognitiveservices/v1` |
+| MaryTTS | `/marytts` | `GET/POST /process` (+ root aliases) |
 
 > **Kokoro / kokoro-fastapi** clients are OpenAI-compatible and need no dedicated prefix — point them at `/openai/v1/audio/speech`.
 

@@ -106,6 +106,119 @@ pytest test/ -v
 
 ---
 
+## Agent Integration
+
+### UTCP — Universal Tool Calling Protocol
+
+The server exposes a **UTCP manual** at `GET /utcp`.  Any UTCP-aware agent
+(e.g. [ovos-tool-adapters](https://github.com/OpenVoiceOS/ovos-tool-adapters)
+`UTCPToolBox`) can point at this URL and auto-discover every synthesis endpoint
+without additional configuration.
+
+No extra dependencies are needed — `GET /utcp` is always available.
+
+**Example response (abbreviated):**
+```json
+{
+  "utcp_version": "1.0.1",
+  "manual_version": "1.0.0",
+  "tools": [
+    {
+      "name": "tts_synthesize_v2",
+      "description": "Synthesize speech from text (OVOS v2 endpoint)...",
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "utterance": {"type": "string"},
+          "voice":     {"type": "string"},
+          "lang":      {"type": "string"}
+        },
+        "required": ["utterance"]
+      },
+      "tool_call_template": {
+        "call_template_type": "http",
+        "url": "http://localhost:9666/v2/synthesize",
+        "http_method": "GET"
+      }
+    }
+  ]
+}
+```
+
+**ovos-tool-adapters config example:**
+```json
+{
+  "utcp_config": {
+    "providers": [
+      {
+        "provider_type": "http",
+        "name": "ovos-tts",
+        "url": "http://localhost:9666/utcp"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### MCP — Model Context Protocol
+
+The server can optionally expose a **FastMCP server** mounted at `/mcp`,
+providing a `synthesize` tool callable by any MCP-compatible agent (Claude
+Desktop, Claude Code, etc.).
+
+**Install the extra:**
+```bash
+pip install "ovos-tts-server[mcp]"
+```
+
+**Start with MCP enabled:**
+```bash
+ovos-tts-server --engine ovos-tts-plugin-piper --mcp
+```
+
+Or from Python:
+```python
+from ovos_tts_server import start_tts_server
+app, engine = start_tts_server("ovos-tts-plugin-piper", enable_mcp=True)
+```
+
+The MCP server uses **streamable HTTP transport** (SSE-compatible) and is
+mounted alongside the existing FastAPI app — no separate process needed.
+
+**Claude Desktop `claude_desktop_config.json` example:**
+```json
+{
+  "mcpServers": {
+    "ovos-tts": {
+      "transport": "http",
+      "url": "http://localhost:9666/mcp"
+    }
+  }
+}
+```
+
+**`synthesize` tool:**
+
+| Parameter | Type   | Required | Description                          |
+|-----------|--------|----------|--------------------------------------|
+| `text`    | string | yes      | Text to synthesize                   |
+| `voice`   | string | no       | Voice/speaker identifier             |
+| `lang`    | string | no       | BCP-47 language code (e.g. `en-us`)  |
+
+Returns a JSON object:
+```json
+{
+  "mime_type": "audio/wav",
+  "data": "<base64-encoded WAV>",
+  "path": "/tmp/ovos_synth_abc123.wav",
+  "phonemes": null
+}
+```
+
+---
+
 ## Credits
 
 Developed by [TigreGótico](https://tigregotico.pt) for

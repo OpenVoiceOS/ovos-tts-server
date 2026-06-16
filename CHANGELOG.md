@@ -1,5 +1,69 @@
 # Changelog
 
+## [1.7.0a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.7.0a3) (2026-06-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.7.0a2...1.7.0a3)
+
+**Merged pull requests:**
+
+- docs: add NGI0 Commons Fund attribution [\#111](https://github.com/OpenVoiceOS/ovos-tts-server/pull/111) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.7.0a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.7.0a2) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.7.0a1...1.7.0a2)
+
+**Merged pull requests:**
+
+- test: run the official-SDK e2e tests in CI \(add vendor SDKs to test extra\) [\#108](https://github.com/OpenVoiceOS/ovos-tts-server/pull/108) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.7.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.7.0a1) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.6.0a1...1.7.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add azure-compatible TTS endpoints \(/azure-tts\) [\#92](https://github.com/OpenVoiceOS/ovos-tts-server/pull/92) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.6.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.6.0a1) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.5.0a1...1.6.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add amazon-polly-compatible TTS endpoints \(/amazon-polly\) [\#91](https://github.com/OpenVoiceOS/ovos-tts-server/pull/91) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.5.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.5.0a1) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.4.0a1...1.5.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add google-compatible TTS endpoints \(/google-tts\) [\#90](https://github.com/OpenVoiceOS/ovos-tts-server/pull/90) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.4.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.4.0a1) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.3.0a1...1.4.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add coqui-compatible TTS endpoints \(/coqui\) [\#89](https://github.com/OpenVoiceOS/ovos-tts-server/pull/89) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.3.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.3.0a1) (2026-06-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.2.0a1...1.3.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add openai-compatible TTS endpoints \(/openai\) [\#88](https://github.com/OpenVoiceOS/ovos-tts-server/pull/88) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.2.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.2.0a1) (2026-06-12)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.1.0a2...1.2.0a1)
+
+**Merged pull requests:**
+
+- feat\(compat\): add elevenlabs-compatible TTS endpoints \(/elevenlabs\) [\#87](https://github.com/OpenVoiceOS/ovos-tts-server/pull/87) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.1.0a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.1.0a2) (2026-05-14)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.1.0a1...1.1.0a2)

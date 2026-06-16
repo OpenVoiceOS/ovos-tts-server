@@ -28,7 +28,6 @@ def base_url():
 
 def test_marytts_plugin_voice_discovery(base_url):
     """The plugin GETs /voices at init and parses 'voice lang gender plugin' lines."""
-    pytest.importorskip("ovos_tts_plugin_marytts")
     from ovos_tts_plugin_marytts import MaryTTS
 
     tts = MaryTTS({"url": f"{base_url}/marytts"})
@@ -41,7 +40,6 @@ def test_marytts_plugin_voice_discovery(base_url):
 
 def test_marytts_plugin_synthesizes_via_compat_router(base_url, tmp_path):
     """End-to-end: plugin renders a sentence to a WAV file via our /process."""
-    pytest.importorskip("ovos_tts_plugin_marytts")
     from ovos_tts_plugin_marytts import MaryTTS
 
     tts = MaryTTS({"url": f"{base_url}/marytts", "voice": "voice1"})
@@ -66,7 +64,6 @@ def test_marytts_plugin_against_root_aliases(base_url, tmp_path):
     Our root-alias router covers those — point the plugin at the bare host
     and it should work the same way.
     """
-    pytest.importorskip("ovos_tts_plugin_marytts")
     from ovos_tts_plugin_marytts import MaryTTS
 
     tts = MaryTTS({"url": base_url, "voice": "voice1"})

@@ -49,6 +49,7 @@ alongside the native endpoints, each under its own URL prefix:
 | Azure TTS | `/azure-tts` |
 | MaryTTS | `/marytts` (+ root aliases) |
 | Cartesia | `/cartesia` |
+| Deepgram Aura | `/deepgram` |
 
 Routers are wired up in `create_app()` (`ovos_tts_server/__init__.py`). An Azure
 WebSocket bridge router also exists but is not registered by default. See

@@ -64,7 +64,9 @@ CORS is enabled for all origins.
 
 ### Third-party API compatibility
 
-The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, and Piper. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
+The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, Piper, and Cartesia. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
+
+**Cartesia** (`/cartesia/tts/bytes`) accepts `model_id`, `transcript`, `voice` (object with optional `id` key), and `output_format` (object with `container` field). The official `cartesia` SDK works by overriding its `base_url` to the `/cartesia` prefix (see `examples/cartesia_example.py`).
 
 See [docs/api-compatibility.md](docs/api-compatibility.md) for the full reference.
 

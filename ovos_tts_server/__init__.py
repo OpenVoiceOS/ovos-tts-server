@@ -153,6 +153,9 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     from ovos_tts_server.routers.azure_tts import make_azure_tts_router
     app.include_router(make_azure_tts_router(tts_engine))
 
+    from ovos_tts_server.routers.cartesia import make_cartesia_router
+    app.include_router(make_cartesia_router(tts_engine))
+
     return app
 
 

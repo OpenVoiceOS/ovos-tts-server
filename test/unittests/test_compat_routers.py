@@ -129,3 +129,67 @@ class TestElevenLabsRouter:
 # ---------------------------------------------------------------------------
 # OpenAI TTS  (prefix: /openai)
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Cartesia  (prefix: /cartesia)
+# ---------------------------------------------------------------------------
+
+
+def _make_cartesia_app(engine) -> FastAPI:
+    from ovos_tts_server.routers.cartesia import make_cartesia_router
+    app = FastAPI()
+    app.include_router(make_cartesia_router(engine))
+    return app
+
+
+@pytest.fixture(scope="module")
+def cartesia_client(engine):
+    return TestClient(_make_cartesia_app(engine))
+
+
+class TestCartesiaRouter:
+    def test_tts_bytes_success(self, cartesia_client):
+        resp = cartesia_client.post(
+            "/cartesia/tts/bytes",
+            json={"model_id": "sonic-english", "transcript": "hello world"},
+        )
+        assert resp.status_code == 200
+        assert len(resp.content) > 0
+
+    def test_tts_bytes_empty_transcript_rejected(self, cartesia_client):
+        resp = cartesia_client.post(
+            "/cartesia/tts/bytes",
+            json={"model_id": "sonic-english", "transcript": ""},
+        )
+        assert resp.status_code == 422
+
+    def test_tts_bytes_with_voice(self, cartesia_client):
+        resp = cartesia_client.post(
+            "/cartesia/tts/bytes",
+            json={
+                "model_id": "sonic-english",
+                "transcript": "test",
+                "voice": {"id": "voice1", "mode": "id"},
+            },
+        )
+        assert resp.status_code == 200
+
+    def test_tts_bytes_mp3_format(self, cartesia_client):
+        resp = cartesia_client.post(
+            "/cartesia/tts/bytes",
+            json={
+                "model_id": "sonic-english",
+                "transcript": "test",
+                "output_format": {"container": "mp3"},
+            },
+        )
+        assert resp.status_code == 200
+
+    def test_tts_bytes_api_key_ignored(self, cartesia_client):
+        resp = cartesia_client.post(
+            "/cartesia/tts/bytes",
+            json={"model_id": "sonic-english", "transcript": "hi"},
+            headers={"X-API-Key": "fake-key"},
+        )
+        assert resp.status_code == 200
+
+

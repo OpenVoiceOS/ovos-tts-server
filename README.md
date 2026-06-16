@@ -64,7 +64,9 @@ CORS is enabled for all origins.
 
 ### Third-party API compatibility
 
-The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, and Piper. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
+The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, Piper, and PlayHT. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
+
+**PlayHT** (`/playht/api/v2/tts/stream`) accepts `text`, `voice`, `output_format`, `quality`, `speed`, and `sample_rate`. The server also implements PlayHT's `/api/v4/sdk-auth` inference-coordinates handshake, so the official `pyht` SDK works as a drop-in by overriding only its coordinates `api_url` to the `/playht` prefix (see `examples/playht_example.py`).
 
 See [docs/api-compatibility.md](docs/api-compatibility.md) for the full reference.
 

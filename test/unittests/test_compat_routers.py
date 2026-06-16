@@ -129,3 +129,79 @@ class TestElevenLabsRouter:
 # ---------------------------------------------------------------------------
 # OpenAI TTS  (prefix: /openai)
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# PlayHT  (prefix: /playht)
+# ---------------------------------------------------------------------------
+
+
+def _make_playht_app(engine) -> FastAPI:
+    from ovos_tts_server.routers.playht import make_playht_router
+    app = FastAPI()
+    app.include_router(make_playht_router(engine))
+    return app
+
+
+@pytest.fixture(scope="module")
+def playht_client(engine):
+    return TestClient(_make_playht_app(engine))
+
+
+class TestPlayHTRouter:
+    def test_tts_stream_success(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": "hello world"},
+        )
+        assert resp.status_code == 200
+        assert len(resp.content) > 0
+
+    def test_tts_stream_empty_text_rejected(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": ""},
+        )
+        assert resp.status_code == 422
+
+    def test_tts_stream_with_voice(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": "test", "voice": "s3://voice-cloning-zero-shot/demo"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_stream_mp3_format(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": "test", "output_format": "mp3"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_stream_api_key_ignored(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": "hi"},
+            headers={"Authorization": "fake-secret", "X-USER-ID": "user123"},
+        )
+        assert resp.status_code == 200
+
+    def test_tts_stream_list_text(self, playht_client):
+        # the official pyht SDK sends text as a single-element list
+        resp = playht_client.post(
+            "/playht/api/v2/tts/stream",
+            json={"text": ["hello world"]},
+        )
+        assert resp.status_code == 200
+        assert len(resp.content) > 0
+
+    def test_sdk_auth_returns_coordinates(self, playht_client):
+        resp = playht_client.post(
+            "/playht/api/v4/sdk-auth",
+            headers={"X-USER-ID": "ignored", "Authorization": "Bearer ignored"},
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert "expires_at" in body
+        for model in ("Play3.0-mini", "PlayDialog", "PlayDialogMultilingual", "PlayDialogArabic"):
+            assert "http_streaming_url" in body[model]
+            assert "stream" in body[model]["http_streaming_url"]
+            assert "websocket_url" in body[model]

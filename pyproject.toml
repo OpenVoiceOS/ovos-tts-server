@@ -27,7 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 audio = ["pydub"]
-test = ["pytest", "httpx", "requests", "openai", "boto3", "elevenlabs", "google-cloud-texttospeech", "azure-cognitiveservices-speech", "ovos-tts-plugin-polly"]
+test = ["pytest", "httpx", "requests", "openai", "boto3", "elevenlabs", "google-cloud-texttospeech", "azure-cognitiveservices-speech", "ovos-tts-plugin-polly", "pyht"]
 
 [project.urls]
 Homepage = "https://github.com/OpenVoiceOS/ovos-tts-server"

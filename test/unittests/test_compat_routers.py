@@ -129,3 +129,59 @@ class TestElevenLabsRouter:
 # ---------------------------------------------------------------------------
 # OpenAI TTS  (prefix: /openai)
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Deepgram Aura  (prefix: /deepgram)
+# ---------------------------------------------------------------------------
+
+
+def _make_deepgram_app(engine) -> FastAPI:
+    from ovos_tts_server.routers.deepgram_aura import make_deepgram_aura_router
+    app = FastAPI()
+    app.include_router(make_deepgram_aura_router(engine))
+    return app
+
+
+@pytest.fixture(scope="module")
+def deepgram_client(engine):
+    return TestClient(_make_deepgram_app(engine))
+
+
+class TestDeepgramAuraRouter:
+    def test_speak_success(self, deepgram_client):
+        resp = deepgram_client.post(
+            "/deepgram/v1/speak",
+            json={"text": "hello world"},
+        )
+        assert resp.status_code == 200
+        assert len(resp.content) > 0
+
+    def test_speak_empty_text_rejected(self, deepgram_client):
+        resp = deepgram_client.post(
+            "/deepgram/v1/speak",
+            json={"text": ""},
+        )
+        assert resp.status_code == 422
+
+    def test_speak_with_model_query(self, deepgram_client):
+        resp = deepgram_client.post(
+            "/deepgram/v1/speak?model=aura-luna-en",
+            json={"text": "test"},
+        )
+        assert resp.status_code == 200
+
+    def test_speak_mp3_encoding(self, deepgram_client):
+        resp = deepgram_client.post(
+            "/deepgram/v1/speak?encoding=mp3",
+            json={"text": "test"},
+        )
+        assert resp.status_code == 200
+
+    def test_speak_api_key_ignored(self, deepgram_client):
+        resp = deepgram_client.post(
+            "/deepgram/v1/speak",
+            json={"text": "hi"},
+            headers={"Authorization": "Token fake-key"},
+        )
+        assert resp.status_code == 200
+
+

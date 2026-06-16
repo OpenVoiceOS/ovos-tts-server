@@ -64,7 +64,9 @@ CORS is enabled for all origins.
 
 ### Third-party API compatibility
 
-The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, and Piper. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
+The server can additionally expose its underlying TTS plugin behind drop-in compatibility endpoints for popular cloud TTS APIs — MaryTTS, ElevenLabs, OpenAI, Coqui, Google Cloud TTS, Amazon Polly, Azure, Piper, and Deepgram Aura. Each vendor lives under its own URL prefix so multiple compat layers coexist with no path collisions. Auth tokens are accepted and silently ignored — wrap behind a reverse proxy if you need real auth.
+
+**Deepgram Aura** (`/deepgram/v1/speak`) accepts the model as a query parameter (`?model=aura-asteria-en`) and the text as a JSON body `{"text": "..."}`. The official `deepgram-sdk` works by overriding its base URL to the `/deepgram` prefix (see `examples/deepgram_aura_example.py`).
 
 See [docs/api-compatibility.md](docs/api-compatibility.md) for the full reference.
 

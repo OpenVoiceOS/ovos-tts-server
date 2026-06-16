@@ -29,9 +29,6 @@ def test_polly_plugin_synthesizes_via_compat_router(base_url, tmp_path,
     our /amazon-polly router. boto3 picks up AWS_ENDPOINT_URL_POLLY at
     client construction time, so we set it before importing the plugin.
     """
-    pytest.importorskip("ovos_tts_plugin_polly")
-    pytest.importorskip("boto3")
-
     monkeypatch.setenv("AWS_ENDPOINT_URL_POLLY", f"{base_url}/amazon-polly")
     # boto3's signing requires creds even when the server ignores them;
     # any non-empty string works.

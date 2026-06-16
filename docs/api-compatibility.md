@@ -23,6 +23,7 @@ non-WAV outputs via `pydub`; without it, non-WAV requests fall back to WAV. See
 | [Google Cloud TTS](#google-cloud-tts-google-tts) | `/google-tts` | `POST /v1/text:synthesize` | JSON (base64 audio) |
 | [Amazon Polly](#amazon-polly-amazon-polly) | `/amazon-polly` | `POST /v1/speech` | binary audio |
 | [Azure TTS](#azure-tts-azure-tts) | `/azure-tts` | `POST /cognitiveservices/v1` | binary audio |
+| [MaryTTS](#marytts-marytts) | `/marytts` | `GET/POST /process`, `GET /voices`, `GET /locales` (+ root aliases) | binary WAV / text |
 | [Deepgram Aura](#deepgram-aura-deepgram) | `/deepgram` | `POST /v1/speak?model=…` | binary audio |
 
 > **Kokoro / kokoro-fastapi** is OpenAI-compatible and needs no dedicated
@@ -256,6 +257,61 @@ from ovos_tts_server.routers.azure_ws import make_azure_ws_router
 
 app, engine = start_tts_server("ovos-tts-plugin-piper")
 app.include_router(make_azure_ws_router(engine))
+```
+
+---
+
+## MaryTTS (`/marytts`)
+
+Exposes the classic [MaryTTS](http://mary.dfki.de/) HTTP endpoints so apps that
+already speak MaryTTS — notably **accessibility / assistive tech** and Home
+Assistant's `marytts` integration — can swap in OVOS without code changes. There
+is no canonical Python SDK; clients hand-roll HTTP.
+
+**Upstream:** [marytts/marytts `MaryHttpServer.java`](https://github.com/marytts/marytts/blob/master/marytts-runtime/src/main/java/marytts/server/http/MaryHttpServer.java) ·
+[`InfoRequestHandler.java`](https://github.com/marytts/marytts/blob/master/marytts-runtime/src/main/java/marytts/server/http/InfoRequestHandler.java) (defines `/process`, `/voices`, `/locales`) ·
+[Home Assistant client](https://github.com/home-assistant/core/blob/dev/homeassistant/components/marytts/tts.py)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| GET | `/marytts/locales` | Newline-separated supported locales |
+| GET | `/marytts/voices` | Newline-separated voices (`name locale gender plugin`) |
+| GET/POST | `/marytts/process` | Synthesize — returns `audio/wav` |
+
+**Root-path aliases.** MaryTTS predates modern API gateways and is widely used by
+assistive software that hardcodes bare paths, so the same three endpoints are
+**also exposed at the server root** (`/locales`, `/voices`, `/process`) for
+drop-in compatibility. Prefer the `/marytts/...` paths in new code.
+
+`/marytts/process` parameters:
+
+| Name | Type | Notes |
+| :--- | :--- | :--- |
+| `INPUT_TEXT` | str (required) | Text or SSML to synthesize |
+| `INPUT_TYPE` | `TEXT` \| `SSML` | Default `TEXT` |
+| `LOCALE` | str | Mapped to `lang=` |
+| `VOICE` | str | Underscores → spaces, mapped to `voice=` |
+| `OUTPUT_TYPE` / `AUDIO` | str | Accepted, ignored (always `AUDIO` / `WAVE_FILE`) |
+
+```bash
+curl http://localhost:9666/marytts/locales
+curl http://localhost:9666/marytts/voices
+
+curl -G http://localhost:9666/marytts/process \
+  --data-urlencode "INPUT_TEXT=hello world" \
+  --data-urlencode "LOCALE=en_US" \
+  -o out.wav
+```
+
+**Home Assistant** (`configuration.yaml`) — the built-in integration hardcodes
+the bare paths, so point it straight at the server; the root-alias router handles
+`/process`, `/voices`, `/locales`:
+
+```yaml
+tts:
+  - platform: marytts
+    host: localhost
+    port: 9666
 ```
 
 ---

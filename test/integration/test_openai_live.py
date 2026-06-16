@@ -1,8 +1,6 @@
 """Live test: drive the /openai router with the official `openai` SDK."""
 import pytest
 
-openai_mod = pytest.importorskip("openai")
-
 from test.integration.conftest import run_live_server
 
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.2a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.2a1) (2026-07-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.1a1...1.13.2a1)
+
+**Merged pull requests:**
+
+- fix: address voice ids that span multiple path segments [\#130](https://github.com/OpenVoiceOS/ovos-tts-server/pull/130) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.13.1a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.1a1) (2026-07-14)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.0a1...1.13.1a1)

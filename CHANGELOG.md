@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.1a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.1a1) (2026-07-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.0a1...1.13.1a1)
+
+**Merged pull requests:**
+
+- fix: declare a websocket implementation as a runtime dependency [\#129](https://github.com/OpenVoiceOS/ovos-tts-server/pull/129) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.13.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.0a1) (2026-07-14)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.12.1a1...1.13.0a1)

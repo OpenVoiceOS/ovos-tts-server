@@ -375,3 +375,56 @@ class TestPathReturningPlugin:
         )
         assert not resp.content.startswith(b"RIFF")
         assert len(resp.content) // 2 == pytest.approx(2400, abs=2)
+
+
+# ---------------------------------------------------------------------------
+# Voice ids spanning multiple path segments
+# ---------------------------------------------------------------------------
+
+#: Voice ids as plugins report them; HuggingFace repo ids contain slashes.
+VOICE_IDS = [
+    "voice1",
+    "OpenVoiceOS/phoonnx_ar_dii_espeak",
+    "hf_community/vadimbelsky/arabic-emirati-female-piper",
+]
+
+
+class TestMultiSegmentVoiceIds:
+    @pytest.mark.parametrize("voice_id", VOICE_IDS)
+    def test_http_passes_voice_id_verbatim(self, client, engine, voice_id):
+        resp = client.post(
+            f"/elevenlabs/v1/text-to-speech/{voice_id}",
+            json={"text": "hello world"},
+        )
+        assert resp.status_code == 200
+        assert engine.calls == [("hello world", {"voice": voice_id})]
+
+    @pytest.mark.parametrize("voice_id", VOICE_IDS)
+    def test_websocket_passes_voice_id_verbatim(self, client, engine, voice_id):
+        with client.websocket_connect(
+                f"/elevenlabs/v1/text-to-speech/{voice_id}/stream-input") as ws:
+            ws.send_json({"text": " "})
+            ws.send_json({"text": "hello world"})
+            ws.send_json({"text": ""})
+            audio, _ = _drain(ws)
+
+        assert audio
+        assert engine.calls == [("hello world", {"voice": voice_id})]
+
+    def test_http_default_voice_uses_plugin_default(self, client, engine):
+        resp = client.post(
+            "/elevenlabs/v1/text-to-speech/default",
+            json={"text": "hello world"},
+        )
+        assert resp.status_code == 200
+        assert engine.calls == [("hello world", {})]
+
+    def test_websocket_default_voice_uses_plugin_default(self, client, engine):
+        with client.websocket_connect(
+                "/elevenlabs/v1/text-to-speech/default/stream-input") as ws:
+            ws.send_json({"text": " "})
+            ws.send_json({"text": "hello world"})
+            ws.send_json({"text": ""})
+            _drain(ws)
+
+        assert engine.calls == [("hello world", {})]

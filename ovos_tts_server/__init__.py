@@ -9,17 +9,25 @@ from ovos_config import Configuration
 class TTSEngineWrapper:
     """Wrapper around an OVOS TTS engine for dependency injection."""
 
-    def __init__(self, plugin_name: str, cache: bool = False):
+    def __init__(self, plugin_name: str, cache: bool = False,
+                 lang: Optional[str] = None):
         """
         Create a TTSEngineWrapper by loading and configuring the named TTS plugin.
-        
+
         Parameters:
             plugin_name (str): Name of the TTS plugin to load.
             cache (bool): If True, persist generated audio cache across restarts.
+            lang (Optional[str]): Language code that overrides any configured
+                language for the plugin. Plugins select their default voice from
+                this language when no specific voice is configured. When None,
+                the plugin's configured language is used.
         """
         engine = load_tts_plugin(plugin_name)
         config = Configuration().get("tts", {}).get(plugin_name, {})
         config["persist_cache"] = cache
+        # An explicit lang takes precedence over the plugin's configured lang
+        if lang:
+            config["lang"] = lang
         self.engine = engine(config=config)
         self.engine.log_timestamps = True
         self.plugin_name = plugin_name
@@ -181,6 +189,7 @@ def start_tts_server(
     tts_plugin: str,
     cache: bool = False,
     enable_mcp: bool = False,
+    lang: Optional[str] = None,
 ) -> Tuple[FastAPI, TTSEngineWrapper]:
     """
     Initialize TTS engine and create FastAPI app.
@@ -190,11 +199,14 @@ def start_tts_server(
         cache: Whether to persist cached audio across reboots.
         enable_mcp: If True, mount the optional MCP server at ``/mcp``
             (requires ``pip install "ovos-tts-server[mcp]"``).
+        lang: Language code that overrides the plugin's configured language,
+            driving its default voice selection. When None, the configured
+            language is used.
 
     Returns:
         Tuple of FastAPI app and TTS engine wrapper.
     """
-    tts_engine = TTSEngineWrapper(plugin_name=tts_plugin, cache=cache)
+    tts_engine = TTSEngineWrapper(plugin_name=tts_plugin, cache=cache, lang=lang)
     app = create_app(tts_engine)
     if enable_mcp:
         from ovos_tts_server.mcp_server import mount_mcp

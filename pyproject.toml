@@ -9,7 +9,7 @@ description = "simple FastAPI server to host TTS plugins as a service"
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{name = "JarbasAi", email = "jarbasai@mailfence.com"}]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 keywords = [
     "plugin",
@@ -27,8 +27,8 @@ dependencies = [
 
 [project.optional-dependencies]
 audio = ["pydub"]
-test = ["pytest", "httpx", "requests", "openai", "boto3", "elevenlabs", "google-cloud-texttospeech", "azure-cognitiveservices-speech", "ovos-tts-plugin-polly", "ovos-tts-plugin-marytts", "mcp>=1.0.0", "cartesia", "deepgram-sdk", "pyht>=0.1.14"]
-mcp = ["mcp>=1.0.0"]
+test = ["pytest", "httpx", "requests", "openai", "boto3", "elevenlabs", "google-cloud-texttospeech", "azure-cognitiveservices-speech", "ovos-tts-plugin-polly", "ovos-tts-plugin-marytts", "mcp>=1.0.0,<2.0.0", "cartesia", "deepgram-sdk", "pyht>=0.1.14"]
+mcp = ["mcp>=1.0.0,<2.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/OpenVoiceOS/ovos-tts-server"

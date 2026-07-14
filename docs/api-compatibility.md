@@ -50,6 +50,10 @@ Examples below assume the server runs at `http://localhost:9666`.
 
 **Auth:** `xi-api-key` header (accepted, ignored).
 
+The `voice_id` may span several path segments, so voices named after a
+HuggingFace repo id (`OpenVoiceOS/phoonnx_ar_dii_espeak`) can be addressed
+directly — pass the id exactly as `GET /v1/voices` reports it.
+
 **Synthesis request** — path `voice_id` (use `default` for the plugin default),
 query `output_format` (default `mp3_44100_128`), JSON body:
 

@@ -211,7 +211,8 @@ def _synth_kwargs(voice_id: str) -> Dict[str, str]:
     """Map a requested voice_id to plugin synthesize() kwargs.
 
     Args:
-        voice_id: Voice identifier from the request path.
+        voice_id: Voice identifier from the request path, verbatim — it may be
+            a multi-segment id such as a HuggingFace repo id.
 
     Returns:
         Kwargs for engine.synthesize(); the plugin default is used for
@@ -329,7 +330,9 @@ def make_elevenlabs_router(engine) -> APIRouter:
             voices = [ElevenLabsVoice(voice_id="default", name="default")]
         return ElevenLabsVoicesResponse(voices=voices)
 
-    @router.post("/v1/text-to-speech/{voice_id}")
+    # voice ids are often HuggingFace repo ids, which contain slashes, so the
+    # voice spans several path segments
+    @router.post("/v1/text-to-speech/{voice_id:path}")
     def tts_elevenlabs(
             voice_id: str,
             request: ElevenLabsTTSRequest,
@@ -351,7 +354,7 @@ def make_elevenlabs_router(engine) -> APIRouter:
         audio_bytes, mime = encode_audio(audio_path, output_format)
         return Response(content=audio_bytes, media_type=mime)
 
-    @router.websocket("/v1/text-to-speech/{voice_id}/stream-input")
+    @router.websocket("/v1/text-to-speech/{voice_id:path}/stream-input")
     async def tts_stream_input(
             websocket: WebSocket,
             voice_id: str,

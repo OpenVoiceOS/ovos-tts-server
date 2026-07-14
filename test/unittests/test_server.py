@@ -161,4 +161,4 @@ class TestWebSocketSupport:
                     yield from ws_paths(getattr(nested, "routes", []) or [])
 
         paths = list(ws_paths(create_app(FakeEngine()).routes))
-        assert "/elevenlabs/v1/text-to-speech/{voice_id}/stream-input" in paths
+        assert "/elevenlabs/v1/text-to-speech/{voice_id:path}/stream-input" in paths

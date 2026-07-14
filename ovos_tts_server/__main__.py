@@ -27,8 +27,11 @@ def main():
                         default="0.0.0.0")
     parser.add_argument("--cache", help="save every synth to disk",
                         action="store_true")
-    parser.add_argument("--lang", help="default language supported by plugin",
-                        default="en-us")
+    parser.add_argument("--lang",
+                        help="language the plugin serves; selects its default "
+                             "voice when no voice is configured. Overrides the "
+                             "plugin's configured language.",
+                        default=None)
     parser.add_argument(
         "--mcp",
         help="mount MCP server at /mcp (requires ovos-tts-server[mcp])",
@@ -36,7 +39,8 @@ def main():
     )
     args = parser.parse_args()
 
-    server, engine = start_tts_server(args.engine, cache=bool(args.cache), enable_mcp=bool(args.mcp))
+    server, engine = start_tts_server(args.engine, cache=bool(args.cache),
+                                      enable_mcp=bool(args.mcp), lang=args.lang)
     LOG.info("Server Started")
     uvicorn.run(server, host=args.host, port=int(args.port))
 

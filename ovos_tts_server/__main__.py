@@ -13,7 +13,6 @@
 import uvicorn
 
 from ovos_tts_server import start_tts_server
-from ovos_tts_server.gradio_app import bind_gradio_service
 from ovos_utils.log import LOG
 
 
@@ -30,24 +29,15 @@ def main():
                         action="store_true")
     parser.add_argument("--lang", help="default language supported by plugin",
                         default="en-us")
-    parser.add_argument("--gradio", help="Enable Gradio Web UI",
-                        action="store_true")
-    parser.add_argument("--title", help="Title for webUI",
-                        default="TTS")
-    parser.add_argument("--description", help="Text description to print in UI",
-                        default="Get Text-to-Speech")
-    parser.add_argument("--info", help="Text to display at end of UI",
-                        default=None)
-    parser.add_argument("--badge", help="URL of visitor badge", default=None)
+    parser.add_argument(
+        "--mcp",
+        help="mount MCP server at /mcp (requires ovos-tts-server[mcp])",
+        action="store_true",
+    )
     args = parser.parse_args()
 
-    server, engine = start_tts_server(args.engine, cache=bool(args.cache),
-                                      has_gradio=bool(args.gradio))
+    server, engine = start_tts_server(args.engine, cache=bool(args.cache), enable_mcp=bool(args.mcp))
     LOG.info("Server Started")
-    if args.gradio:
-        bind_gradio_service(server, engine, args.title, args.description,
-                            args.info, args.badge, args.lang)
-        LOG.info("Gradio Started")
     uvicorn.run(server, host=args.host, port=int(args.port))
 
 

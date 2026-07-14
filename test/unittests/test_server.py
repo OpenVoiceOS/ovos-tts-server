@@ -1,0 +1,164 @@
+# Licensed under the Apache License, Version 2.0
+"""Unit tests for the base ovos-tts-server FastAPI app.
+
+Uses a lightweight FakeEngine that mimics TTSEngineWrapper so the tests
+exercise routes and parameter wiring without loading any OVOS TTS plugin.
+"""
+import tempfile
+import wave
+from typing import List, Optional, Tuple
+
+import pytest
+from fastapi.testclient import TestClient
+
+from ovos_tts_server import create_app
+
+
+class FakeEngine:
+    """Stand-in for TTSEngineWrapper used by create_app(tts_engine)."""
+
+    plugin_name: str = "fake-tts"
+    lang: str = "en-us"
+    langs: List[str] = ["en-us", "de-de"]
+    voices: List[str] = ["voice1", "voice2"]
+
+    def __init__(self):
+        self.last_call: Optional[Tuple[str, dict]] = None
+
+        class _InnerEngine:
+            config = {"model": "fakemodel", "voice": "fakevoice"}
+
+        self.engine = _InnerEngine()
+
+    def synthesize(self, utterance: str, **kwargs) -> Tuple[str, Optional[str]]:
+        self.last_call = (utterance, kwargs)
+        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+        tmp.close()
+        with wave.open(tmp.name, "w") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(16000)
+            wf.writeframes(b"\x00\x00" * 100)
+        return tmp.name, None
+
+
+@pytest.fixture
+def engine() -> FakeEngine:
+    return FakeEngine()
+
+
+@pytest.fixture
+def client(engine: FakeEngine) -> TestClient:
+    return TestClient(create_app(engine))
+
+
+class TestStatusEndpoint:
+    def test_returns_ok_and_engine_metadata(self, client, engine):
+        r = client.get("/status")
+        assert r.status_code == 200
+        body = r.json()
+        assert body == {
+            "status": "ok",
+            "plugin": engine.plugin_name,
+            "langs": engine.langs,
+            "default_lang": engine.lang,
+            "default_model": "fakemodel",
+            "default_voice": "fakevoice",
+        }
+
+    def test_missing_engine_config_keys_yield_none(self, client, engine):
+        engine.engine.config = {}
+        r = client.get("/status")
+        body = r.json()
+        assert body["default_model"] is None
+        assert body["default_voice"] is None
+
+    def test_engine_without_config_attr_defaults_to_empty(self, engine):
+        engine.engine = type("E", (), {})()  # plain object, no `config` attr
+        client = TestClient(create_app(engine))
+        r = client.get("/status")
+        body = r.json()
+        assert body["default_model"] is None
+        assert body["default_voice"] is None
+
+
+class TestLegacySynthesize:
+    def test_returns_audio_file(self, client, engine):
+        r = client.get("/synthesize/hello%20world")
+        assert r.status_code == 200
+        assert engine.last_call[0] == "hello world"
+
+    def test_forwards_query_params(self, client, engine):
+        r = client.get("/synthesize/hi", params={"voice": "v1", "lang": "de-de"})
+        assert r.status_code == 200
+        utterance, kwargs = engine.last_call
+        assert utterance == "hi"
+        assert kwargs["voice"] == "v1"
+        assert kwargs["lang"] == "de-de"
+
+
+class TestV2Synthesize:
+    def test_returns_audio_when_utterance_given(self, client, engine):
+        r = client.get("/v2/synthesize", params={"utterance": "hi"})
+        assert r.status_code == 200
+        assert engine.last_call[0] == "hi"
+
+    def test_missing_utterance_returns_400(self, client):
+        r = client.get("/v2/synthesize")
+        assert r.status_code == 400
+        assert r.json() == {"error": "Missing utterance"}
+
+    def test_forwards_extra_params_without_utterance_leakage(self, client, engine):
+        r = client.get(
+            "/v2/synthesize",
+            params={"utterance": "hi", "voice": "v1", "lang": "en-us"},
+        )
+        assert r.status_code == 200
+        utterance, kwargs = engine.last_call
+        assert utterance == "hi"
+        assert "utterance" not in kwargs
+        assert kwargs["voice"] == "v1"
+        assert kwargs["lang"] == "en-us"
+
+
+class TestCORS:
+    def test_cors_headers_present_on_preflight(self, client):
+        r = client.options(
+            "/status",
+            headers={
+                "Origin": "https://example.com",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert r.status_code == 200
+        assert r.headers.get("access-control-allow-origin") == "https://example.com"
+
+
+class TestWebSocketSupport:
+    """The WebSocket routers need uvicorn to have a ws implementation available.
+
+    uvicorn does not fail loudly when none is importable: it answers the
+    WebSocket handshake with a 404, so a registered route looks missing.
+    """
+
+    def test_uvicorn_resolves_a_ws_protocol_class(self):
+        from uvicorn.config import Config
+
+        config = Config(app=create_app(FakeEngine()), ws="auto")
+        config.load()
+        assert config.ws_protocol_class is not None
+
+    def test_stream_input_route_is_registered(self):
+        from fastapi.routing import APIWebSocketRoute
+
+        def ws_paths(routes):
+            """Collect WebSocket paths, descending into included routers."""
+            for route in routes:
+                if isinstance(route, APIWebSocketRoute):
+                    yield route.path
+                nested = getattr(route, "original_router", None) or route
+                if nested is not route:
+                    yield from ws_paths(getattr(nested, "routes", []) or [])
+
+        paths = list(ws_paths(create_app(FakeEngine()).routes))
+        assert "/elevenlabs/v1/text-to-speech/{voice_id}/stream-input" in paths

@@ -49,7 +49,7 @@ from fastapi import APIRouter, Header, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from ovos_tts_server.audio_utils import convert_audio
+from ovos_tts_server.audio_utils import _ensure_wav, convert_audio
 
 #: Plugins return either a str or a pathlib.Path from synthesize().
 AudioPath = Union[str, "os.PathLike[str]"]
@@ -91,12 +91,18 @@ def _read_samples(wav_path: AudioPath) -> Tuple[array.array, int]:
         Tuple of (samples, source_sample_rate). Multi-channel input is
         downmixed by averaging, 8-bit input is scaled up to 16-bit.
     """
+    # Plugins may emit non-WAV audio (e.g. an mp3-only engine); transcode first.
     # wave.open() only opens str paths; anything else it treats as a file object
-    with wave.open(os.fspath(wav_path), "rb") as wf:
-        channels = wf.getnchannels()
-        width = wf.getsampwidth()
-        src_rate = wf.getframerate()
-        frames = wf.readframes(wf.getnframes())
+    src_path, is_temp = _ensure_wav(os.fspath(wav_path))
+    try:
+        with wave.open(src_path, "rb") as wf:
+            channels = wf.getnchannels()
+            width = wf.getsampwidth()
+            src_rate = wf.getframerate()
+            frames = wf.readframes(wf.getnframes())
+    finally:
+        if is_temp:
+            os.remove(src_path)
 
     if width == 1:
         # 8-bit WAV samples are unsigned

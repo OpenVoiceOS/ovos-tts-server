@@ -17,7 +17,7 @@ non-WAV outputs via `pydub`; without it, non-WAV requests fall back to WAV. See
 
 | Vendor | Prefix | Endpoint(s) | Response |
 | :--- | :--- | :--- | :--- |
-| [ElevenLabs](#elevenlabs-elevenlabs) | `/elevenlabs` | `GET /v1/voices`, `GET /v1/models`, `POST /v1/text-to-speech/{voice_id}` | binary audio / JSON |
+| [ElevenLabs](#elevenlabs-elevenlabs) | `/elevenlabs` | `GET /v1/voices`, `GET /v1/models`, `POST /v1/text-to-speech/{voice_id}`, `WS /v1/text-to-speech/{voice_id}/stream-input` | binary audio / JSON |
 | [OpenAI](#openai-openai) | `/openai` | `POST /v1/audio/speech` | binary audio |
 | [Coqui](#coqui-coqui) | `/coqui` | `GET /api/tts` | binary WAV |
 | [Google Cloud TTS](#google-cloud-tts-google-tts) | `/google-tts` | `POST /v1/text:synthesize` | JSON (base64 audio) |
@@ -59,9 +59,11 @@ query `output_format` (default `mp3_44100_128`), JSON body:
 | `model_id` | str | Accepted, not forwarded |
 | `voice_settings` | object | `stability`, `similarity_boost`, `style`, `use_speaker_boost` — accepted, not forwarded |
 
-`output_format` is parsed for the container: `pcm_*` → PCM/WAV, `ulaw_*` → WAV,
-otherwise the leading token (`mp3_44100_128` → `mp3`). Falls back to WAV if pydub
-is absent.
+`output_format` selects both container and sample rate: `pcm_*` → headerless
+mono 16-bit little-endian PCM resampled to the requested rate (`pcm_16000`,
+`pcm_22050`, `pcm_24000`, `pcm_44100`, …), `ulaw_8000` → G.711 mu-law,
+`opus_*` → Ogg, otherwise the leading token (`mp3_44100_128` → `mp3`).
+Compressed containers fall back to WAV if pydub is absent.
 
 ```bash
 # List voices
@@ -85,6 +87,71 @@ client = ElevenLabs(api_key="ignored", base_url="http://localhost:9666/elevenlab
 // @elevenlabs/elevenlabs-js
 new ElevenLabsClient({ apiKey: "ignored", baseUrl: "http://localhost:9666/elevenlabs" });
 ```
+
+### WebSocket streaming (`stream-input`)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| WS | `/elevenlabs/v1/text-to-speech/{voice_id}/stream-input` | Stream synthesized speech |
+
+Registered by default, alongside the HTTP endpoints. Query parameters:
+`output_format` (default `mp3_44100_128`, parsed as above), `language_code`
+(→ `lang=`); other ElevenLabs options (`model_id`, `inactivity_timeout`, …) are
+accepted and ignored. Auth is the `xi-api-key` header or an `xi_api_key` field
+in the first message — both accepted, ignored.
+
+Client → server (JSON text frames):
+
+1. `{"text": " ", "voice_settings": {...}, "generation_config": {...}}` — begin
+   the stream.
+2. `{"text": "hello world "}` — content, repeated; text accumulates.
+3. `{"flush": true}` — generate the buffered text immediately.
+4. `{"text": ""}` — end of stream: the buffer is generated and the socket closes.
+
+Server → client (JSON text frames):
+
+```json
+{"audio": "<base64>", "isFinal": null, "normalizedAlignment": null, "alignment": null}
+```
+
+Audio is delivered in one or more frames, terminated by a frame with no audio
+and `"isFinal": true`. Alignment fields are always null: the plugin API exposes
+no character timings.
+
+**Point the SDK at this server:** `client.text_to_speech.convert_realtime()` uses
+this endpoint. Its realtime client derives the WebSocket URL from `base_url=` but
+forces the `wss` scheme, so it cannot reach a plaintext server. Either put a TLS
+terminator in front of ovos-tts-server — then `base_url="https://…"` works
+untouched — or keep `ws` for `http` base URLs:
+
+```python
+import urllib.parse
+from elevenlabs import VoiceSettings, realtime_tts
+from elevenlabs.client import ElevenLabs
+
+_orig_init = realtime_tts.RealtimeTextToSpeechClient.__init__
+
+def _init(self, *, client_wrapper):
+    _orig_init(self, client_wrapper=client_wrapper)
+    parsed = urllib.parse.urlparse(client_wrapper.get_base_url())
+    scheme = "ws" if parsed.scheme == "http" else "wss"
+    self._ws_base_url = parsed._replace(scheme=scheme).geturl()
+
+realtime_tts.RealtimeTextToSpeechClient.__init__ = _init
+
+client = ElevenLabs(api_key="ignored", base_url="http://localhost:9666/elevenlabs")
+for chunk in client.text_to_speech.convert_realtime(
+        voice_id="default",
+        text=iter(["hello world"]),
+        output_format="pcm_24000",
+        # the SDK unconditionally serializes voice_settings into its BOS frame
+        voice_settings=VoiceSettings(stability=0.5, similarity_boost=0.8)):
+    ...
+```
+
+Runnable version: [`examples/elevenlabs_ws_example.py`](../examples/elevenlabs_ws_example.py).
+Clients that speak `ws://` directly (`websockets`, `websocket-client`, the JS SDK
+with a `ws://` base) need no patching.
 
 ---
 

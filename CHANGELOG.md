@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.4a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.4a1) (2026-07-14)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.3a1...1.13.4a1)
+
+**Merged pull requests:**
+
+- fix: flow --lang into the plugin configuration [\#134](https://github.com/OpenVoiceOS/ovos-tts-server/pull/134) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.13.3a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.3a1) (2026-07-14)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.2...1.13.3a1)

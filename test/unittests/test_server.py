@@ -132,3 +132,33 @@ class TestCORS:
         )
         assert r.status_code == 200
         assert r.headers.get("access-control-allow-origin") == "https://example.com"
+
+
+class TestWebSocketSupport:
+    """The WebSocket routers need uvicorn to have a ws implementation available.
+
+    uvicorn does not fail loudly when none is importable: it answers the
+    WebSocket handshake with a 404, so a registered route looks missing.
+    """
+
+    def test_uvicorn_resolves_a_ws_protocol_class(self):
+        from uvicorn.config import Config
+
+        config = Config(app=create_app(FakeEngine()), ws="auto")
+        config.load()
+        assert config.ws_protocol_class is not None
+
+    def test_stream_input_route_is_registered(self):
+        from fastapi.routing import APIWebSocketRoute
+
+        def ws_paths(routes):
+            """Collect WebSocket paths, descending into included routers."""
+            for route in routes:
+                if isinstance(route, APIWebSocketRoute):
+                    yield route.path
+                nested = getattr(route, "original_router", None) or route
+                if nested is not route:
+                    yield from ws_paths(getattr(nested, "routes", []) or [])
+
+        paths = list(ws_paths(create_app(FakeEngine()).routes))
+        assert "/elevenlabs/v1/text-to-speech/{voice_id}/stream-input" in paths

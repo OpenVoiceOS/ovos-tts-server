@@ -1,6 +1,5 @@
 # Licensed under the Apache License, Version 2.0
 """Amazon Polly-compatible TTS endpoint."""
-from starlette.concurrency import run_in_threadpool
 from typing import Optional
 
 from fastapi import APIRouter, Header
@@ -75,7 +74,7 @@ def make_amazon_polly_router(engine) -> APIRouter:
             synth_kwargs["lang"] = request.LanguageCode
 
         fmt = _FMT_MAP.get(request.OutputFormat, "mp3")
-        audio_path, _ = await run_in_threadpool(engine.synthesize, request.Text, **synth_kwargs)
+        audio_path, _ = engine.synthesize(request.Text, **synth_kwargs)
         audio_bytes, _ = convert_audio(audio_path, fmt)
         mime = _MIME_MAP.get(request.OutputFormat, "audio/mpeg")
         return Response(content=audio_bytes, media_type=mime)

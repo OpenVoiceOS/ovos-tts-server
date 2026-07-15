@@ -1,7 +1,6 @@
 # Licensed under the Apache License, Version 2.0
 """Google Cloud TTS-compatible endpoint."""
 import base64
-from starlette.concurrency import run_in_threadpool
 from typing import Optional
 
 from fastapi import APIRouter, Header, Query
@@ -97,7 +96,7 @@ def make_google_tts_router(engine) -> APIRouter:
             synth_kwargs["voice"] = request.voice.name
 
         fmt = _FMT_MAP.get(request.audioConfig.audioEncoding, "mp3")
-        audio_path, _ = await run_in_threadpool(engine.synthesize, utterance, **synth_kwargs)
+        audio_path, _ = engine.synthesize(utterance, **synth_kwargs)
         audio_bytes, _ = convert_audio(audio_path, fmt)
         return GoogleTTSResponse(audioContent=base64.b64encode(audio_bytes).decode())
 

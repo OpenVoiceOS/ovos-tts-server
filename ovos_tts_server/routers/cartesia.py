@@ -1,6 +1,5 @@
 # Licensed under the Apache License, Version 2.0
 """Cartesia Sonic-compatible TTS endpoint."""
-from starlette.concurrency import run_in_threadpool
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Header
@@ -66,7 +65,7 @@ def make_cartesia_router(engine) -> APIRouter:
             if voice_id:
                 synth_kwargs["voice"] = voice_id
 
-        audio_path, _ = await run_in_threadpool(engine.synthesize, request.transcript, **synth_kwargs)
+        audio_path, _ = engine.synthesize(request.transcript, **synth_kwargs)
 
         fmt = request.output_format.container
         if fmt == "raw":

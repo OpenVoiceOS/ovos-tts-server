@@ -40,8 +40,9 @@ References:
 - https://learn.microsoft.com/en-us/azure/ai-services/speech-service/websockets
 - https://github.com/Azure-Samples/cognitive-services-speech-sdk
 """
-from starlette.concurrency import run_in_threadpool
 from __future__ import annotations
+
+from starlette.concurrency import run_in_threadpool
 
 import datetime
 import json

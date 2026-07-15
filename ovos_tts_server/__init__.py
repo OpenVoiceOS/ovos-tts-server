@@ -1,5 +1,6 @@
 from typing import Optional, Tuple
 from fastapi import FastAPI, Request, Response
+from starlette.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from ovos_plugin_manager.tts import load_tts_plugin
@@ -119,7 +120,11 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         Returns:
             FileResponse: A response serving the synthesized audio file.
         """
-        audio_path, _ = tts_engine.synthesize(utterance, **request.query_params)
+        # synthesize is blocking and (for streaming plugins) drives its own event
+        # loop via run_until_complete; run it in a worker thread so it never nests
+        # inside this async handler's running loop.
+        audio_path, _ = await run_in_threadpool(
+            tts_engine.synthesize, utterance, **request.query_params)
         return FileResponse(audio_path)
 
     @app.get("/v2/synthesize")
@@ -140,7 +145,8 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         # Pass all plugin-specific options
         plugin_params = dict(request.query_params)
         plugin_params.pop("utterance", None)  # Remove the utterance key
-        audio_path, _ = tts_engine.synthesize(utterance, **plugin_params)
+        audio_path, _ = await run_in_threadpool(
+            tts_engine.synthesize, utterance, **plugin_params)
         return FileResponse(audio_path)
 
     from ovos_tts_server.routers.elevenlabs import make_elevenlabs_router

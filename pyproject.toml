@@ -18,7 +18,7 @@ keywords = [
     "OpenVoiceOS",
 ]
 dependencies = [
-    "ovos-plugin-manager>=2.1.0,<3.0.0",
+    "ovos-plugin-manager>=2.10.0a1,<3.0.0",
     "fastapi~=0.115",
     "uvicorn~=0.34",
     # uvicorn serves WebSockets only when a ws implementation is importable;

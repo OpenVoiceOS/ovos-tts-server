@@ -69,6 +69,30 @@ The plugin is configured exactly as it would be inside the assistant — through
 
 See [docs/configuration.md](docs/configuration.md) for how voice and language flow from a request to the plugin.
 
+### Transformer pipelines
+
+The server can run OVOS transformer plugins around synthesis, on every
+endpoint (native, vendor-compat, websocket, MCP/UTCP): **dialog
+transformers** rewrite the text before synthesis and **tts transformers**
+post-process the audio. Opt-in via the standard mycroft.conf sections:
+
+```json
+{
+  "dialog_transformers": {
+    "ovos-dialog-transformer-openai-plugin": {"rewrite_prompt": "reply in a cheerful tone"}
+  },
+  "tts_transformers": {
+    "ovos-tts-transformer-sox-plugin": {"pitch": 300}
+  }
+}
+```
+
+Enabling a dialog transformer server-side means the server deliberately
+synthesizes **different text than the client sent** — that's the tool for
+setting a tone/persona globally across every device using this server. See
+[docs/transformers.md](docs/transformers.md) for when to use server-side vs
+device-side transformers and how to avoid double-processing.
+
 ## HTTP API
 
 The native OVOS endpoints:
@@ -153,6 +177,7 @@ pytest test/ -v
 
 - [API compatibility reference](docs/api-compatibility.md) — every vendor prefix, endpoint, and SDK snippet
 - [Voice & language configuration](docs/configuration.md) — how requests map to the plugin
+- [Transformer pipelines](docs/transformers.md) — dialog/tts transformer plugins around synthesis
 - [Audio format conversion](docs/audio-formats.md) — `convert_audio()` and the `[audio]` extra
 - [Architecture overview](docs/index.md) — classes, entry points, request flow
 

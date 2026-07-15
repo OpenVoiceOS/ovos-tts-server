@@ -13,6 +13,7 @@ Two routers are exposed:
 
 Both routers expose identical behaviour; register either or both.
 """
+from starlette.concurrency import run_in_threadpool
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -68,7 +69,7 @@ def _register_marytts_routes(router: APIRouter, engine) -> None:
         if params.VOICE:
             synth_kwargs["voice"] = params.VOICE.replace("_", " ")
         try:
-            audio_path, _ = engine.synthesize(params.INPUT_TEXT, **synth_kwargs)
+            audio_path, _ = await run_in_threadpool(engine.synthesize, params.INPUT_TEXT, **synth_kwargs)
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

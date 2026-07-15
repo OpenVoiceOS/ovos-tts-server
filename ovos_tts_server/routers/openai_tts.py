@@ -1,5 +1,6 @@
 # Licensed under the Apache License, Version 2.0
 """OpenAI-compatible TTS endpoint."""
+from starlette.concurrency import run_in_threadpool
 from typing import Optional
 
 from fastapi import APIRouter, Header
@@ -67,7 +68,7 @@ def make_openai_tts_router(engine) -> APIRouter:
             Audio response in requested format.
         """
         # All OpenAI voice names map to plugin default — voice kwarg intentionally omitted
-        audio_path, _ = engine.synthesize(request.input)
+        audio_path, _ = await run_in_threadpool(engine.synthesize, request.input)
         audio_bytes, mime = convert_audio(audio_path, request.response_format)
         return Response(content=audio_bytes, media_type=mime)
 

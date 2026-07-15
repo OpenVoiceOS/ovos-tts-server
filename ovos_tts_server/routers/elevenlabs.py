@@ -1,5 +1,6 @@
 # Licensed under the Apache License, Version 2.0
 """ElevenLabs-compatible TTS endpoints."""
+from starlette.concurrency import run_in_threadpool
 from typing import List, Optional
 
 from fastapi import APIRouter, Header, Query
@@ -128,7 +129,7 @@ def make_elevenlabs_router(engine) -> APIRouter:
         if voice_id and voice_id != "default":
             synth_kwargs["voice"] = voice_id
 
-        audio_path, _ = engine.synthesize(request.text, **synth_kwargs)
+        audio_path, _ = await run_in_threadpool(engine.synthesize, request.text, **synth_kwargs)
         audio_bytes, mime = convert_audio(audio_path, fmt)
         return Response(content=audio_bytes, media_type=mime)
 

@@ -1,5 +1,6 @@
 # Licensed under the Apache License, Version 2.0
 """Deepgram Aura-compatible TTS endpoint."""
+from starlette.concurrency import run_in_threadpool
 from typing import Optional
 
 from fastapi import APIRouter, Header, Query
@@ -50,7 +51,7 @@ def make_deepgram_aura_router(engine) -> APIRouter:
         if model:
             synth_kwargs["voice"] = model
 
-        audio_path, _ = engine.synthesize(request.text, **synth_kwargs)
+        audio_path, _ = await run_in_threadpool(engine.synthesize, request.text, **synth_kwargs)
 
         fmt_map = {
             "linear16": "wav",

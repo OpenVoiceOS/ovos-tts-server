@@ -7,6 +7,7 @@ handshake plus the ``/api/v2/tts/stream`` synthesis endpoint. Point a stock
 ``pyht.Client`` at this server by overriding only its coordinates ``api_url``
 (see ``examples/playht_example.py``); no monkey-patching of SDK internals.
 """
+from starlette.concurrency import run_in_threadpool
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Union
 
@@ -132,7 +133,7 @@ def make_playht_router(engine) -> APIRouter:
         if request.voice:
             synth_kwargs["voice"] = request.voice
 
-        audio_path, _ = engine.synthesize(text, **synth_kwargs)
+        audio_path, _ = await run_in_threadpool(engine.synthesize, text, **synth_kwargs)
 
         fmt = _FORMAT_MAP.get(request.output_format, request.output_format)
         audio_bytes, mime = convert_audio(audio_path, fmt)

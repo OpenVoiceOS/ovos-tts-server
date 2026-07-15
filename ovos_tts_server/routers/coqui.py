@@ -1,5 +1,6 @@
 # Licensed under the Apache License, Version 2.0
 """Coqui TTS-compatible endpoint."""
+from starlette.concurrency import run_in_threadpool
 from typing import Optional
 
 from fastapi import APIRouter, Query
@@ -39,7 +40,7 @@ def make_coqui_router(engine) -> APIRouter:
         if language_id:
             synth_kwargs["lang"] = language_id
 
-        audio_path, _ = engine.synthesize(text, **synth_kwargs)
+        audio_path, _ = await run_in_threadpool(engine.synthesize, text, **synth_kwargs)
         with open(audio_path, "rb") as f:
             audio_bytes = f.read()
         return Response(content=audio_bytes, media_type="audio/wav")

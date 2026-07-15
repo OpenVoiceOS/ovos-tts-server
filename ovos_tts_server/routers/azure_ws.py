@@ -40,6 +40,7 @@ References:
 - https://learn.microsoft.com/en-us/azure/ai-services/speech-service/websockets
 - https://github.com/Azure-Samples/cognitive-services-speech-sdk
 """
+from starlette.concurrency import run_in_threadpool
 from __future__ import annotations
 
 import datetime
@@ -185,7 +186,7 @@ def make_azure_ws_router(engine) -> APIRouter:
                 if path == "ssml":
                     ssml = str(body)
                     utterance, synth_kwargs = _extract_synth_args(ssml)
-                    wav_path, _ = engine.synthesize(utterance, **synth_kwargs)
+                    wav_path, _ = await run_in_threadpool(engine.synthesize, utterance, **synth_kwargs)
                     audio_bytes, mime = convert_audio(wav_path, output_format)
 
                     # turn.start

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.14.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.0a1) (2026-07-17)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.6a1...1.14.0a1)
+
+**Merged pull requests:**
+
+- feat: dialog and tts transformer pipelines [\#139](https://github.com/OpenVoiceOS/ovos-tts-server/pull/139) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.13.6a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.6a1) (2026-07-15)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.5a1...1.13.6a1)

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.14.0a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.0a2) (2026-08-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.0a1...1.14.0a2)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#144](https://github.com/OpenVoiceOS/ovos-tts-server/pull/144) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.14.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.0a1) (2026-07-17)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.6a1...1.14.0a1)

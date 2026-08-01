@@ -4,12 +4,12 @@
 [![Python](https://img.shields.io/pypi/pyversions/ovos-tts-server)](https://pypi.org/project/ovos-tts-server/)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE.md)
 
-Turn **any** [OVOS TTS plugin](https://github.com/OpenVoiceOS) into a microservice — a small, stateless [FastAPI](https://fastapi.tiangolo.com/) app that exposes text-to-speech over HTTP.
+`ovos-tts-server` turns any [OVOS TTS plugin](https://github.com/OpenVoiceOS) into a microservice. It is a small, stateless [FastAPI](https://fastapi.tiangolo.com/) app that exposes text-to-speech over HTTP.
 
-- 🔌 **Plugin-agnostic** — serve Piper, Coqui, Azure, or any OVOS TTS plugin behind one consistent HTTP API.
-- 🧩 **Drop-in cloud-API compatibility** — speak the ElevenLabs, OpenAI, Coqui, Google, Amazon Polly, Azure, MaryTTS, Cartesia, Deepgram Aura, and PlayHT APIs so existing clients and SDKs work unmodified (see [API compatibility](docs/api-compatibility.md)).
-- 🪶 **Stateless & tiny** — each request loads nothing extra; ideal for containers and horizontal scaling.
-- 🎛️ **Format conversion** — return WAV out of the box, or mp3/ogg/flac/… with the optional `[audio]` extra.
+- **Plugin-agnostic.** Serve Piper, Coqui, Azure, or any OVOS TTS plugin behind one HTTP API.
+- **Cloud-API compatibility.** The server also speaks the ElevenLabs, OpenAI, Coqui, Google, Amazon Polly, Azure, MaryTTS, Cartesia, Deepgram Aura, and PlayHT APIs, so existing clients and SDKs work unmodified. See [API compatibility](docs/api-compatibility.md).
+- **Stateless.** Each request loads nothing extra. This suits containers and horizontal scaling.
+- **Format conversion.** The server returns WAV by default, or mp3/ogg/flac/... with the optional `[audio]` extra.
 
 ---
 
@@ -18,11 +18,11 @@ Turn **any** [OVOS TTS plugin](https://github.com/OpenVoiceOS) into a microservi
 ```bash
 pip install ovos-tts-server
 
-# Optional: enable non-WAV output (mp3, ogg, flac, …) via pydub
+# Optional: enable non-WAV output (mp3, ogg, flac, ...) via pydub
 pip install "ovos-tts-server[audio]"
 ```
 
-You also need at least one TTS plugin, e.g. [Piper](https://github.com/OpenVoiceOS/ovos-tts-plugin-piper):
+You also need at least one TTS plugin, for example [Piper](https://github.com/OpenVoiceOS/ovos-tts-plugin-piper):
 
 ```bash
 pip install ovos-tts-plugin-piper
@@ -46,7 +46,7 @@ ovos-tts-server [-h] [--engine ENGINE] [--port PORT] [--host HOST] [--cache] [--
 
 | Option | Default | Description |
 | :--- | :--- | :--- |
-| `--engine ENGINE` | — | TTS plugin to load (e.g. `ovos-tts-plugin-piper`) |
+| `--engine ENGINE` | none | TTS plugin to load (for example `ovos-tts-plugin-piper`) |
 | `--port PORT` | `9666` | Port to bind |
 | `--host HOST` | `0.0.0.0` | Host/interface to bind |
 | `--cache` | off | Persist every synth to disk (cache across requests) |
@@ -54,7 +54,7 @@ ovos-tts-server [-h] [--engine ENGINE] [--port PORT] [--host HOST] [--cache] [--
 
 ## Configuration
 
-The plugin is configured exactly as it would be inside the assistant — through `mycroft.conf`:
+The plugin is configured exactly as it would be inside the assistant, through `mycroft.conf`:
 
 ```json
 {
@@ -71,10 +71,7 @@ See [docs/configuration.md](docs/configuration.md) for how voice and language fl
 
 ### Transformer pipelines
 
-The server can run OVOS transformer plugins around synthesis, on every
-endpoint (native, vendor-compat, websocket, MCP/UTCP): **dialog
-transformers** rewrite the text before synthesis and **tts transformers**
-post-process the audio. Opt-in via the standard mycroft.conf sections:
+The server can run OVOS transformer plugins around synthesis, on every endpoint (native, vendor-compat, websocket, MCP/UTCP). **Dialog transformers** rewrite the text before synthesis, and **tts transformers** post-process the audio. Enable them with the standard mycroft.conf sections:
 
 ```json
 {
@@ -87,11 +84,7 @@ post-process the audio. Opt-in via the standard mycroft.conf sections:
 }
 ```
 
-Enabling a dialog transformer server-side means the server deliberately
-synthesizes **different text than the client sent** — that's the tool for
-setting a tone/persona globally across every device using this server. See
-[docs/transformers.md](docs/transformers.md) for when to use server-side vs
-device-side transformers and how to avoid double-processing.
+Enabling a dialog transformer server-side means the server deliberately synthesizes different text than the client sent. Use it to set a tone or persona globally, across every device using this server. See [docs/transformers.md](docs/transformers.md) for when to use server-side or device-side transformers, and how to avoid processing the text twice.
 
 ## HTTP API
 
@@ -100,10 +93,10 @@ The native OVOS endpoints:
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | GET | `/status` | Plugin name, supported languages, default voice/model |
-| GET | `/v2/synthesize?utterance=<text>[&lang=…][&voice=…]` | Primary synthesis endpoint — returns a WAV file |
+| GET | `/v2/synthesize?utterance=<text>[&lang=...][&voice=...]` | Primary synthesis endpoint. Returns a WAV file |
 | GET | `/synthesize/<utterance>` | Legacy path-based synthesis endpoint |
 
-Any extra query parameters on the synthesis endpoints are forwarded to the plugin as synthesis options. CORS is enabled for all origins.
+The server forwards any extra query parameter on the synthesis endpoints to the plugin as a synthesis option. CORS is enabled for all origins.
 
 ```bash
 curl http://localhost:9666/status
@@ -112,7 +105,7 @@ curl http://localhost:9666/status
 
 ### Third-party API compatibility
 
-The server can **additionally** expose the same plugin behind drop-in compatibility endpoints for popular cloud TTS APIs. Each vendor lives under its own URL prefix, so every compat layer is active at once with no path collisions. Auth tokens / API keys are accepted and silently ignored — put real auth in a reverse proxy if you need it.
+The server can also expose the same plugin behind drop-in compatibility endpoints for popular cloud TTS APIs. Each vendor lives under its own URL prefix, so every compat layer stays active at once with no path collisions. The server accepts auth tokens and API keys but ignores them silently; put real auth in a reverse proxy if you need it.
 
 | Vendor | Prefix | Key endpoint |
 | :--- | :--- | :--- |
@@ -122,14 +115,14 @@ The server can **additionally** expose the same plugin behind drop-in compatibil
 | Google Cloud TTS | `/google-tts` | `POST /v1/text:synthesize` |
 | Amazon Polly | `/amazon-polly` | `POST /v1/speech` |
 | Azure TTS | `/azure-tts` | `POST /cognitiveservices/v1` |
-| MaryTTS | `/marytts` | `GET/POST /process` (+ root aliases) |
+| MaryTTS | `/marytts` | `GET/POST /process` (plus root aliases) |
 | Cartesia | `/cartesia` | `POST /tts/bytes` |
-| Deepgram Aura | `/deepgram` | `POST /v1/speak?model=…` |
-| PlayHT | `/playht` | `POST /api/v2/tts/stream` (+ `pyht` SDK auth) |
+| Deepgram Aura | `/deepgram` | `POST /v1/speak?model=...` |
+| PlayHT | `/playht` | `POST /api/v2/tts/stream` (plus `pyht` SDK auth) |
 
-> **Kokoro / kokoro-fastapi** clients are OpenAI-compatible and need no dedicated prefix — point them at `/openai/v1/audio/speech`.
+**Kokoro / kokoro-fastapi** clients are OpenAI-compatible and need no dedicated prefix. Point them at `/openai/v1/audio/speech`.
 
-Most official SDKs accept a custom base URL; point them at `http://<host>:9666/<prefix>` and they work unmodified. See **[docs/api-compatibility.md](docs/api-compatibility.md)** for per-vendor endpoints, parameters, SDK snippets, and curl examples.
+Most official SDKs accept a custom base URL. Point them at `http://<host>:9666/<prefix>` and they work unmodified. See [docs/api-compatibility.md](docs/api-compatibility.md) for per-vendor endpoints, parameters, SDK snippets, and curl examples.
 
 ## Python API
 
@@ -137,7 +130,7 @@ Most official SDKs accept a custom base URL; point them at `http://<host>:9666/<
 from ovos_tts_server import start_tts_server
 
 app, engine = start_tts_server("ovos-tts-plugin-piper", cache=False)
-# `app` is a FastAPI instance — mount it, test it, or run it with uvicorn
+# `app` is a FastAPI instance: mount it, test it, or run it with uvicorn
 ```
 
 `create_app(tts_engine)` is also available if you want to build and inject the `TTSEngineWrapper` yourself.
@@ -160,11 +153,11 @@ docker run -p 8080:9666 my_ovos_tts_plugin
 curl "http://localhost:8080/v2/synthesize?utterance=hello" -o hello.wav
 ```
 
-Each plugin can ship its own Dockerfile in its repository using `ovos-tts-server`.
+Each plugin can ship its own Dockerfile in its repository, using `ovos-tts-server`.
 
 ## Companion plugin
 
-Consume this server from a voice assistant via the [companion TTS plugin](https://github.com/OpenVoiceOS/ovos-tts-server-plugin).
+Consume this server from a voice assistant with the [companion TTS plugin](https://github.com/OpenVoiceOS/ovos-tts-server-plugin).
 
 ## Development
 
@@ -175,24 +168,21 @@ pytest test/ -v
 
 ## Documentation
 
-- [API compatibility reference](docs/api-compatibility.md) — every vendor prefix, endpoint, and SDK snippet
-- [Voice & language configuration](docs/configuration.md) — how requests map to the plugin
-- [Transformer pipelines](docs/transformers.md) — dialog/tts transformer plugins around synthesis
-- [Audio format conversion](docs/audio-formats.md) — `convert_audio()` and the `[audio]` extra
-- [Architecture overview](docs/index.md) — classes, entry points, request flow
+- [API compatibility reference](docs/api-compatibility.md): every vendor prefix, endpoint, and SDK snippet
+- [Voice & language configuration](docs/configuration.md): how requests map to the plugin
+- [Transformer pipelines](docs/transformers.md): dialog/tts transformer plugins around synthesis
+- [Audio format conversion](docs/audio-formats.md): `convert_audio()` and the `[audio]` extra
+- [Architecture overview](docs/index.md): classes, entry points, request flow
 
 ---
 
-## Agent Integration
+## Agent integration
 
-### UTCP — Universal Tool Calling Protocol
+### UTCP: Universal Tool Calling Protocol
 
-The server exposes a **UTCP manual** at `GET /utcp`.  Any UTCP-aware agent
-(e.g. [ovos-tool-adapters](https://github.com/OpenVoiceOS/ovos-tool-adapters)
-`UTCPToolBox`) can point at this URL and auto-discover every synthesis endpoint
-without additional configuration.
+The server exposes a UTCP manual at `GET /utcp`. Any UTCP-aware agent, for example [ovos-tool-adapters](https://github.com/OpenVoiceOS/ovos-tool-adapters)' `UTCPToolBox`, can point at this URL and auto-discover every synthesis endpoint without extra configuration.
 
-No extra dependencies are needed — `GET /utcp` is always available.
+`GET /utcp` needs no extra dependencies. It is always available.
 
 **Example response (abbreviated):**
 ```json
@@ -239,11 +229,9 @@ No extra dependencies are needed — `GET /utcp` is always available.
 
 ---
 
-### MCP — Model Context Protocol
+### MCP: Model Context Protocol
 
-The server can optionally expose a **FastMCP server** mounted at `/mcp`,
-providing a `synthesize` tool callable by any MCP-compatible agent (Claude
-Desktop, Claude Code, etc.).
+The server can optionally expose a FastMCP server mounted at `/mcp`, providing a `synthesize` tool callable by any MCP-compatible agent (Claude Desktop, Claude Code, and others).
 
 **Install the extra:**
 ```bash
@@ -261,8 +249,7 @@ from ovos_tts_server import start_tts_server
 app, engine = start_tts_server("ovos-tts-plugin-piper", enable_mcp=True)
 ```
 
-The MCP server uses **streamable HTTP transport** (SSE-compatible) and is
-mounted alongside the existing FastAPI app — no separate process needed.
+The MCP server uses streamable HTTP transport (SSE-compatible) and mounts alongside the existing FastAPI app. No separate process is needed.
 
 **Claude Desktop `claude_desktop_config.json` example:**
 ```json
@@ -282,7 +269,7 @@ mounted alongside the existing FastAPI app — no separate process needed.
 |-----------|--------|----------|--------------------------------------|
 | `text`    | string | yes      | Text to synthesize                   |
 | `voice`   | string | no       | Voice/speaker identifier             |
-| `lang`    | string | no       | BCP-47 language code (e.g. `en-us`)  |
+| `lang`    | string | no       | BCP-47 language code (for example `en-us`) |
 
 Returns a JSON object:
 ```json
@@ -298,8 +285,7 @@ Returns a JSON object:
 
 ## Credits
 
-Developed by [TigreGótico](https://tigregotico.pt) for
-[OpenVoiceOS](https://openvoiceos.org).
+Developed by [TigreGótico](https://tigregotico.pt) for [OpenVoiceOS](https://openvoiceos.org).
 
 [![NGI0 Commons Fund](./ngi.png)](https://nlnet.nl/project/OpenVoiceOS)
 

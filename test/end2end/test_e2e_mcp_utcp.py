@@ -138,7 +138,7 @@ def mcp_server():
 
     stub = _StubTTSEngine()
     mcp = _build_mcp(stub)
-    mcp_app = mcp.streamable_http_app()
+    mcp_app = mcp.http_app(transport="streamable-http")
     try:
         base_url, server, thread = _start_server(mcp_app, health_path="/mcp")
     except RuntimeError as exc:

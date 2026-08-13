@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.14.1a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.1a2) (2026-08-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.1a1...1.14.1a2)
+
+**Merged pull requests:**
+
+- refactor: migrate MCP server to the fastmcp package [\#146](https://github.com/OpenVoiceOS/ovos-tts-server/pull/146) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.14.1a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.1a1) (2026-08-13)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.0a2...1.14.1a1)

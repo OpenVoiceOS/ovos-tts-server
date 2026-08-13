@@ -34,6 +34,8 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from starlette.concurrency import run_in_threadpool
+
 if TYPE_CHECKING:
     from fastapi import FastAPI
     from ovos_tts_server import TTSEngineWrapper
@@ -67,7 +69,7 @@ def _build_mcp(engine: "TTSEngineWrapper"):
             "Returns base64-encoded WAV audio with MIME type audio/wav."
         ),
     )
-    def synthesize(
+    async def synthesize(
         text: str,
         voice: Optional[str] = None,
         lang: Optional[str] = None,
@@ -95,10 +97,13 @@ def _build_mcp(engine: "TTSEngineWrapper"):
         if lang:
             kwargs["lang"] = lang
 
-        audio_path, phonemes = engine.synthesize(text, **kwargs)
+        audio_path, phonemes = await run_in_threadpool(engine.synthesize, text, **kwargs)
 
-        with open(audio_path, "rb") as fh:
-            audio_bytes = fh.read()
+        def _read_audio() -> bytes:
+            with open(audio_path, "rb") as fh:
+                return fh.read()
+
+        audio_bytes = await run_in_threadpool(_read_audio)
 
         return {
             "mime_type": "audio/wav",

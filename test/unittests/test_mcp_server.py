@@ -4,6 +4,7 @@
 The ``mcp`` package is mocked throughout so these tests run without it
 being installed.
 """
+import asyncio
 import base64
 import sys
 import types
@@ -124,7 +125,7 @@ class TestBuildMcp:
     def test_synthesize_returns_expected_keys(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello world")
+        result = asyncio.run(tools["synthesize"](text="hello world"))
         assert "mime_type" in result
         assert "data" in result
         assert "path" in result
@@ -133,39 +134,39 @@ class TestBuildMcp:
     def test_synthesize_mime_type_is_wav(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello")
+        result = asyncio.run(tools["synthesize"](text="hello"))
         assert result["mime_type"] == "audio/wav"
 
     def test_synthesize_data_is_valid_base64(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello")
+        result = asyncio.run(tools["synthesize"](text="hello"))
         decoded = base64.b64decode(result["data"])
         assert len(decoded) > 0
 
     def test_synthesize_with_voice_param(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello", voice="voice1")
+        result = asyncio.run(tools["synthesize"](text="hello", voice="voice1"))
         assert result["mime_type"] == "audio/wav"
 
     def test_synthesize_with_lang_param(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello", lang="de-de")
+        result = asyncio.run(tools["synthesize"](text="hello", lang="de-de"))
         assert result["mime_type"] == "audio/wav"
 
     def test_synthesize_empty_text_raises(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
         with pytest.raises(ValueError, match="non-empty"):
-            tools["synthesize"](text="")
+            asyncio.run(tools["synthesize"](text=""))
 
     def test_synthesize_whitespace_text_raises(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
         with pytest.raises(ValueError, match="non-empty"):
-            tools["synthesize"](text="   ")
+            asyncio.run(tools["synthesize"](text="   "))
 
     def test_build_raises_import_error_when_mcp_missing(self, engine):
         """_build_mcp should raise ImportError when mcp is not installed."""
@@ -274,7 +275,7 @@ class TestSynthesizeEdgeCases:
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
         long_text = "word " * 2000
-        result = tools["synthesize"](text=long_text)
+        result = asyncio.run(tools["synthesize"](text=long_text))
         assert result["mime_type"] == "audio/wav"
         decoded = base64.b64decode(result["data"])
         assert len(decoded) > 0
@@ -283,7 +284,7 @@ class TestSynthesizeEdgeCases:
         """Decoded base64 data must start with the RIFF WAV magic bytes."""
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="check wav header")
+        result = asyncio.run(tools["synthesize"](text="check wav header"))
         decoded = base64.b64decode(result["data"])
         assert decoded[:4] == b"RIFF", (
             f"Expected WAV RIFF header, got: {decoded[:4]!r}"
@@ -293,27 +294,27 @@ class TestSynthesizeEdgeCases:
         """Passing an unknown voice should not raise — FakeEngine ignores extra kwargs."""
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello", voice="nonexistent-voice")
+        result = asyncio.run(tools["synthesize"](text="hello", voice="nonexistent-voice"))
         assert result["mime_type"] == "audio/wav"
 
     def test_unknown_lang_forwarded_to_engine(self, engine, fake_mcp_modules):
         """Passing an unknown lang should not raise — FakeEngine ignores extra kwargs."""
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello", lang="xx-yy")
+        result = asyncio.run(tools["synthesize"](text="hello", lang="xx-yy"))
         assert result["mime_type"] == "audio/wav"
 
     def test_phonemes_field_is_none_when_engine_returns_none(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="phoneme check")
+        result = asyncio.run(tools["synthesize"](text="phoneme check"))
         assert result["phonemes"] is None
 
     def test_path_field_points_to_existing_file(self, engine, fake_mcp_modules):
         import os
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="path check")
+        result = asyncio.run(tools["synthesize"](text="path check"))
         assert os.path.isfile(result["path"]), f"Expected file at {result['path']!r}"
 
 

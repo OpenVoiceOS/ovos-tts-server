@@ -1,7 +1,7 @@
 # Licensed under the Apache License, Version 2.0
 """Unit tests for the optional MCP server module.
 
-The ``mcp`` package is mocked throughout so these tests run without it
+The ``fastmcp`` package is mocked throughout so these tests run without it
 being installed.
 """
 import asyncio
@@ -40,17 +40,20 @@ class FakeEngine:
 
 
 # ---------------------------------------------------------------------------
-# Fake mcp module
+# Fake fastmcp module
 # ---------------------------------------------------------------------------
 
 def _make_fake_mcp_module():
-    """Build a minimal sys.modules stub for the ``mcp`` package.
+    """Build a minimal sys.modules stub for the ``fastmcp`` package.
 
-    We need ``mcp.server.fastmcp.FastMCP`` to behave like the real thing:
+    We need ``fastmcp.FastMCP`` to behave like the real thing:
     - accepts ``name`` and ``instructions`` kwargs
     - exposes a ``.tool()`` decorator that registers callables
-    - exposes an ``.asgi_app()`` method that returns an ASGI app stub
+    - exposes an ``.http_app()`` method that returns a minimal ASGI app
+      stub with a ``.lifespan`` async context manager, so app.mount() and
+      the lifespan-chaining logic in mount_mcp() both succeed.
     """
+    from contextlib import asynccontextmanager
 
     registered_tools = {}
 
@@ -68,22 +71,24 @@ def _make_fake_mcp_module():
                 return fn
             return decorator
 
-        def asgi_app(self):
-            """Return a minimal ASGI callable so app.mount() succeeds."""
+        def http_app(self, path="/", transport="streamable-http"):
+            """Return a minimal ASGI app stub so app.mount() succeeds."""
             async def _asgi(scope, receive, send):  # pragma: no cover
                 pass
+
+            @asynccontextmanager
+            async def _lifespan(_app):
+                yield
+
+            _asgi.lifespan = _lifespan
+            _asgi.routes = []
             return _asgi
 
     # Build fake module tree
-    mcp_mod = types.ModuleType("mcp")
-    server_mod = types.ModuleType("mcp.server")
-    fastmcp_mod = types.ModuleType("mcp.server.fastmcp")
+    fastmcp_mod = types.ModuleType("fastmcp")
     fastmcp_mod.FastMCP = _FakeFastMCP
 
-    mcp_mod.server = server_mod
-    server_mod.fastmcp = fastmcp_mod
-
-    return mcp_mod, server_mod, fastmcp_mod, registered_tools
+    return fastmcp_mod, registered_tools
 
 
 # ---------------------------------------------------------------------------
@@ -97,11 +102,9 @@ def engine():
 
 @pytest.fixture()
 def fake_mcp_modules():
-    mcp_mod, server_mod, fastmcp_mod, tools = _make_fake_mcp_module()
+    fastmcp_mod, tools = _make_fake_mcp_module()
     with patch.dict(sys.modules, {
-        "mcp": mcp_mod,
-        "mcp.server": server_mod,
-        "mcp.server.fastmcp": fastmcp_mod,
+        "fastmcp": fastmcp_mod,
     }):
         # Re-import the module under test so it picks up the fake mcp
         import importlib
@@ -170,7 +173,7 @@ class TestBuildMcp:
 
     def test_build_raises_import_error_when_mcp_missing(self, engine):
         """_build_mcp should raise ImportError when mcp is not installed."""
-        with patch.dict(sys.modules, {"mcp": None, "mcp.server": None, "mcp.server.fastmcp": None}):
+        with patch.dict(sys.modules, {"fastmcp": None}):
             import importlib
             import ovos_tts_server.mcp_server as mcp_server_mod
             importlib.reload(mcp_server_mod)
@@ -216,7 +219,7 @@ class TestMountMcp:
 
     def test_mount_mcp_no_op_when_mcp_missing(self, engine):
         """mount_mcp should not raise when mcp is not installed."""
-        with patch.dict(sys.modules, {"mcp": None, "mcp.server": None, "mcp.server.fastmcp": None}):
+        with patch.dict(sys.modules, {"fastmcp": None}):
             import importlib
             import ovos_tts_server.mcp_server as mcp_server_mod
             importlib.reload(mcp_server_mod)

@@ -44,13 +44,13 @@ if TYPE_CHECKING:
 def _build_mcp(engine: "TTSEngineWrapper"):
     """Build and return a FastMCP instance wired to *engine*.
 
-    Raises ImportError if the ``mcp`` package is not installed.
+    Raises ImportError if the ``fastmcp`` package is not installed.
     """
     try:
-        from mcp.server.fastmcp import FastMCP
+        from fastmcp import FastMCP
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
-            "MCP support requires the 'mcp' package: "
+            "MCP support requires the 'fastmcp' package: "
             "pip install \"ovos-tts-server[mcp]\""
         ) from exc
 
@@ -118,8 +118,9 @@ def _build_mcp(engine: "TTSEngineWrapper"):
 def mount_mcp(app: "FastAPI", engine: "TTSEngineWrapper", path: str = "/mcp") -> None:
     """Mount the FastMCP ASGI app onto *app* at *path*.
 
-    This is a no-op (with a logged warning) when the ``mcp`` package is not
-    installed, so servers that omit the ``[mcp]`` extra still start cleanly.
+    This is a no-op (with a logged warning) when the ``fastmcp`` package is
+    not installed, so servers that omit the ``[mcp]`` extra still start
+    cleanly.
 
     Args:
         app: The FastAPI application to mount onto.
@@ -129,10 +130,10 @@ def mount_mcp(app: "FastAPI", engine: "TTSEngineWrapper", path: str = "/mcp") ->
     try:
         mcp = _build_mcp(engine)
         # Serve the MCP streamable-HTTP transport at the mount root so the
-        # endpoint is exactly *path* (FastMCP defaults to an internal /mcp
+        # endpoint is exactly *path* (fastmcp defaults to an internal /mcp
         # sub-path, which would yield /mcp/mcp when mounted).
-        mcp.settings.streamable_http_path = "/"
-        app.mount(path, mcp.streamable_http_app())
+        mcp_app = mcp.http_app(path="/", transport="streamable-http")
+        app.mount(path, mcp_app)
 
         # Starlette does not propagate lifespan events to mounted sub-apps,
         # and the streamable transport requires its session manager running.
@@ -142,7 +143,7 @@ def mount_mcp(app: "FastAPI", engine: "TTSEngineWrapper", path: str = "/mcp") ->
         @asynccontextmanager
         async def _lifespan_with_mcp(host_app):
             async with _original_lifespan(host_app):
-                async with mcp.session_manager.run():
+                async with mcp_app.lifespan(mcp_app):
                     yield
 
         app.router.lifespan_context = _lifespan_with_mcp

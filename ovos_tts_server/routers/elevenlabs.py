@@ -48,6 +48,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from fastapi import APIRouter, Header, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
 from ovos_tts_server.audio_utils import _ensure_wav, convert_audio
 
@@ -389,8 +390,8 @@ def make_elevenlabs_router(engine) -> APIRouter:
             buffer.clear()
             if not text:
                 return
-            audio_path, _ = engine.synthesize(text, **synth_kwargs)
-            audio_bytes, _mime = encode_audio(audio_path, output_format)
+            audio_path, _ = await run_in_threadpool(engine.synthesize, text, **synth_kwargs)
+            audio_bytes, _mime = await run_in_threadpool(encode_audio, audio_path, output_format)
             for start in range(0, len(audio_bytes), AUDIO_CHUNK_SIZE):
                 chunk = audio_bytes[start:start + AUDIO_CHUNK_SIZE]
                 await websocket.send_json(_audio_frame(

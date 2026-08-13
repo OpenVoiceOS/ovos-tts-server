@@ -188,7 +188,7 @@ def make_azure_ws_router(engine) -> APIRouter:
                     ssml = str(body)
                     utterance, synth_kwargs = _extract_synth_args(ssml)
                     wav_path, _ = await run_in_threadpool(engine.synthesize, utterance, **synth_kwargs)
-                    audio_bytes, mime = convert_audio(wav_path, output_format)
+                    audio_bytes, mime = await run_in_threadpool(convert_audio, wav_path, output_format)
 
                     # turn.start
                     await websocket.send_text(_build_text(

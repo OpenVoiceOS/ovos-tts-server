@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.14.1a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.1a1) (2026-08-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.0a2...1.14.1a1)
+
+**Merged pull requests:**
+
+- fix: run blocking synth off the event loop in elevenlabs websocket stream [\#147](https://github.com/OpenVoiceOS/ovos-tts-server/pull/147) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.14.0a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.0a2) (2026-08-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.0a1...1.14.0a2)

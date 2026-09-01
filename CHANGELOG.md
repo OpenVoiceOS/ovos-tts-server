@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.0a1) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.1a2...1.15.0a1)
+
+**Merged pull requests:**
+
+- feat: Docker Compose proxy default and custom-container docs [\#101](https://github.com/OpenVoiceOS/ovos-tts-server/pull/101) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.14.1a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.1a2) (2026-08-13)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.1a1...1.14.1a2)

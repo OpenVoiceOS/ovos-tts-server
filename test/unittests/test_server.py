@@ -4,6 +4,7 @@
 Uses a lightweight FakeEngine that mimics TTSEngineWrapper so the tests
 exercise routes and parameter wiring without loading any OVOS TTS plugin.
 """
+import asyncio
 import tempfile
 import wave
 from typing import List, Optional, Tuple
@@ -119,6 +120,47 @@ class TestV2Synthesize:
         assert "utterance" not in kwargs
         assert kwargs["voice"] == "v1"
         assert kwargs["lang"] == "en-us"
+
+
+class LoopDrivingEngine(FakeEngine):
+    """Mimics a plugin using opm's base streaming ``get_tts``.
+
+    opm's ``TTS.get_tts`` wraps async streaming synthesis into sync usage by
+    calling ``asyncio.new_event_loop().run_until_complete(...)``. Python raises
+    ``RuntimeError: Cannot run the event loop while another loop is running``
+    whenever that runs on a thread that already has a running loop — which is
+    exactly what happens if an ``async def`` endpoint calls ``synthesize``
+    directly on the request event loop. Running the blocking call in a worker
+    thread (run_in_threadpool) is what keeps this working.
+    """
+
+    def synthesize(self, utterance: str, **kwargs) -> Tuple[str, Optional[str]]:
+        async def _gen():
+            return None
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(_gen())
+        finally:
+            loop.close()
+        return super().synthesize(utterance, **kwargs)
+
+
+class TestNestedEventLoopRegression:
+    """Guards against the nested-loop 500 on the async /synthesize endpoints."""
+
+    @pytest.fixture
+    def client(self) -> TestClient:
+        return TestClient(create_app(LoopDrivingEngine()))
+
+    def test_legacy_synthesize_survives_loop_driving_plugin(self, client):
+        r = client.get("/synthesize/hello")
+        assert r.status_code == 200
+
+    def test_v2_synthesize_survives_loop_driving_plugin(self, client):
+        r = client.get("/v2/synthesize", params={"utterance": "hello"})
+        assert r.status_code == 200
 
 
 class TestCORS:

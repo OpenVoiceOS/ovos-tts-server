@@ -1,7 +1,13 @@
+import os
+import shutil
+import tempfile
 from typing import Optional, Tuple
 from fastapi import FastAPI, Request, Response
+from starlette.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from ovos_plugin_manager.transformer_services import (DialogTransformersService,
+                                                      TTSTransformersService)
 from ovos_plugin_manager.tts import load_tts_plugin
 from ovos_config import Configuration
 
@@ -32,6 +38,13 @@ class TTSEngineWrapper:
         self.engine.log_timestamps = True
         self.plugin_name = plugin_name
         self.lang = config.get("lang") or Configuration().get("lang") or "mul"
+        # transformer pipelines: config-gated and opt-in, a plugin only
+        # loads if named in the mycroft.conf "dialog_transformers" /
+        # "tts_transformers" sections
+        self.dialog_transformers = DialogTransformersService(
+            config=Configuration().get("dialog_transformers") or {})
+        self.tts_transformers = TTSTransformersService(
+            config=Configuration().get("tts_transformers") or {})
 
     @property
     def langs(self):
@@ -64,9 +77,29 @@ class TTSEngineWrapper:
         Returns:
         	tuple (str, Optional[str]): `(audio_path, phonemes)` where `audio_path` is the file path to the generated audio and `phonemes` is the phoneme data produced by the engine, or `None` if not available.
         """
+        if self.dialog_transformers.plugins:
+            utterance, _ = self.dialog_transformers.transform(
+                utterance, {"lang": kwargs.get("lang") or self.lang})
         utterance = self.engine.validate_ssml(utterance)
         audio, phonemes = self.engine.synth(utterance, **kwargs)
-        return audio.path, phonemes
+        audio_path = audio.path
+        if self.tts_transformers.plugins:
+            audio_path = self._apply_tts_transformers(audio_path)
+        return audio_path, phonemes
+
+    def _apply_tts_transformers(self, audio_path: str) -> str:
+        """Run the TTS transformer chain on a copy of the synthesized file.
+
+        The engine returns a path into its cache; transforming a copy keeps
+        cached audio pristine so later requests are not served already
+        transformed (or repeatedly re-transformed) files.
+        """
+        ext = os.path.splitext(audio_path)[1] or ".wav"
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as f:
+            tmp_path = f.name
+        shutil.copy(audio_path, tmp_path)
+        transformed, _ = self.tts_transformers.transform(tmp_path)
+        return transformed
 
 
 def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
@@ -119,7 +152,11 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         Returns:
             FileResponse: A response serving the synthesized audio file.
         """
-        audio_path, _ = tts_engine.synthesize(utterance, **request.query_params)
+        # synthesize is blocking and (for streaming plugins) drives its own event
+        # loop via run_until_complete; run it in a worker thread so it never nests
+        # inside this async handler's running loop.
+        audio_path, _ = await run_in_threadpool(
+            tts_engine.synthesize, utterance, **request.query_params)
         return FileResponse(audio_path)
 
     @app.get("/v2/synthesize")
@@ -140,7 +177,8 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         # Pass all plugin-specific options
         plugin_params = dict(request.query_params)
         plugin_params.pop("utterance", None)  # Remove the utterance key
-        audio_path, _ = tts_engine.synthesize(utterance, **plugin_params)
+        audio_path, _ = await run_in_threadpool(
+            tts_engine.synthesize, utterance, **plugin_params)
         return FileResponse(audio_path)
 
     from ovos_tts_server.routers.elevenlabs import make_elevenlabs_router

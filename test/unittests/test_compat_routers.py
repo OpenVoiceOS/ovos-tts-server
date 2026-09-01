@@ -392,3 +392,61 @@ class TestPlayHTRouter:
             assert "http_streaming_url" in body[model]
             assert "stream" in body[model]["http_streaming_url"]
             assert "websocket_url" in body[model]
+
+
+class TestElevenLabsPcmNonWavSource:
+    """The PCM output path must transcode non-WAV plugin output before decoding."""
+
+    def _write_non_riff(self) -> str:
+        tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+        tmp.write(b"ID3\x03\x00\x00\x00\x00\x00\x00not-a-wav-payload")
+        tmp.close()
+        return tmp.name
+
+    def _fake_pydub(self):
+        import sys as _sys
+
+        class FakeAudio:
+            @classmethod
+            def from_file(cls, path):
+                return cls()
+
+            def export(self, out, format):
+                with wave.open(out, "w") as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(16000)
+                    wf.writeframes(b"\x00\x01" * 1600)
+
+        mod = type(_sys)("pydub")
+        mod.AudioSegment = FakeAudio
+        return mod
+
+    def test_pcm_output_handles_mp3_source(self, monkeypatch):
+        import sys as _sys
+
+        from ovos_tts_server.routers.elevenlabs import encode_audio
+
+        monkeypatch.setitem(_sys.modules, "pydub", self._fake_pydub())
+        src = self._write_non_riff()
+        try:
+            data, mime = encode_audio(src, "pcm_24000")
+            assert mime == "audio/pcm"
+            assert isinstance(data, (bytes, bytearray))
+            assert len(data) > 0
+        finally:
+            os.remove(src)
+
+    def test_read_samples_handles_mp3_source(self, monkeypatch):
+        import sys as _sys
+
+        from ovos_tts_server.routers.elevenlabs import _read_samples
+
+        monkeypatch.setitem(_sys.modules, "pydub", self._fake_pydub())
+        src = self._write_non_riff()
+        try:
+            samples, rate = _read_samples(src)
+            assert rate == 16000
+            assert len(samples) == 1600
+        finally:
+            os.remove(src)

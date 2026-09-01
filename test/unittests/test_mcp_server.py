@@ -1,9 +1,10 @@
 # Licensed under the Apache License, Version 2.0
 """Unit tests for the optional MCP server module.
 
-The ``mcp`` package is mocked throughout so these tests run without it
+The ``fastmcp`` package is mocked throughout so these tests run without it
 being installed.
 """
+import asyncio
 import base64
 import sys
 import types
@@ -39,17 +40,20 @@ class FakeEngine:
 
 
 # ---------------------------------------------------------------------------
-# Fake mcp module
+# Fake fastmcp module
 # ---------------------------------------------------------------------------
 
 def _make_fake_mcp_module():
-    """Build a minimal sys.modules stub for the ``mcp`` package.
+    """Build a minimal sys.modules stub for the ``fastmcp`` package.
 
-    We need ``mcp.server.fastmcp.FastMCP`` to behave like the real thing:
+    We need ``fastmcp.FastMCP`` to behave like the real thing:
     - accepts ``name`` and ``instructions`` kwargs
     - exposes a ``.tool()`` decorator that registers callables
-    - exposes an ``.asgi_app()`` method that returns an ASGI app stub
+    - exposes an ``.http_app()`` method that returns a minimal ASGI app
+      stub with a ``.lifespan`` async context manager, so app.mount() and
+      the lifespan-chaining logic in mount_mcp() both succeed.
     """
+    from contextlib import asynccontextmanager
 
     registered_tools = {}
 
@@ -67,22 +71,24 @@ def _make_fake_mcp_module():
                 return fn
             return decorator
 
-        def asgi_app(self):
-            """Return a minimal ASGI callable so app.mount() succeeds."""
+        def http_app(self, path="/", transport="streamable-http"):
+            """Return a minimal ASGI app stub so app.mount() succeeds."""
             async def _asgi(scope, receive, send):  # pragma: no cover
                 pass
+
+            @asynccontextmanager
+            async def _lifespan(_app):
+                yield
+
+            _asgi.lifespan = _lifespan
+            _asgi.routes = []
             return _asgi
 
     # Build fake module tree
-    mcp_mod = types.ModuleType("mcp")
-    server_mod = types.ModuleType("mcp.server")
-    fastmcp_mod = types.ModuleType("mcp.server.fastmcp")
+    fastmcp_mod = types.ModuleType("fastmcp")
     fastmcp_mod.FastMCP = _FakeFastMCP
 
-    mcp_mod.server = server_mod
-    server_mod.fastmcp = fastmcp_mod
-
-    return mcp_mod, server_mod, fastmcp_mod, registered_tools
+    return fastmcp_mod, registered_tools
 
 
 # ---------------------------------------------------------------------------
@@ -96,11 +102,9 @@ def engine():
 
 @pytest.fixture()
 def fake_mcp_modules():
-    mcp_mod, server_mod, fastmcp_mod, tools = _make_fake_mcp_module()
+    fastmcp_mod, tools = _make_fake_mcp_module()
     with patch.dict(sys.modules, {
-        "mcp": mcp_mod,
-        "mcp.server": server_mod,
-        "mcp.server.fastmcp": fastmcp_mod,
+        "fastmcp": fastmcp_mod,
     }):
         # Re-import the module under test so it picks up the fake mcp
         import importlib
@@ -124,7 +128,7 @@ class TestBuildMcp:
     def test_synthesize_returns_expected_keys(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello world")
+        result = asyncio.run(tools["synthesize"](text="hello world"))
         assert "mime_type" in result
         assert "data" in result
         assert "path" in result
@@ -133,43 +137,43 @@ class TestBuildMcp:
     def test_synthesize_mime_type_is_wav(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello")
+        result = asyncio.run(tools["synthesize"](text="hello"))
         assert result["mime_type"] == "audio/wav"
 
     def test_synthesize_data_is_valid_base64(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello")
+        result = asyncio.run(tools["synthesize"](text="hello"))
         decoded = base64.b64decode(result["data"])
         assert len(decoded) > 0
 
     def test_synthesize_with_voice_param(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello", voice="voice1")
+        result = asyncio.run(tools["synthesize"](text="hello", voice="voice1"))
         assert result["mime_type"] == "audio/wav"
 
     def test_synthesize_with_lang_param(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello", lang="de-de")
+        result = asyncio.run(tools["synthesize"](text="hello", lang="de-de"))
         assert result["mime_type"] == "audio/wav"
 
     def test_synthesize_empty_text_raises(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
         with pytest.raises(ValueError, match="non-empty"):
-            tools["synthesize"](text="")
+            asyncio.run(tools["synthesize"](text=""))
 
     def test_synthesize_whitespace_text_raises(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
         with pytest.raises(ValueError, match="non-empty"):
-            tools["synthesize"](text="   ")
+            asyncio.run(tools["synthesize"](text="   "))
 
     def test_build_raises_import_error_when_mcp_missing(self, engine):
         """_build_mcp should raise ImportError when mcp is not installed."""
-        with patch.dict(sys.modules, {"mcp": None, "mcp.server": None, "mcp.server.fastmcp": None}):
+        with patch.dict(sys.modules, {"fastmcp": None}):
             import importlib
             import ovos_tts_server.mcp_server as mcp_server_mod
             importlib.reload(mcp_server_mod)
@@ -215,7 +219,7 @@ class TestMountMcp:
 
     def test_mount_mcp_no_op_when_mcp_missing(self, engine):
         """mount_mcp should not raise when mcp is not installed."""
-        with patch.dict(sys.modules, {"mcp": None, "mcp.server": None, "mcp.server.fastmcp": None}):
+        with patch.dict(sys.modules, {"fastmcp": None}):
             import importlib
             import ovos_tts_server.mcp_server as mcp_server_mod
             importlib.reload(mcp_server_mod)
@@ -274,7 +278,7 @@ class TestSynthesizeEdgeCases:
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
         long_text = "word " * 2000
-        result = tools["synthesize"](text=long_text)
+        result = asyncio.run(tools["synthesize"](text=long_text))
         assert result["mime_type"] == "audio/wav"
         decoded = base64.b64decode(result["data"])
         assert len(decoded) > 0
@@ -283,7 +287,7 @@ class TestSynthesizeEdgeCases:
         """Decoded base64 data must start with the RIFF WAV magic bytes."""
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="check wav header")
+        result = asyncio.run(tools["synthesize"](text="check wav header"))
         decoded = base64.b64decode(result["data"])
         assert decoded[:4] == b"RIFF", (
             f"Expected WAV RIFF header, got: {decoded[:4]!r}"
@@ -293,27 +297,27 @@ class TestSynthesizeEdgeCases:
         """Passing an unknown voice should not raise — FakeEngine ignores extra kwargs."""
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello", voice="nonexistent-voice")
+        result = asyncio.run(tools["synthesize"](text="hello", voice="nonexistent-voice"))
         assert result["mime_type"] == "audio/wav"
 
     def test_unknown_lang_forwarded_to_engine(self, engine, fake_mcp_modules):
         """Passing an unknown lang should not raise — FakeEngine ignores extra kwargs."""
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="hello", lang="xx-yy")
+        result = asyncio.run(tools["synthesize"](text="hello", lang="xx-yy"))
         assert result["mime_type"] == "audio/wav"
 
     def test_phonemes_field_is_none_when_engine_returns_none(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="phoneme check")
+        result = asyncio.run(tools["synthesize"](text="phoneme check"))
         assert result["phonemes"] is None
 
     def test_path_field_points_to_existing_file(self, engine, fake_mcp_modules):
         import os
         mcp_server_mod, tools = fake_mcp_modules
         mcp_server_mod._build_mcp(engine)
-        result = tools["synthesize"](text="path check")
+        result = asyncio.run(tools["synthesize"](text="path check"))
         assert os.path.isfile(result["path"]), f"Expected file at {result['path']!r}"
 
 

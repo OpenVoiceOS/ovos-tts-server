@@ -30,8 +30,16 @@ def _patched_wrapper(plugin_name="fake-tts", cache=False, config_overrides=None,
     cfg = MagicMock()
     cfg.get.side_effect = lambda k, d=None: cfg_dict.get(k, d)
 
+    fake_dialog_svc = MagicMock()
+    fake_dialog_svc.plugins = []
+    fake_tts_svc = MagicMock()
+    fake_tts_svc.plugins = []
     with patch("ovos_tts_server.load_tts_plugin", return_value=fake_plugin_cls), \
-         patch("ovos_tts_server.Configuration", return_value=cfg):
+         patch("ovos_tts_server.Configuration", return_value=cfg), \
+         patch("ovos_tts_server.DialogTransformersService",
+               return_value=fake_dialog_svc), \
+         patch("ovos_tts_server.TTSTransformersService",
+               return_value=fake_tts_svc):
         wrapper = TTSEngineWrapper(plugin_name=plugin_name, cache=cache, lang=lang)
     return wrapper, fake_engine, fake_plugin_cls
 
@@ -141,3 +149,57 @@ class TestStartTTSServer:
             app, engine = start_tts_server("foo", cache=False)
             assert app is not None
             assert isinstance(engine, TTSEngineWrapper)
+
+
+# ---------------------------------------------------------------------------
+# Transformer pipelines
+# ---------------------------------------------------------------------------
+
+class TestTransformerPipelines:
+    def test_no_transformers_by_default(self):
+        """With empty config sections no transformer runs and synth output
+        is returned untouched."""
+        wrapper, engine, _ = _patched_wrapper()
+        path, phonemes = wrapper.synthesize("hello")
+        assert path == "/tmp/fake.wav"
+        wrapper.dialog_transformers.transform.assert_not_called()
+        wrapper.tts_transformers.transform.assert_not_called()
+
+    def test_dialog_transformer_rewrites_utterance_before_synth(self):
+        wrapper, engine, _ = _patched_wrapper()
+        wrapper.dialog_transformers.plugins = ["fake-plugin"]
+        wrapper.dialog_transformers.transform.return_value = ("rewritten", {})
+        wrapper.synthesize("hello", lang="en-us")
+        wrapper.dialog_transformers.transform.assert_called_once_with(
+            "hello", {"lang": "en-us"})
+        engine.synth.assert_called_once()
+        assert engine.synth.call_args[0][0] == "rewritten"
+
+    def test_tts_transformer_runs_on_a_copy(self, tmp_path):
+        """The synthesized (cached) file must never be handed to the
+        transformer chain directly."""
+        cached = tmp_path / "cached.wav"
+        cached.write_bytes(b"ORIGINAL")
+
+        wrapper, engine, _ = _patched_wrapper()
+        audio = MagicMock()
+        audio.path = str(cached)
+        engine.synth.return_value = (audio, None)
+
+        seen = {}
+
+        def fake_transform(path, context=None):
+            seen["path"] = path
+            with open(path, "wb") as f:
+                f.write(b"TRANSFORMED")
+            return path, context or {}
+
+        wrapper.tts_transformers.plugins = ["fake-plugin"]
+        wrapper.tts_transformers.transform.side_effect = fake_transform
+
+        out_path, _ = wrapper.synthesize("hello")
+        assert seen["path"] != str(cached)
+        assert out_path == seen["path"]
+        assert cached.read_bytes() == b"ORIGINAL"
+        with open(out_path, "rb") as f:
+            assert f.read() == b"TRANSFORMED"

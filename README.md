@@ -50,7 +50,7 @@ ovos-tts-server [-h] [--engine ENGINE] [--port PORT] [--host HOST] [--cache] [--
 | `--port PORT` | `9666` | Port to bind |
 | `--host HOST` | `0.0.0.0` | Host/interface to bind |
 | `--cache` | off | Persist every synth to disk (cache across requests) |
-| `--lang LANG` | `en-us` | Default language reported by the plugin |
+| `--lang LANG` | none | Overrides the plugin's configured language; falls back to the plugin's own configuration, or `mul`, when omitted |
 
 ## Configuration
 

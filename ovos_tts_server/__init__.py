@@ -82,7 +82,7 @@ class TTSEngineWrapper:
                 utterance, {"lang": kwargs.get("lang") or self.lang})
         utterance = self.engine.validate_ssml(utterance)
         audio, phonemes = self.engine.synth(utterance, **kwargs)
-        audio_path = audio.path
+        audio_path = os.fspath(audio.path)
         if self.tts_transformers.plugins:
             audio_path = self._apply_tts_transformers(audio_path)
         return audio_path, phonemes

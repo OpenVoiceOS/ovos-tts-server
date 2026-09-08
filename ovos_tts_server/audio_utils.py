@@ -8,6 +8,7 @@ from typing import Tuple
 
 def _is_wav(path: str) -> bool:
     """Return True if the file can be opened as a RIFF WAV."""
+    path = os.fspath(path)
     try:
         with wave.open(path, "rb"):
             return True
@@ -29,6 +30,7 @@ def _ensure_wav(path: str) -> Tuple[str, bool]:
         Tuple of (wav_path, is_temp). ``is_temp`` is True when ``wav_path`` is a
         freshly created temporary file the caller is responsible for removing.
     """
+    path = os.fspath(path)
     if _is_wav(path):
         return path, False
 

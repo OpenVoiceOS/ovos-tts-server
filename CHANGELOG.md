@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.2a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.2a1) (2026-09-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.1a2...1.15.2a1)
+
+**Merged pull requests:**
+
+- fix\(openai\): accept pathlib paths in audio conversion [\#153](https://github.com/OpenVoiceOS/ovos-tts-server/pull/153) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.15.1a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.1a2) (2026-09-16)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.1a1...1.15.1a2)

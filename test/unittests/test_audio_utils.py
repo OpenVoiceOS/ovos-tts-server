@@ -3,13 +3,14 @@
 import builtins
 import io
 import os
+import pathlib
 import sys
 import tempfile
 import wave
 
 import pytest
 
-from ovos_tts_server.audio_utils import convert_audio
+from ovos_tts_server.audio_utils import _is_wav, convert_audio
 
 
 def _write_silent_wav() -> str:
@@ -58,6 +59,15 @@ class TestConvertAudio:
         monkeypatch.delitem(sys.modules, "pydub", raising=False)
 
         data, mime = convert_audio(wav_path, "mp3")
+        assert mime == "audio/wav"
+        assert data.startswith(b"RIFF")
+
+    def test_is_wav_accepts_path_object(self, wav_path):
+        """A pathlib.Path (what TTS plugins actually return) must not break wave.open."""
+        assert _is_wav(pathlib.Path(wav_path)) is True
+
+    def test_convert_audio_accepts_path_object(self, wav_path):
+        data, mime = convert_audio(pathlib.Path(wav_path), "wav")
         assert mime == "audio/wav"
         assert data.startswith(b"RIFF")
 

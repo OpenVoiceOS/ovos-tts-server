@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.1a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.1a1) (2026-09-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.0a1...1.15.1a1)
+
+**Merged pull requests:**
+
+- fix: coerce PosixPath audio path to str before wave.open [\#155](https://github.com/OpenVoiceOS/ovos-tts-server/pull/155) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [1.15.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.0a1) (2026-09-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.1a2...1.15.0a1)

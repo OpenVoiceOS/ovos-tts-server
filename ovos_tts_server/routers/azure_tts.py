@@ -1,6 +1,7 @@
 # Licensed under the Apache License, Version 2.0
 """Azure Cognitive Services TTS-compatible endpoint."""
 import re
+from starlette.concurrency import run_in_threadpool
 from typing import Optional
 
 from fastapi import APIRouter, Header, Request
@@ -81,7 +82,7 @@ def make_azure_tts_router(engine) -> APIRouter:
             synth_kwargs["lang"] = lang
 
         fmt = _parse_output_format(x_microsoft_output_format)
-        audio_path, _ = engine.synthesize(text or ssml, **synth_kwargs)
+        audio_path, _ = await run_in_threadpool(engine.synthesize, text or ssml, **synth_kwargs)
         audio_bytes, mime = convert_audio(audio_path, fmt)
         return Response(content=audio_bytes, media_type=mime)
 

@@ -18,7 +18,7 @@ keywords = [
     "OpenVoiceOS",
 ]
 dependencies = [
-    "ovos-plugin-manager>=2.1.0,<3.0.0",
+    "ovos-plugin-manager>=2.10.0a1,<3.0.0",
     "fastapi~=0.115",
     "uvicorn~=0.34",
     # uvicorn serves WebSockets only when a ws implementation is importable;
@@ -30,8 +30,9 @@ dependencies = [
 
 [project.optional-dependencies]
 audio = ["pydub"]
-test = ["pytest", "httpx", "requests", "openai", "boto3", "elevenlabs", "google-cloud-texttospeech", "azure-cognitiveservices-speech", "ovos-tts-plugin-polly", "ovos-tts-plugin-marytts", "mcp>=1.0.0,<2.0.0", "cartesia", "deepgram-sdk", "pyht>=0.1.14"]
-mcp = ["mcp>=1.0.0,<2.0.0"]
+test = ["pytest", "httpx", "requests", "openai", "boto3", "elevenlabs", "google-cloud-texttospeech", "azure-cognitiveservices-speech", "ovos-tts-plugin-polly", "ovos-tts-plugin-marytts", "cartesia", "deepgram-sdk"]
+mcp = ["fastmcp>=3,<4"]
+playht = ["pyht>=0.1.14"]
 
 [project.urls]
 Homepage = "https://github.com/OpenVoiceOS/ovos-tts-server"

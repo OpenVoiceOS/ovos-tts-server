@@ -2,11 +2,10 @@
 
 `ovos-tts-server` exposes its underlying OVOS TTS plugin behind drop-in
 compatibility endpoints for popular cloud TTS APIs. Each vendor lives under its
-own URL prefix, so every compat layer is active simultaneously with no path
-collisions — point a client at the matching prefix and it works unmodified.
+own URL prefix, so every compat layer is active at once with no path
+collisions. Point a client at the matching prefix and it works unmodified.
 
-All routers accept any auth token / API key from the client and **silently
-ignore it** — authentication is the responsibility of your reverse proxy.
+All routers accept any auth token or API key from the client and ignore it silently. Authentication is the responsibility of your reverse proxy.
 
 Audio format conversion is provided by `ovos_tts_server.audio_utils.convert_audio()`.
 Install the `[audio]` extra (`pip install "ovos-tts-server[audio]"`) to enable
@@ -25,11 +24,11 @@ non-WAV outputs via `pydub`; without it, non-WAV requests fall back to WAV. See
 | [Azure TTS](#azure-tts-azure-tts) | `/azure-tts` | `POST /cognitiveservices/v1` | binary audio |
 | [MaryTTS](#marytts-marytts) | `/marytts` | `GET/POST /process`, `GET /voices`, `GET /locales` (+ root aliases) | binary WAV / text |
 | [Cartesia](#cartesia-cartesia) | `/cartesia` | `POST /tts/bytes` | binary audio |
-| [Deepgram Aura](#deepgram-aura-deepgram) | `/deepgram` | `POST /v1/speak?model=…` | binary audio |
+| [Deepgram Aura](#deepgram-aura-deepgram) | `/deepgram` | `POST /v1/speak?model=...` | binary audio |
 | [PlayHT](#playht-playht) | `/playht` | `POST /api/v2/tts/stream`, `POST /api/v4/sdk-auth` | binary audio |
 
 > **Kokoro / kokoro-fastapi** is OpenAI-compatible and needs no dedicated
-> router — point any OpenAI-compatible client at the `/openai` prefix
+> router, point any OpenAI-compatible client at the `/openai` prefix
 > (`/openai/v1/audio/speech`).
 
 Examples below assume the server runs at `http://localhost:9666`.
@@ -52,20 +51,20 @@ Examples below assume the server runs at `http://localhost:9666`.
 
 The `voice_id` may span several path segments, so voices named after a
 HuggingFace repo id (`OpenVoiceOS/phoonnx_ar_dii_espeak`) can be addressed
-directly — pass the id exactly as `GET /v1/voices` reports it.
+directly. Pass the id exactly as `GET /v1/voices` reports it.
 
-**Synthesis request** — path `voice_id` (use `default` for the plugin default),
+**Synthesis request:** path `voice_id` (use `default` for the plugin default),
 query `output_format` (default `mp3_44100_128`), JSON body:
 
 | Field | Type | Notes |
 | :--- | :--- | :--- |
 | `text` | str (required) | Text to synthesize |
 | `model_id` | str | Accepted, not forwarded |
-| `voice_settings` | object | `stability`, `similarity_boost`, `style`, `use_speaker_boost` — accepted, not forwarded |
+| `voice_settings` | object | `stability`, `similarity_boost`, `style`, `use_speaker_boost`, accepted, not forwarded |
 
 `output_format` selects both container and sample rate: `pcm_*` → headerless
 mono 16-bit little-endian PCM resampled to the requested rate (`pcm_16000`,
-`pcm_22050`, `pcm_24000`, `pcm_44100`, …), `ulaw_8000` → G.711 mu-law,
+`pcm_22050`, `pcm_24000`, `pcm_44100`, ...), `ulaw_8000` → G.711 mu-law,
 `opus_*` → Ogg, otherwise the leading token (`mp3_44100_128` → `mp3`).
 Compressed containers fall back to WAV if pydub is absent.
 
@@ -100,17 +99,17 @@ new ElevenLabsClient({ apiKey: "ignored", baseUrl: "http://localhost:9666/eleven
 
 Registered by default, alongside the HTTP endpoints. Query parameters:
 `output_format` (default `mp3_44100_128`, parsed as above), `language_code`
-(→ `lang=`); other ElevenLabs options (`model_id`, `inactivity_timeout`, …) are
+(→ `lang=`); other ElevenLabs options (`model_id`, `inactivity_timeout`, ...) are
 accepted and ignored. Auth is the `xi-api-key` header or an `xi_api_key` field
-in the first message — both accepted, ignored.
+in the first message, both accepted, ignored.
 
 Client → server (JSON text frames):
 
-1. `{"text": " ", "voice_settings": {...}, "generation_config": {...}}` — begin
+1. `{"text": " ", "voice_settings": {...}, "generation_config": {...}}`, begin
    the stream.
-2. `{"text": "hello world "}` — content, repeated; text accumulates.
-3. `{"flush": true}` — generate the buffered text immediately.
-4. `{"text": ""}` — end of stream: the buffer is generated and the socket closes.
+2. `{"text": "hello world "}`, content, repeated; text accumulates.
+3. `{"flush": true}`, generate the buffered text immediately.
+4. `{"text": ""}`, end of stream: the buffer is generated and the socket closes.
 
 Server → client (JSON text frames):
 
@@ -125,8 +124,8 @@ no character timings.
 **Point the SDK at this server:** `client.text_to_speech.convert_realtime()` uses
 this endpoint. Its realtime client derives the WebSocket URL from `base_url=` but
 forces the `wss` scheme, so it cannot reach a plaintext server. Either put a TLS
-terminator in front of ovos-tts-server — then `base_url="https://…"` works
-untouched — or keep `ws` for `http` base URLs:
+terminator in front of ovos-tts-server (then `base_url="https://..."` works
+untouched), or keep `ws` for `http` base URLs:
 
 ```python
 import urllib.parse
@@ -168,17 +167,17 @@ with a `ws://` base) need no patching.
 | :--- | :--- | :--- |
 | POST | `/openai/v1/audio/speech` | Synthesize speech |
 
-**Auth:** `Authorization: Bearer …` header (accepted, ignored).
+**Auth:** `Authorization: Bearer ...` header (accepted, ignored).
 
 JSON body:
 
 | Field | Type | Notes |
 | :--- | :--- | :--- |
 | `input` | str (required) | Text to synthesize (≤ 4096 chars) |
-| `model` | str | Default `tts-1`; accepted, not forwarded |
-| `voice` | str | Default `alloy`; accepted, not forwarded |
+| `model` | str | Default `tts-1`, accepted, not forwarded |
+| `voice` | str | Default `alloy`, accepted, not forwarded |
 | `response_format` | str | Default `mp3`; maps to the output container |
-| `speed` | float | `0.25`–`4.0`; accepted, not forwarded |
+| `speed` | float | `0.25`–`4.0`, accepted, not forwarded |
 
 ```bash
 curl -X POST -H "Authorization: Bearer sk-ignored" -H "Content-Type: application/json" \
@@ -236,7 +235,7 @@ JSON body (Google `SynthesizeSpeech` shape):
 | Field | Notes |
 | :--- | :--- |
 | `input.text` / `input.ssml` | Text or SSML to synthesize (`ssml` wins) |
-| `voice.languageCode` | Default `en-US`; mapped to `lang=` |
+| `voice.languageCode` | Default `en-US`, mapped to `lang=` |
 | `voice.name` | Mapped to `voice=` |
 | `voice.ssmlGender` | Accepted, not forwarded |
 | `audioConfig.audioEncoding` | `MP3`→mp3, `LINEAR16`→wav, `OGG_OPUS`→ogg, `MULAW`/`ALAW`→wav |
@@ -278,10 +277,10 @@ JSON body (Polly `SynthesizeSpeech` shape):
 | Field | Type | Notes |
 | :--- | :--- | :--- |
 | `Text` | str (required) | Text to synthesize |
-| `VoiceId` | str | Default `Joanna`; mapped to `voice=` |
+| `VoiceId` | str | Default `Joanna`, mapped to `voice=` |
 | `OutputFormat` | str | `mp3`→mp3, `ogg_vorbis`→ogg, `pcm`→wav, `json`→mp3 |
 | `LanguageCode` | str | Mapped to `lang=` |
-| `Engine` / `TextType` / `SampleRate` | — | Accepted, not forwarded |
+| `Engine` / `TextType` / `SampleRate` |, | Accepted, not forwarded |
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \
@@ -303,7 +302,7 @@ curl -X POST -H "Content-Type: application/json" \
 **Auth:** `Ocp-Apim-Subscription-Key` header (accepted, ignored).
 
 The request body is raw **SSML**. The router extracts the voice from
-`<voice name="…">` (→ `voice=`) and the language from `xml:lang="…"` (→ `lang=`),
+`<voice name="...">` (→ `voice=`) and the language from `xml:lang="..."` (→ `lang=`),
 then synthesizes the stripped text. The output container is chosen from the
 `X-Microsoft-OutputFormat` header: values containing `mp3` → mp3,
 `pcm`/`wav`/`riff` → wav, `ogg`/`opus` → ogg (default mp3).
@@ -322,7 +321,7 @@ curl -X POST \
 `ovos_tts_server.routers.azure_ws.make_azure_ws_router()` provides a WebSocket
 endpoint (`/azure-tts/cognitiveservices/websocket/v1`) compatible with the Azure
 Speech SDK's `speak_text_async()` / `speak_ssml_async()` calls. It is **not**
-registered by default — include it in your own app if you need it:
+registered by default, include it in your own app if you need it:
 
 ```python
 from ovos_tts_server import start_tts_server
@@ -337,8 +336,8 @@ app.include_router(make_azure_ws_router(engine))
 ## MaryTTS (`/marytts`)
 
 Exposes the classic [MaryTTS](http://mary.dfki.de/) HTTP endpoints so apps that
-already speak MaryTTS — notably **accessibility / assistive tech** and Home
-Assistant's `marytts` integration — can swap in OVOS without code changes. There
+already speak MaryTTS, notably **accessibility / assistive tech** and Home
+Assistant's `marytts` integration, can swap in OVOS without code changes. There
 is no canonical Python SDK; clients hand-roll HTTP.
 
 **Upstream:** [marytts/marytts `MaryHttpServer.java`](https://github.com/marytts/marytts/blob/master/marytts-runtime/src/main/java/marytts/server/http/MaryHttpServer.java) ·
@@ -349,7 +348,7 @@ is no canonical Python SDK; clients hand-roll HTTP.
 | :--- | :--- | :--- |
 | GET | `/marytts/locales` | Newline-separated supported locales |
 | GET | `/marytts/voices` | Newline-separated voices (`name locale gender plugin`) |
-| GET/POST | `/marytts/process` | Synthesize — returns `audio/wav` |
+| GET/POST | `/marytts/process` | Synthesize, returns `audio/wav` |
 
 **Root-path aliases.** MaryTTS predates modern API gateways and is widely used by
 assistive software that hardcodes bare paths, so the same three endpoints are
@@ -376,7 +375,7 @@ curl -G http://localhost:9666/marytts/process \
   -o out.wav
 ```
 
-**Home Assistant** (`configuration.yaml`) — the built-in integration hardcodes
+**Home Assistant** (`configuration.yaml`), the built-in integration hardcodes
 the bare paths, so point it straight at the server; the root-alias router handles
 `/process`, `/voices`, `/locales`:
 
@@ -405,8 +404,8 @@ JSON body:
 | Field | Type | Notes |
 | :--- | :--- | :--- |
 | `transcript` | str (required) | Text to synthesize |
-| `model_id` | str | Default `sonic-english`; accepted, not forwarded |
-| `voice` | object | `id` is mapped to `voice=`; other keys ignored |
+| `model_id` | str | Default `sonic-english`, accepted, not forwarded |
+| `voice` | object | `id` is mapped to `voice=`, other keys ignored |
 | `output_format` | object | `container` selects the output: `wav`, `mp3`, or `raw` (→ PCM/WAV) |
 
 ```bash
@@ -446,10 +445,10 @@ The model is a query parameter and the text is a JSON body:
 
 | Parameter | In | Notes |
 | :--- | :--- | :--- |
-| `model` | query | Default `aura-asteria-en`; mapped to `voice=` |
+| `model` | query | Default `aura-asteria-en`, mapped to `voice=` |
 | `encoding` | query | `linear16`/`mulaw`→wav, `mp3`→mp3, `opus`→ogg, `flac`→flac |
 | `sample_rate` | query | Accepted, not forwarded |
-| `text` | body | Required text to synthesize (`{"text": "…"}`) |
+| `text` | body | Required text to synthesize (`{"text": "..."}`) |
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \
@@ -488,7 +487,7 @@ client.speak.rest.v("1").save("out.wav", {"text": "hello world"},
 | `text` | str **or** list[str] | Text to synthesize (the SDK sends a single-element list) |
 | `voice` | str | Mapped to `voice=` |
 | `output_format` | str | `mp3`/`wav`/`ogg`/`flac`, `raw`→PCM, `mulaw`→wav |
-| `quality` / `speed` / `sample_rate` | — | Accepted, not forwarded |
+| `quality` / `speed` / `sample_rate` |, | Accepted, not forwarded |
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \
@@ -529,8 +528,11 @@ client.close()
 
 ## How parameters reach the plugin
 
-Every router boils its vendor-specific request down to two optional kwargs —
-`voice=` and `lang=` — passed to `engine.synthesize(text, **kwargs)`. Parameters
-a plugin can't act on (speed, pitch, model id, voice settings, …) are accepted
+Every router boils its vendor-specific request down to two optional kwargs,
+`voice=` and `lang=`, passed to `engine.synthesize(text, **kwargs)`. Parameters
+a plugin can't act on (speed, pitch, model id, voice settings, ...) are accepted
 for wire-compatibility and ignored. See [configuration.md](configuration.md) for
 the full flow.
+
+---
+[← Configuration](configuration.md) · [Home](index.md) · [Transformers →](transformers.md)

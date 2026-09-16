@@ -7,6 +7,9 @@ protocol with ``auto_connect=False`` so the SDK never contacts play.ht's gRPC
 lease/warmup endpoints.
 """
 import pytest
+
+pytest.importorskip("pyht", reason="pyht pins websockets<14 which conflicts with fastmcp; exercised by the dedicated playht CI job")
+
 from pyht import Client, TTSOptions
 from pyht.client import Format
 from pyht.inference_coordinates import InferenceCoordinatesOptions

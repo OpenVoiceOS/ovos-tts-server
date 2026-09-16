@@ -7,6 +7,7 @@ import pathlib
 import sys
 import tempfile
 import wave
+from pathlib import Path
 
 import pytest
 
@@ -32,6 +33,12 @@ def wav_path() -> str:
 class TestConvertAudio:
     def test_wav_passthrough(self, wav_path):
         data, mime = convert_audio(wav_path, "wav")
+        assert mime == "audio/wav"
+        assert data.startswith(b"RIFF")
+
+    def test_accepts_pathlib_path(self, wav_path):
+        """The OpenAI speech route hands convert_audio a pathlib.Path; it must not 500."""
+        data, mime = convert_audio(Path(wav_path), "wav")
         assert mime == "audio/wav"
         assert data.startswith(b"RIFF")
 

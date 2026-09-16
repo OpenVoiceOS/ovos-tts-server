@@ -10,7 +10,7 @@ def _is_wav(path: str) -> bool:
     """Return True if the file can be opened as a RIFF WAV."""
     path = os.fspath(path)
     try:
-        with wave.open(path, "rb"):
+        with wave.open(os.fspath(path), "rb"):
             return True
     except (wave.Error, EOFError, OSError):
         return False

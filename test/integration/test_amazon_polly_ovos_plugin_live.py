@@ -13,11 +13,15 @@ import pytest
 from test.integration.conftest import run_live_server
 
 
+_engines = []
+
+
 @pytest.fixture(scope="module")
 def base_url():
     from ovos_tts_server.routers.amazon_polly import make_amazon_polly_router
 
     def register(app, engine):
+        _engines.append(engine)
         app.include_router(make_amazon_polly_router(engine))
 
     yield from run_live_server(register)
@@ -40,7 +44,7 @@ def test_polly_plugin_synthesizes_via_compat_router(base_url, tmp_path,
 
     tts = PollyTTS(config={
         "lang": "en-us",
-        "voice": "Joanna",
+        "voice": "voice1",
         "region": "us-east-1",
         "engine": "neural",
     })
@@ -49,8 +53,29 @@ def test_polly_plugin_synthesizes_via_compat_router(base_url, tmp_path,
         "hello world",
         str(out_path),
         lang="en-us",
-        voice="Joanna",
+        voice="voice1",
     )
     assert result_path == str(out_path)
     assert out_path.exists()
     assert out_path.stat().st_size > 0
+
+
+def test_polly_plugin_falls_back_from_configured_polly_voice(base_url, tmp_path, monkeypatch):
+    """A Polly voice name in the config that the server does not list, with
+    no per-call voice: the plugin falls back to the first listed voice."""
+    monkeypatch.setenv("AWS_ENDPOINT_URL_POLLY", f"{base_url}/amazon-polly")
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "ignored")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "ignored")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+
+    from ovos_tts_plugin_polly import PollyTTS
+
+    tts = PollyTTS(config={"lang": "en-us", "voice": "Joanna",
+                           "region": "us-east-1", "engine": "neural"})
+    out_path = tmp_path / "polly.mp3"
+    calls_before = len(_engines[0].calls)
+    result_path, _ = tts.get_tts("hello world", str(out_path), lang="en-us")
+    assert result_path == str(out_path)
+    assert out_path.stat().st_size > 0
+    assert len(_engines[0].calls) == calls_before + 1
+    assert _engines[0].calls[-1][1]["voice"] == "voice1"

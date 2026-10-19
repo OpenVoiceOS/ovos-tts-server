@@ -20,7 +20,7 @@ non-WAV outputs via `pydub`; without it, non-WAV requests fall back to WAV. See
 | [OpenAI](#openai-openai) | `/openai` | `POST /v1/audio/speech` | binary audio |
 | [Coqui](#coqui-coqui) | `/coqui` | `GET /api/tts` | binary WAV |
 | [Google Cloud TTS](#google-cloud-tts-google-tts) | `/google-tts` | `POST /v1/text:synthesize` | JSON (base64 audio) |
-| [Amazon Polly](#amazon-polly-amazon-polly) | `/amazon-polly` | `POST /v1/speech` | binary audio |
+| [Amazon Polly](#amazon-polly-amazon-polly) | `/amazon-polly` | `POST /v1/speech`, `GET /v1/voices` | binary audio, voice list JSON |
 | [Azure TTS](#azure-tts-azure-tts) | `/azure-tts` | `POST /cognitiveservices/v1` | binary audio |
 | [MaryTTS](#marytts-marytts) | `/marytts` | `GET/POST /process`, `GET /voices`, `GET /locales` (+ root aliases) | binary WAV / text |
 | [Cartesia](#cartesia-cartesia) | `/cartesia` | `POST /tts/bytes` | binary audio |
@@ -264,11 +264,13 @@ curl -X POST -H "Content-Type: application/json" \
 ## Amazon Polly (`/amazon-polly`)
 
 **Upstream:** [boto3 Polly](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/polly.html) ·
-[SynthesizeSpeech API](https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html)
+[SynthesizeSpeech API](https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html) ·
+[DescribeVoices API](https://docs.aws.amazon.com/polly/latest/dg/API_DescribeVoices.html)
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | POST | `/amazon-polly/v1/speech` | Synthesize speech |
+| GET | `/amazon-polly/v1/voices` | List voices (`DescribeVoices`) |
 
 **Auth:** AWS SigV4 `Authorization` header (accepted, ignored).
 
@@ -287,6 +289,10 @@ curl -X POST -H "Content-Type: application/json" \
   -d '{"Text": "hello world", "VoiceId": "Joanna", "OutputFormat": "mp3"}' \
   "http://localhost:9666/amazon-polly/v1/speech" -o out.mp3
 ```
+
+`GET /v1/voices` returns the plugin's voices in the Polly `Voice` shape. If the plugin lists no voices, it returns one voice with the ID `default`. Each voice has the plugin's default language as `LanguageCode` and the plugin's other languages as `AdditionalLanguageCodes`. `LanguageCode` filters the list. A language the plugin lists without a region, such as `de`, matches a request for any region of it, such as `de-DE`. `IncludeAdditionalLanguageCodes=true` also matches the additional languages. `Engine` and `NextToken` are accepted and ignored.
+
+ovos-tts-plugin-polly checks the voice against `DescribeVoices`. It rejects a per-call voice that is not listed. A configured voice that is not listed, such as `Joanna`, falls back to the first listed voice. Clients that send `VoiceId` without a check, such as boto3 `synthesize_speech`, can use any name.
 
 ---
 

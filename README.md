@@ -113,7 +113,7 @@ The server can also expose the same plugin behind drop-in compatibility endpoint
 | OpenAI | `/openai` | `POST /v1/audio/speech` |
 | Coqui | `/coqui` | `GET /api/tts` |
 | Google Cloud TTS | `/google-tts` | `POST /v1/text:synthesize` |
-| Amazon Polly | `/amazon-polly` | `POST /v1/speech` |
+| Amazon Polly | `/amazon-polly` | `POST /v1/speech`, `GET /v1/voices` |
 | Azure TTS | `/azure-tts` | `POST /cognitiveservices/v1` |
 | MaryTTS | `/marytts` | `GET/POST /process` (plus root aliases) |
 | Cartesia | `/cartesia` | `POST /tts/bytes` |

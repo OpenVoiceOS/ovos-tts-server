@@ -1,9 +1,33 @@
 # Licensed under the Apache License, Version 2.0
+import mimetypes
 import os
 import subprocess
 import tempfile
 import wave
 from typing import Tuple
+
+# Fixed here because ``mimetypes`` answers these differently per platform
+# (``audio/x-wav`` for .wav, nothing for .ogg without /etc/mime.types).
+_AUDIO_MIME_TYPES = {
+    "wav": "audio/wav",
+    "mp3": "audio/mpeg",
+    "ogg": "audio/ogg",
+    "flac": "audio/flac",
+    "aac": "audio/aac",
+}
+
+
+# Ogg Opus files are audio/ogg (RFC 7845 section 9).
+_AUDIO_FILE_MIME_TYPES = {**_AUDIO_MIME_TYPES, "opus": "audio/ogg"}
+
+
+def audio_mime_type(path: str) -> str:
+    """Return the MIME type of a synthesized audio file, from its extension."""
+    path = os.fspath(path)
+    ext = os.path.splitext(path)[1].lstrip(".").lower()
+    return (_AUDIO_FILE_MIME_TYPES.get(ext)
+            or mimetypes.guess_type(path)[0]
+            or "application/octet-stream")
 
 
 def _is_wav(path: str) -> bool:
@@ -78,13 +102,7 @@ def convert_audio(wav_path: str, fmt: str) -> Tuple[bytes, str]:
             buf = io.BytesIO()
             pydub_fmt = "mp3" if fmt == "mp3" else fmt
             audio.export(buf, format=pydub_fmt)
-            mime_map = {
-                "mp3": "audio/mpeg",
-                "ogg": "audio/ogg",
-                "flac": "audio/flac",
-                "aac": "audio/aac",
-            }
-            mime = mime_map.get(fmt, f"audio/{fmt}")
+            mime = _AUDIO_MIME_TYPES.get(fmt, f"audio/{fmt}")
             return buf.getvalue(), mime
         except ImportError:
             return wav_bytes, "audio/wav"

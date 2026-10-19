@@ -11,10 +11,10 @@
 # limitations under the License.
 """UTCP manual builder for ovos-tts-server.
 
-Generates a UTCPManual JSON document (GET /utcp) that describes every
-HTTP endpoint exposed by the server.  UTCP-aware agents (e.g. those using
-ovos-tool-adapters' UTCPToolBox) can point at ``GET /utcp`` and
-automatically discover all synthesis endpoints without any extra wrapper.
+Generates a UTCPManual JSON document (GET /utcp) that describes the status
+and synthesis endpoints. UTCP-aware agents can point at ``GET /utcp`` and
+discover them without any extra wrapper. Every tool returns JSON, because
+UTCP HTTP clients read non-JSON responses as text and cannot carry raw audio.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ _MANUAL_VERSION = "1.0.0"
 
 
 def build_utcp_manual(engine: "TTSEngineWrapper", base_url: str) -> Dict[str, Any]:
-    """Return a UTCPManual dict describing all TTS HTTP endpoints.
+    """Return a UTCPManual dict describing the TTS status and synthesis endpoints.
 
     Args:
         engine: The live TTSEngineWrapper (used to populate metadata).
@@ -81,9 +81,9 @@ def build_utcp_manual(engine: "TTSEngineWrapper", base_url: str) -> Dict[str, An
         {
             "name": "tts_synthesize_v2",
             "description": (
-                "Synthesize speech from text (OVOS v2 endpoint). "
-                "Returns a WAV audio file. "
-                "Pass 'voice' and/or 'lang' as optional query parameters."
+                "Synthesize speech from text. "
+                "Returns a JSON object with the audio file encoded as base64 and its MIME type. "
+                "Pass 'voice' and/or 'lang' to select a voice or language."
             ),
             "inputs": {
                 "type": "object",
@@ -104,46 +104,17 @@ def build_utcp_manual(engine: "TTSEngineWrapper", base_url: str) -> Dict[str, An
                 "required": ["utterance"],
             },
             "outputs": {
-                "type": "string",
-                "description": "Raw WAV audio bytes (audio/wav).",
-                "format": "binary",
+                "type": "object",
+                "properties": {
+                    "mime_type": {"type": "string", "description": "MIME type of the audio, e.g. 'audio/wav' or 'audio/mpeg'."},
+                    "data": {"type": "string", "description": "Base64-encoded audio file."},
+                    "phonemes": {"type": ["string", "null"]},
+                },
             },
             "tags": ["tts", "synthesize"],
             "tool_call_template": {
                 "call_template_type": "http",
-                "url": f"{base_url}/v2/synthesize",
-                "http_method": "GET",
-                "content_type": "application/octet-stream",
-            },
-        },
-        {
-            "name": "tts_synthesize_legacy",
-            "description": (
-                "Synthesize speech from text (OVOS legacy endpoint). "
-                "Text is embedded in the URL path. "
-                "Returns a WAV audio file."
-            ),
-            "inputs": {
-                "type": "object",
-                "properties": {
-                    "utterance": {
-                        "type": "string",
-                        "description": "Text to synthesize (URL path segment).",
-                    },
-                    "voice": {"type": "string", "description": "Voice identifier (optional)."},
-                    "lang": {"type": "string", "description": "Language code (optional)."},
-                },
-                "required": ["utterance"],
-            },
-            "outputs": {
-                "type": "string",
-                "description": "Raw WAV audio bytes (audio/wav).",
-                "format": "binary",
-            },
-            "tags": ["tts", "synthesize", "legacy"],
-            "tool_call_template": {
-                "call_template_type": "http",
-                "url": f"{base_url}/synthesize/{{utterance}}",
+                "url": f"{base_url}/v2/synthesize/json",
                 "http_method": "GET",
             },
         },

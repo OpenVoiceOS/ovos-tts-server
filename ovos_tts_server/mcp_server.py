@@ -36,6 +36,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from starlette.concurrency import run_in_threadpool
 
+from ovos_tts_server.audio_utils import audio_mime_type
+
 if TYPE_CHECKING:
     from fastapi import FastAPI
     from ovos_tts_server import TTSEngineWrapper
@@ -66,7 +68,7 @@ def _build_mcp(engine: "TTSEngineWrapper"):
         name="synthesize",
         description=(
             "Convert text to speech using the configured OVOS TTS engine. "
-            "Returns base64-encoded WAV audio with MIME type audio/wav."
+            "Returns the audio file base64-encoded, with its MIME type."
         ),
     )
     async def synthesize(
@@ -83,9 +85,9 @@ def _build_mcp(engine: "TTSEngineWrapper"):
 
         Returns:
             A dict with keys:
-            - ``mime_type``: always ``"audio/wav"``
-            - ``data``: base64-encoded WAV bytes
-            - ``path``: absolute path to the temporary WAV file on the server
+            - ``mime_type``: MIME type of the audio file, e.g. ``"audio/wav"``
+            - ``data``: base64-encoded audio bytes
+            - ``path``: absolute path to the audio file on the server
             - ``phonemes``: phoneme string returned by the engine, or null
         """
         if not text or not text.strip():
@@ -106,7 +108,7 @@ def _build_mcp(engine: "TTSEngineWrapper"):
         audio_bytes = await run_in_threadpool(_read_audio)
 
         return {
-            "mime_type": "audio/wav",
+            "mime_type": audio_mime_type(audio_path),
             "data": base64.b64encode(audio_bytes).decode("ascii"),
             "path": str(audio_path),
             "phonemes": phonemes,

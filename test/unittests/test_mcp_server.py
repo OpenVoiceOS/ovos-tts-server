@@ -359,3 +359,20 @@ class TestCliMcpFlag:
             assert call_kwargs is not None
             enable_mcp_val = call_kwargs.kwargs.get("enable_mcp", False)
             assert enable_mcp_val is False, f"Expected enable_mcp=False, got {enable_mcp_val}"
+
+
+class TestSynthesizeMimeType:
+    def test_mp3_output_is_labelled_mp3(self, fake_mcp_modules):
+        mcp_server_mod, tools = fake_mcp_modules
+
+        class Mp3Engine(FakeEngine):
+            def synthesize(self, utterance, **kwargs):
+                tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+                tmp.write(b"ID3\x04fake-mp3")
+                tmp.close()
+                return tmp.name, None
+
+        mcp_server_mod._build_mcp(Mp3Engine())
+        result = asyncio.run(tools["synthesize"](text="hello"))
+        assert base64.b64decode(result["data"]) == b"ID3\x04fake-mp3"
+        assert result["mime_type"] == "audio/mpeg"

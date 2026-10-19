@@ -23,6 +23,7 @@ Run in isolation::
 from __future__ import annotations
 
 import asyncio
+import base64
 import importlib
 import socket
 import tempfile
@@ -191,6 +192,39 @@ class TestUtcpE2E:
         url = status_tool["tool_call_template"]["url"]
         resp = httpx.get(url, timeout=10)
         assert resp.status_code == 200
+
+
+    def test_json_synthesis_requires_utterance(self, live_server):
+        resp = httpx.get(f"{live_server}/v2/synthesize/json", timeout=10)
+        assert resp.status_code == 400
+        assert resp.json() == {"error": "Missing utterance"}
+
+    def test_reference_client_calls_every_tool(self, live_server):
+        """The reference UTCP client (utcp + utcp-http) must be able to call
+        every tool in the manual, and synthesis must return the audio."""
+        from utcp.utcp_client import UtcpClient
+        from utcp.data.utcp_client_config import UtcpClientConfig
+
+        async def _run():
+            config = UtcpClientConfig(manual_call_templates=[{
+                "name": "ovos_tts",
+                "call_template_type": "http",
+                "url": f"{live_server}/utcp",
+                "http_method": "GET",
+            }])
+            client = await UtcpClient.create(config=config)
+            tools = await client.config.tool_repository.get_tools()
+            results = {}
+            for tool in tools:
+                args = {"utterance": "hello"} if "utterance" in tool.inputs.required else {}
+                results[tool.name] = await client.call_tool(tool.name, args)
+            return results
+
+        results = asyncio.run(_run())
+        assert results["ovos_tts.tts_status"]["plugin"] == "stub-tts"
+        audio = results["ovos_tts.tts_synthesize_v2"]
+        assert audio["mime_type"] == "audio/wav"
+        assert base64.b64decode(audio["data"]) == _wav_bytes()
 
 
 # ---------------------------------------------------------------------------

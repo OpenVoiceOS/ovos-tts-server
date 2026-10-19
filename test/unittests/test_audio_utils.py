@@ -200,3 +200,24 @@ class TestEnsureWav:
             assert data == b"MP3DATA"
         finally:
             os.remove(src)
+
+
+class TestAudioMimeType:
+    @pytest.mark.parametrize("name, expected", [
+        ("a.wav", "audio/wav"),
+        ("a.WAV", "audio/wav"),
+        ("a.mp3", "audio/mpeg"),
+        ("a.ogg", "audio/ogg"),
+        ("a.flac", "audio/flac"),
+        ("a.unknownext", "application/octet-stream"),
+    ])
+    def test_mime_type_from_extension(self, name, expected):
+        from ovos_tts_server.audio_utils import audio_mime_type
+        assert audio_mime_type(name) == expected
+
+    def test_opus_is_ogg_without_system_mime_types(self, monkeypatch):
+        """Slim containers have no /etc/mime.types; Ogg Opus is still audio/ogg (RFC 7845)."""
+        import mimetypes
+        from ovos_tts_server.audio_utils import audio_mime_type
+        monkeypatch.setattr(mimetypes, "guess_type", lambda *a, **k: (None, None))
+        assert audio_mime_type("a.opus") == "audio/ogg"

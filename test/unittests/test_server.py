@@ -5,6 +5,7 @@ Uses a lightweight FakeEngine that mimics TTSEngineWrapper so the tests
 exercise routes and parameter wiring without loading any OVOS TTS plugin.
 """
 import asyncio
+import base64
 import tempfile
 import wave
 from typing import List, Optional, Tuple
@@ -204,3 +205,71 @@ class TestWebSocketSupport:
 
         paths = list(ws_paths(create_app(FakeEngine()).routes))
         assert "/elevenlabs/v1/text-to-speech/{voice_id:path}/stream-input" in paths
+
+
+class Mp3Engine(FakeEngine):
+    """Engine whose plugin writes MP3, like google-tx, edge-tts or polly."""
+
+    MP3 = b"ID3\x04\x00\x00\x00\x00\x00\x00fake-mp3-frames"
+
+    def synthesize(self, utterance: str, **kwargs) -> Tuple[str, Optional[str]]:
+        self.last_call = (utterance, kwargs)
+        tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+        tmp.write(self.MP3)
+        tmp.close()
+        return tmp.name, None
+
+
+class TestSynthesizeJsonEndpoint:
+    def test_lang_and_voice_reach_the_engine(self, client, engine):
+        r = client.get("/v2/synthesize/json",
+                       params={"utterance": "hallo", "lang": "de-de", "voice": "voice2"})
+        assert r.status_code == 200
+        assert engine.last_call == ("hallo", {"lang": "de-de", "voice": "voice2"})
+
+    def test_wav_output_is_labelled_wav(self, client):
+        body = client.get("/v2/synthesize/json", params={"utterance": "hi"}).json()
+        assert body["mime_type"] == "audio/wav"
+        assert base64.b64decode(body["data"])[:4] == b"RIFF"
+
+    def test_mp3_output_is_labelled_mp3(self):
+        client = TestClient(create_app(Mp3Engine()))
+        body = client.get("/v2/synthesize/json", params={"utterance": "hi"}).json()
+        assert base64.b64decode(body["data"]) == Mp3Engine.MP3
+        assert body["mime_type"] == "audio/mpeg"
+
+
+class _FileEngine(FakeEngine):
+    """Engine that returns a given path and phonemes value."""
+
+    def __init__(self, path, phonemes=None):
+        super().__init__()
+        self.path, self.phonemes = path, phonemes
+
+    def synthesize(self, utterance: str, **kwargs) -> Tuple[str, Optional[str]]:
+        return self.path, self.phonemes
+
+
+class TestSynthesizeJsonErrors:
+    def test_missing_audio_file_is_a_server_error(self, tmp_path):
+        client = TestClient(create_app(_FileEngine(str(tmp_path / "gone.wav"))),
+                            raise_server_exceptions=False)
+        assert client.get("/v2/synthesize/json", params={"utterance": "hi"}).status_code == 500
+
+    def test_unencodable_phonemes_are_a_server_error(self, tmp_path):
+        audio = tmp_path / "a.wav"
+        audio.write_bytes(b"RIFF")
+        client = TestClient(create_app(_FileEngine(str(audio), phonemes=object())),
+                            raise_server_exceptions=False)
+        assert client.get("/v2/synthesize/json", params={"utterance": "hi"}).status_code == 500
+
+
+class TestSynthesizeJsonLargeAudio:
+    def test_audio_longer_than_several_slices_decodes_strictly(self, tmp_path):
+        import os
+        audio = tmp_path / "long.wav"
+        payload = os.urandom(3 * 1024 * 1024 + 7)
+        audio.write_bytes(payload)
+        client = TestClient(create_app(_FileEngine(str(audio))))
+        body = client.get("/v2/synthesize/json", params={"utterance": "hi"}).json()
+        assert base64.b64decode(body["data"], validate=True) == payload

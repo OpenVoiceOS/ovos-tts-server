@@ -183,21 +183,17 @@ class TestUtcpToolUrlCorrectness:
     def test_v2_synthesize_url_contains_v2_synthesize(self, engine):
         tools = self._tools_by_name(engine)
         url = tools["tts_synthesize_v2"]["tool_call_template"]["url"]
-        assert url == f"{self.BASE}/v2/synthesize"
+        assert url == f"{self.BASE}/v2/synthesize/json"
 
     def test_v2_synthesize_method_is_get(self, engine):
         tools = self._tools_by_name(engine)
         assert tools["tts_synthesize_v2"]["tool_call_template"]["http_method"] == "GET"
 
-    def test_legacy_synthesize_url_contains_utterance_template(self, engine):
-        tools = self._tools_by_name(engine)
-        url = tools["tts_synthesize_legacy"]["tool_call_template"]["url"]
-        assert "{utterance}" in url, f"Expected {{utterance}} in legacy URL, got: {url!r}"
-        assert url.startswith(f"{self.BASE}/synthesize/")
-
-    def test_legacy_synthesize_method_is_get(self, engine):
-        tools = self._tools_by_name(engine)
-        assert tools["tts_synthesize_legacy"]["tool_call_template"]["http_method"] == "GET"
+    def test_every_tool_returns_json(self, engine):
+        manual = build_utcp_manual(engine, self.BASE)
+        for tool in manual["tools"]:
+            assert tool["outputs"]["type"] == "object", tool["name"]
+            assert tool["outputs"].get("format") != "binary", tool["name"]
 
     def test_no_double_slash_in_any_url(self, engine):
         manual = build_utcp_manual(engine, self.BASE)
@@ -207,14 +203,9 @@ class TestUtcpToolUrlCorrectness:
             without_proto = url.split("://", 1)[-1]
             assert "//" not in without_proto, f"Double slash in URL for {tool['name']!r}: {url!r}"
 
-    def test_v2_synthesize_has_content_type_octet_stream(self, engine):
+    def test_v2_synthesize_has_synthesize_tag(self, engine):
         tools = self._tools_by_name(engine)
-        tpl = tools["tts_synthesize_v2"]["tool_call_template"]
-        assert tpl.get("content_type") == "application/octet-stream"
-
-    def test_legacy_tool_has_synthesize_tag(self, engine):
-        tools = self._tools_by_name(engine)
-        assert "synthesize" in tools["tts_synthesize_legacy"].get("tags", [])
+        assert "synthesize" in tools["tts_synthesize_v2"].get("tags", [])
 
     def test_status_inputs_has_no_required_fields(self, engine):
         tools = self._tools_by_name(engine)

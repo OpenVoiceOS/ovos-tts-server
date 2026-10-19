@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.3a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.3a1) (2026-10-19)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.2a1...1.15.3a1)
+
+**Merged pull requests:**
+
+- fix\(polly\): serve DescribeVoices so the Polly plugin can list voices [\#167](https://github.com/OpenVoiceOS/ovos-tts-server/pull/167) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [1.15.2a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.2a1) (2026-09-16)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.1a2...1.15.2a1)

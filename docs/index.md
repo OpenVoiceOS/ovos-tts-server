@@ -65,7 +65,7 @@ The agent protocols live in two modules: `ovos_tts_server/mcp_server.py` (`build
 ## Entry point
 
 ```bash
-ovos-tts-server --engine <plugin_name> [--host 0.0.0.0] [--port 9666] [--cache] [--lang en-us]
+ovos-tts-server --engine <plugin_name> [--host 0.0.0.0] [--port 9666] [--cache] [--lang en-us] [--mcp]
 ```
 
 `__main__.py` parses the CLI, calls `start_tts_server(...)`, and runs the app with `uvicorn`.
@@ -79,3 +79,4 @@ The server allows all origins unconditionally (`CORSMiddleware(allow_origins=["*
 - [API Compatibility Reference](api-compatibility.md): every vendor prefix, endpoint, parameter, and SDK snippet
 - [Voice & Language Configuration](configuration.md): how a request maps to the plugin
 - [Audio Format Conversion](audio-formats.md): `convert_audio()` and the `[audio]` extra
+- [AI agents (MCP and UTCP)](ai-agents.md): the `/mcp` and `/utcp` endpoints, with recipes

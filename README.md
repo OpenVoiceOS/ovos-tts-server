@@ -41,7 +41,7 @@ curl "http://localhost:9666/v2/synthesize?utterance=hello%20world" -o hello.wav
 ## Command line
 
 ```
-ovos-tts-server [-h] [--engine ENGINE] [--port PORT] [--host HOST] [--cache] [--lang LANG]
+ovos-tts-server [-h] [--engine ENGINE] [--port PORT] [--host HOST] [--cache] [--lang LANG] [--mcp]
 ```
 
 | Option | Default | Description |
@@ -51,6 +51,7 @@ ovos-tts-server [-h] [--engine ENGINE] [--port PORT] [--host HOST] [--cache] [--
 | `--host HOST` | `0.0.0.0` | Host/interface to bind |
 | `--cache` | off | Persist every synth to disk (cache across requests) |
 | `--lang LANG` | none | Overrides the plugin's configured language; falls back to the plugin's own configuration, or `mul`, when omitted |
+| `--mcp` | off | Serve MCP at `/mcp` (needs the `mcp` extra) |
 
 ## Configuration
 
@@ -162,7 +163,7 @@ Consume this server from a voice assistant with the [companion TTS plugin](https
 ## Development
 
 ```bash
-pip install -e ".[audio,test]"
+pip install -e ".[audio,test,mcp]"
 pytest test/ -v
 ```
 
@@ -172,114 +173,22 @@ pytest test/ -v
 - [Voice & language configuration](docs/configuration.md): how requests map to the plugin
 - [Transformer pipelines](docs/transformers.md): dialog/tts transformer plugins around synthesis
 - [Audio format conversion](docs/audio-formats.md): `convert_audio()` and the `[audio]` extra
+- [AI agents (MCP and UTCP)](docs/ai-agents.md): connect Claude Code, Claude Desktop, OVOS agents and UTCP clients
 - [Architecture overview](docs/index.md): classes, entry points, request flow
 
 ---
 
-## Agent integration
+## AI agent integration
 
-### UTCP: Universal Tool Calling Protocol
+The server works as a tool for AI agents. `GET /utcp` always serves a [UTCP](https://www.utcp.io/) manual. Start the server with `--mcp` and install the `mcp` extra to serve an [MCP](https://modelcontextprotocol.io/) endpoint at `/mcp`:
 
-The server exposes a UTCP manual at `GET /utcp`. Any UTCP-aware agent, for example [ovos-tool-adapters](https://github.com/OpenVoiceOS/ovos-tool-adapters)' `UTCPToolBox`, can point at this URL and auto-discover every synthesis endpoint without extra configuration.
-
-`GET /utcp` needs no extra dependencies. It is always available.
-
-**Example response (abbreviated):**
-```json
-{
-  "utcp_version": "1.0.1",
-  "manual_version": "1.0.0",
-  "tools": [
-    {
-      "name": "tts_synthesize_v2",
-      "description": "Synthesize speech from text (OVOS v2 endpoint)...",
-      "inputs": {
-        "type": "object",
-        "properties": {
-          "utterance": {"type": "string"},
-          "voice":     {"type": "string"},
-          "lang":      {"type": "string"}
-        },
-        "required": ["utterance"]
-      },
-      "tool_call_template": {
-        "call_template_type": "http",
-        "url": "http://localhost:9666/v2/synthesize",
-        "http_method": "GET"
-      }
-    }
-  ]
-}
-```
-
-**ovos-tool-adapters config example:**
-```json
-{
-  "utcp_config": {
-    "providers": [
-      {
-        "provider_type": "http",
-        "name": "ovos-tts",
-        "url": "http://localhost:9666/utcp"
-      }
-    ]
-  }
-}
-```
-
----
-
-### MCP: Model Context Protocol
-
-The server can optionally expose a FastMCP server mounted at `/mcp`, providing a `synthesize` tool callable by any MCP-compatible agent (Claude Desktop, Claude Code, and others).
-
-**Install the extra:**
 ```bash
-pip install "ovos-tts-server[mcp]"
-```
-
-**Start with MCP enabled:**
-```bash
+pip install --pre "ovos-tts-server[mcp]"
 ovos-tts-server --engine ovos-tts-plugin-piper --mcp
+claude mcp add --transport http ovos-tts http://localhost:9666/mcp
 ```
 
-Or from Python:
-```python
-from ovos_tts_server import start_tts_server
-app, engine = start_tts_server("ovos-tts-plugin-piper", enable_mcp=True)
-```
-
-The MCP server uses streamable HTTP transport (SSE-compatible) and mounts alongside the existing FastAPI app. No separate process is needed.
-
-**Claude Desktop `claude_desktop_config.json` example:**
-```json
-{
-  "mcpServers": {
-    "ovos-tts": {
-      "transport": "http",
-      "url": "http://localhost:9666/mcp"
-    }
-  }
-}
-```
-
-**`synthesize` tool:**
-
-| Parameter | Type   | Required | Description                          |
-|-----------|--------|----------|--------------------------------------|
-| `text`    | string | yes      | Text to synthesize                   |
-| `voice`   | string | no       | Voice/speaker identifier             |
-| `lang`    | string | no       | BCP-47 language code (for example `en-us`) |
-
-Returns a JSON object:
-```json
-{
-  "mime_type": "audio/wav",
-  "data": "<base64-encoded WAV>",
-  "path": "/tmp/ovos_synth_abc123.wav",
-  "phonemes": null
-}
-```
+[AI agents (MCP and UTCP)](docs/ai-agents.md) has recipes for Claude Code, Claude Desktop, OVOS agents and UTCP clients, and the tool reference.
 
 ---
 

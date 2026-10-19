@@ -116,18 +116,18 @@ def fake_mcp_modules():
 
 
 # ---------------------------------------------------------------------------
-# _build_mcp tests
+# build_mcp tests
 # ---------------------------------------------------------------------------
 
 class TestBuildMcp:
     def test_build_registers_synthesize_tool(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         assert "synthesize" in tools, "Expected 'synthesize' tool to be registered"
 
     def test_synthesize_returns_expected_keys(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         result = asyncio.run(tools["synthesize"](text="hello world"))
         assert "mime_type" in result
         assert "data" in result
@@ -136,49 +136,49 @@ class TestBuildMcp:
 
     def test_synthesize_mime_type_is_wav(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         result = asyncio.run(tools["synthesize"](text="hello"))
         assert result["mime_type"] == "audio/wav"
 
     def test_synthesize_data_is_valid_base64(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         result = asyncio.run(tools["synthesize"](text="hello"))
         decoded = base64.b64decode(result["data"])
         assert len(decoded) > 0
 
     def test_synthesize_with_voice_param(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         result = asyncio.run(tools["synthesize"](text="hello", voice="voice1"))
         assert result["mime_type"] == "audio/wav"
 
     def test_synthesize_with_lang_param(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         result = asyncio.run(tools["synthesize"](text="hello", lang="de-de"))
         assert result["mime_type"] == "audio/wav"
 
     def test_synthesize_empty_text_raises(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         with pytest.raises(ValueError, match="non-empty"):
             asyncio.run(tools["synthesize"](text=""))
 
     def test_synthesize_whitespace_text_raises(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         with pytest.raises(ValueError, match="non-empty"):
             asyncio.run(tools["synthesize"](text="   "))
 
     def test_build_raises_import_error_when_mcp_missing(self, engine):
-        """_build_mcp should raise ImportError when mcp is not installed."""
+        """build_mcp should raise ImportError when mcp is not installed."""
         with patch.dict(sys.modules, {"fastmcp": None}):
             import importlib
             import ovos_tts_server.mcp_server as mcp_server_mod
             importlib.reload(mcp_server_mod)
             with pytest.raises(ImportError, match="mcp"):
-                mcp_server_mod._build_mcp(engine)
+                mcp_server_mod.build_mcp(engine)
             importlib.reload(mcp_server_mod)
 
 
@@ -234,39 +234,18 @@ class TestMountMcp:
 # ---------------------------------------------------------------------------
 
 class TestStartTtsServerMcpFlag:
-    def test_enable_mcp_false_does_not_mount(self):
-        """start_tts_server with enable_mcp=False should not call mount_mcp."""
+    @pytest.mark.parametrize("kwargs, expected", [
+        ({}, False),
+        ({"enable_mcp": False}, False),
+        ({"enable_mcp": True}, True),
+    ])
+    def test_enable_mcp_passed_to_create_app(self, kwargs, expected):
         with patch("ovos_tts_server.TTSEngineWrapper") as MockEngine, \
-             patch("ovos_tts_server.create_app") as mock_create_app, \
-             patch("ovos_tts_server.mcp_server.mount_mcp") as mock_mount:
-            MockEngine.return_value = MagicMock()
-            mock_create_app.return_value = FastAPI()
-            from ovos_tts_server import start_tts_server
-            start_tts_server("fake-plugin", enable_mcp=False)
-            mock_mount.assert_not_called()
-
-    def test_enable_mcp_true_calls_mount(self, fake_mcp_modules):
-        # start_tts_server does a late import: from ovos_tts_server.mcp_server import mount_mcp
-        # Patch it at the source module so the late import picks up the mock.
-        with patch("ovos_tts_server.TTSEngineWrapper") as MockEngine, \
-             patch("ovos_tts_server.create_app") as mock_create_app, \
-             patch("ovos_tts_server.mcp_server.mount_mcp") as mock_mount:
-            MockEngine.return_value = MagicMock()
+             patch("ovos_tts_server.create_app") as mock_create_app:
             mock_create_app.return_value = FastAPI()
             import ovos_tts_server as tts_mod
-            tts_mod.start_tts_server("fake-plugin", enable_mcp=True)
-            mock_mount.assert_called_once()
-
-    def test_enable_mcp_default_is_off(self):
-        """start_tts_server enable_mcp defaults to False — mount_mcp must not be called."""
-        with patch("ovos_tts_server.TTSEngineWrapper") as MockEngine, \
-             patch("ovos_tts_server.create_app") as mock_create_app, \
-             patch("ovos_tts_server.mcp_server.mount_mcp") as mock_mount:
-            MockEngine.return_value = MagicMock()
-            mock_create_app.return_value = FastAPI()
-            import ovos_tts_server as tts_mod
-            tts_mod.start_tts_server("fake-plugin")  # no enable_mcp kwarg
-            mock_mount.assert_not_called()
+            tts_mod.start_tts_server("fake-plugin", **kwargs)
+            mock_create_app.assert_called_once_with(MockEngine.return_value, enable_mcp=expected)
 
 
 # ---------------------------------------------------------------------------
@@ -276,7 +255,7 @@ class TestStartTtsServerMcpFlag:
 class TestSynthesizeEdgeCases:
     def test_very_long_text(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         long_text = "word " * 2000
         result = asyncio.run(tools["synthesize"](text=long_text))
         assert result["mime_type"] == "audio/wav"
@@ -286,7 +265,7 @@ class TestSynthesizeEdgeCases:
     def test_base64_output_decodes_to_wav_header(self, engine, fake_mcp_modules):
         """Decoded base64 data must start with the RIFF WAV magic bytes."""
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         result = asyncio.run(tools["synthesize"](text="check wav header"))
         decoded = base64.b64decode(result["data"])
         assert decoded[:4] == b"RIFF", (
@@ -296,27 +275,27 @@ class TestSynthesizeEdgeCases:
     def test_unknown_voice_forwarded_to_engine(self, engine, fake_mcp_modules):
         """Passing an unknown voice should not raise — FakeEngine ignores extra kwargs."""
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         result = asyncio.run(tools["synthesize"](text="hello", voice="nonexistent-voice"))
         assert result["mime_type"] == "audio/wav"
 
     def test_unknown_lang_forwarded_to_engine(self, engine, fake_mcp_modules):
         """Passing an unknown lang should not raise — FakeEngine ignores extra kwargs."""
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         result = asyncio.run(tools["synthesize"](text="hello", lang="xx-yy"))
         assert result["mime_type"] == "audio/wav"
 
     def test_phonemes_field_is_none_when_engine_returns_none(self, engine, fake_mcp_modules):
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         result = asyncio.run(tools["synthesize"](text="phoneme check"))
         assert result["phonemes"] is None
 
     def test_path_field_points_to_existing_file(self, engine, fake_mcp_modules):
         import os
         mcp_server_mod, tools = fake_mcp_modules
-        mcp_server_mod._build_mcp(engine)
+        mcp_server_mod.build_mcp(engine)
         result = asyncio.run(tools["synthesize"](text="path check"))
         assert os.path.isfile(result["path"]), f"Expected file at {result['path']!r}"
 
@@ -372,7 +351,82 @@ class TestSynthesizeMimeType:
                 tmp.close()
                 return tmp.name, None
 
-        mcp_server_mod._build_mcp(Mp3Engine())
+        mcp_server_mod.build_mcp(Mp3Engine())
         result = asyncio.run(tools["synthesize"](text="hello"))
         assert base64.b64decode(result["data"]) == b"ID3\x04fake-mp3"
         assert result["mime_type"] == "audio/mpeg"
+
+# ---------------------------------------------------------------------------
+# Real fastmcp: server name and create_app wiring
+# ---------------------------------------------------------------------------
+
+class TestRealFastMcp:
+    def test_server_name_is_short_distribution_name(self, engine):
+        from ovos_tts_server.mcp_server import build_mcp
+
+        assert build_mcp(engine).name == "ovos-tts"
+
+    def test_create_app_enable_mcp_mounts_at_mcp(self, engine):
+        from ovos_tts_server import create_app
+
+        paths = [getattr(r, "path", None) for r in create_app(engine, enable_mcp=True).routes]
+        assert "/mcp" in paths
+
+    def test_create_app_default_does_not_mount_mcp(self, engine):
+        from ovos_tts_server import create_app
+
+        assert "/mcp" not in [getattr(r, "path", None) for r in create_app(engine).routes]
+
+
+# ---------------------------------------------------------------------------
+# Shared layout behaviour: no redirect, version-derived manual, visible warning
+# ---------------------------------------------------------------------------
+
+_INITIALIZE = {
+    "jsonrpc": "2.0", "id": 1, "method": "initialize",
+    "params": {"protocolVersion": "2025-06-18", "capabilities": {},
+               "clientInfo": {"name": "test", "version": "0"}},
+}
+
+
+class TestMcpPathHasNoRedirect:
+    @pytest.mark.parametrize("url", ["/mcp", "/mcp/"])
+    def test_initialize_reaches_transport(self, engine, url):
+        from fastapi.testclient import TestClient
+        from ovos_tts_server import create_app
+
+        with TestClient(create_app(engine, enable_mcp=True)) as client:
+            r = client.post(url, json=_INITIALIZE, follow_redirects=False,
+                            headers={"Accept": "application/json, text/event-stream"})
+        assert r.status_code == 200, (r.status_code, r.headers.get("location"))
+        from ovos_tts_server.version import __version__
+
+        assert f'"serverInfo":{{"name":"ovos-tts","version":"{__version__}"' in r.text
+
+    def test_other_routes_unchanged(self, engine):
+        from fastapi.testclient import TestClient
+        from ovos_tts_server import create_app
+
+        with TestClient(create_app(engine, enable_mcp=True)) as client:
+            assert client.get("/utcp").status_code == 200
+            assert client.get("/no-such-route").json() == {"detail": "Not Found"}
+
+
+class TestMissingExtraWarning:
+    def test_warning_visible_at_default_log_level(self):
+        import subprocess
+        import sys
+
+        code = (
+            "import sys; sys.modules['fastmcp'] = None\n"
+            "from fastapi import FastAPI\n"
+            "import ovos_tts_server\n"
+            "from ovos_tts_server.mcp_server import mount_mcp\n"
+            "mount_mcp(FastAPI(), None)\n"
+        )
+        out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=60)
+        logs = out.stdout + out.stderr
+        assert out.returncode == 0, logs
+        warnings = [line for line in logs.splitlines() if "WARNING" in line]
+        assert len(warnings) == 1, logs
+        assert 'pip install "ovos-tts-server[mcp]"' in warnings[0]

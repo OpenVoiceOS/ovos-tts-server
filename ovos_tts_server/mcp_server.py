@@ -37,13 +37,15 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 from starlette.concurrency import run_in_threadpool
 
 from ovos_tts_server.audio_utils import audio_mime_type
+from ovos_tts_server.version import __version__
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
+    from fastmcp import FastMCP
     from ovos_tts_server import TTSEngineWrapper
 
 
-def _build_mcp(engine: "TTSEngineWrapper"):
+def build_mcp(engine: "TTSEngineWrapper") -> "FastMCP":
     """Build and return a FastMCP instance wired to *engine*.
 
     Raises ImportError if the ``fastmcp`` package is not installed.
@@ -57,7 +59,8 @@ def _build_mcp(engine: "TTSEngineWrapper"):
         ) from exc
 
     mcp = FastMCP(
-        name="ovos-tts-server",
+        name="ovos-tts",
+        version=__version__,
         instructions=(
             "Synthesize speech using the OVOS TTS server. "
             "Call the 'synthesize' tool with the text you want spoken."
@@ -117,6 +120,25 @@ def _build_mcp(engine: "TTSEngineWrapper"):
     return mcp
 
 
+class _ExactMountPath:
+    """ASGI middleware that sends a request for exactly *path* to the mount at *path*.
+
+    Starlette answers ``POST /mcp`` for a ``Mount("/mcp")`` with a 307 to
+    ``/mcp/``. Behind a TLS proxy that uvicorn does not trust, the redirect
+    points at ``http://`` and MCP clients refuse it.
+    """
+
+    def __init__(self, app, path: str):
+        self.app = app
+        self.path = path
+        self.mount_root = path + "/"
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["path"] == self.path:
+            scope = dict(scope, path=self.mount_root, raw_path=self.mount_root.encode())
+        await self.app(scope, receive, send)
+
+
 def mount_mcp(app: "FastAPI", engine: "TTSEngineWrapper", path: str = "/mcp") -> None:
     """Mount the FastMCP ASGI app onto *app* at *path*.
 
@@ -130,12 +152,13 @@ def mount_mcp(app: "FastAPI", engine: "TTSEngineWrapper", path: str = "/mcp") ->
         path: URL prefix for the MCP server (default ``"/mcp"``).
     """
     try:
-        mcp = _build_mcp(engine)
+        mcp = build_mcp(engine)
         # Serve the MCP streamable-HTTP transport at the mount root so the
         # endpoint is exactly *path* (fastmcp defaults to an internal /mcp
         # sub-path, which would yield /mcp/mcp when mounted).
         mcp_app = mcp.http_app(path="/", transport="streamable-http")
         app.mount(path, mcp_app)
+        app.add_middleware(_ExactMountPath, path=path)
 
         # Starlette does not propagate lifespan events to mounted sub-apps,
         # and the streamable transport requires its session manager running.

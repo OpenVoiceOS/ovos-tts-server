@@ -109,12 +109,14 @@ class TTSEngineWrapper:
         return transformed
 
 
-def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
+def create_app(tts_engine: TTSEngineWrapper, enable_mcp: bool = False) -> FastAPI:
     """
     Create a FastAPI application wired to the provided TTS engine.
     
     Parameters:
         tts_engine (TTSEngineWrapper): Injected TTS engine used by the app's endpoints.
+        enable_mcp (bool): Mount the MCP server at ``/mcp``
+            (requires ``pip install "ovos-tts-server[mcp]"``).
     
     Returns:
         FastAPI: Configured FastAPI application exposing /status, legacy /synthesize/{utterance}, and /v2/synthesize endpoints.
@@ -266,8 +268,12 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
     app.include_router(make_playht_router(tts_engine))
 
     # UTCP manual endpoint (no extra deps required)
-    from ovos_tts_server.utcp_manual import make_utcp_router
+    from ovos_tts_server.utcp import make_utcp_router
     app.include_router(make_utcp_router(tts_engine))
+
+    if enable_mcp:
+        from ovos_tts_server.mcp_server import mount_mcp
+        mount_mcp(app, tts_engine)
 
     return app
 
@@ -294,8 +300,5 @@ def start_tts_server(
         Tuple of FastAPI app and TTS engine wrapper.
     """
     tts_engine = TTSEngineWrapper(plugin_name=tts_plugin, cache=cache, lang=lang)
-    app = create_app(tts_engine)
-    if enable_mcp:
-        from ovos_tts_server.mcp_server import mount_mcp
-        mount_mcp(app, tts_engine)
+    app = create_app(tts_engine, enable_mcp=enable_mcp)
     return app, tts_engine

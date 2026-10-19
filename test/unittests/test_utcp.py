@@ -11,7 +11,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ovos_tts_server.utcp_manual import build_utcp_manual, make_utcp_router
+from ovos_tts_server.utcp import build_utcp_manual, make_utcp_router
 
 
 # ---------------------------------------------------------------------------
@@ -212,8 +212,53 @@ class TestUtcpToolUrlCorrectness:
         required = tools["tts_status"]["inputs"].get("required", [])
         assert required == [], f"tts_status should require no inputs, got: {required}"
 
-    def test_manual_version_format(self, engine):
+
+# ---------------------------------------------------------------------------
+# Reference client models and the deprecated module
+# ---------------------------------------------------------------------------
+
+class TestReferenceClientModels:
+    BASE = "http://localhost:9666"
+    HTTP_TEMPLATE_FIELDS = {"call_template_type", "name", "http_method", "url", "content_type",
+                            "auth", "headers", "body_field", "header_fields"}
+
+    def test_manual_loads_as_utcp_manual(self, engine):
+        from utcp.data.utcp_manual import UtcpManual
+
         manual = build_utcp_manual(engine, self.BASE)
-        parts = manual["manual_version"].split(".")
-        assert len(parts) == 3
-        assert all(p.isdigit() for p in parts)
+        loaded = UtcpManual.model_validate(manual)
+        assert [t.name for t in loaded.tools] == [t["name"] for t in manual["tools"]]
+        for tool in loaded.tools:
+            assert tool.tool_call_template.call_template_type == "http"
+
+    def test_call_templates_use_only_http_template_fields(self, engine):
+        from utcp_http.http_call_template import HttpCallTemplate
+
+        for tool in build_utcp_manual(engine, self.BASE)["tools"]:
+            template = tool["tool_call_template"]
+            assert set(template) <= self.HTTP_TEMPLATE_FIELDS, tool["name"]
+            assert HttpCallTemplate.model_validate(template).url == template["url"]
+
+
+class TestDeprecatedUtcpManualModule:
+    def test_old_module_warns_with_next_minor_removal(self):
+        import importlib
+        import sys
+        from ovos_tts_server import utcp
+        from ovos_tts_server.version import VERSION_MAJOR, VERSION_MINOR
+
+        sys.modules.pop("ovos_tts_server.utcp_manual", None)
+        removal = f"{VERSION_MAJOR}.{VERSION_MINOR + 1}.0"
+        with pytest.warns(DeprecationWarning, match=f"removed in {removal}"):
+            old = importlib.import_module("ovos_tts_server.utcp_manual")
+        assert old.build_utcp_manual is utcp.build_utcp_manual
+        assert old.make_utcp_router is utcp.make_utcp_router
+
+
+class TestManualVersions:
+    def test_versions_follow_the_shared_layout(self, engine):
+        from ovos_tts_server.version import __version__
+
+        manual = build_utcp_manual(engine, "http://localhost:9666")
+        assert manual["utcp_version"] == "1.0.0"
+        assert manual["manual_version"] == __version__

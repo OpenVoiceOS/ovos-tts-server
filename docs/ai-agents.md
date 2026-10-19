@@ -13,9 +13,7 @@
 
 The examples use the default port `9666` and the [espeak-ng](https://github.com/OpenVoiceOS/ovos-tts-plugin-espeakng) plugin. Any OVOS TTS plugin works the same way.
 
-## User stories
-
-### "I use Claude Code and want it to speak text"
+## Let Claude Code speak text
 
 You get a `synthesize` tool inside Claude Code. Claude Code calls it and receives the audio and the path of the audio file on the server machine.
 
@@ -61,11 +59,11 @@ The tool result holds the complete audio as base64, and Claude Code reads all of
 
 If `claude mcp get` does not show `Connected`, see [Troubleshooting](#troubleshooting).
 
-### "I use Claude Desktop"
+## Use the server from Claude Desktop
 
 Claude Desktop starts local MCP servers as processes from `claude_desktop_config.json`. That file does not accept a URL. The `mcp-remote` bridge, which needs Node.js, connects the two.
 
-1. Start the server with `--mcp`, as in the Claude Code story.
+1. Start the server with `--mcp`, as in [Let Claude Code speak text](#let-claude-code-speak-text).
 2. Add this entry to `claude_desktop_config.json`:
 
    ```json
@@ -83,11 +81,11 @@ Claude Desktop starts local MCP servers as processes from `claude_desktop_config
 
 A custom connector in the Claude settings is a different mechanism. Anthropic servers make that connection, so the endpoint must be reachable from the public internet. The server has no authentication, so do not expose it that way. See [Security](#security).
 
-### "I build an OVOS persona or agent and want speech as a tool"
+## Give an OVOS persona or agent a speech tool
 
 [ovos-tool-adapters](https://github.com/OpenVoiceOS/ovos-tool-adapters) turns an MCP or UTCP server into an OVOS `ToolBox`. Your agent gets the server tools with their real argument schemas.
 
-Both toolboxes need ovos-tool-adapters 0.1.9a1 or later, which supports `mcp` 2.x and the `utcp` 1.x client. ovos-tts-server 1.15.3a2 and older pin `mcp` 1.x, so with those releases install the server and the agent in separate environments.
+Install the latest alpha of ovos-tool-adapters (`pip install --pre ovos-tool-adapters`) for both toolboxes.
 
 Start the server with `--mcp` and add this toolbox configuration:
 
@@ -100,13 +98,11 @@ Start the server with `--mcp` and add this toolbox configuration:
 
 The toolbox discovers `['synthesize']`. A call with `{"text": "Hello from an OVOS agent."}` returns content that starts with `{"mime_type":"audio/wav","data":"UklGR...`.
 
-The UTCP toolbox (`ovos-utcp-toolbox`) discovers the tools of the UTCP manual. Synthesis through it needs ovos-tts-server 1.15.4a1 or later. In 1.15.3a3 and older, `tts_synthesize_v2` returns raw audio and the call fails. With those releases, use the MCP toolbox.
+The UTCP toolbox (`ovos-utcp-toolbox`) discovers the tools of the UTCP manual.
 
-### "I have a UTCP agent and want it to find the endpoints by itself"
+## Let a UTCP agent discover the endpoints
 
 Point the agent at `/utcp`. No extra package is needed on the server.
-
-This story needs ovos-tts-server 1.15.4a1 or later. In 1.15.3a3 and older, `tts_synthesize_v2` returns raw audio, and the UTCP client fails with `UnicodeDecodeError`.
 
 1. Start the server. `--mcp` is not needed:
 
@@ -149,7 +145,7 @@ This story needs ovos-tts-server 1.15.4a1 or later. In 1.15.3a3 and older, `tts_
    audio/wav written to hello.wav
    ```
 
-### "I write my own agent with an MCP client"
+## Call the server from your own MCP client
 
 This script uses the reference Python client (`pip install --pre "mcp>=2"`). It lists the tools, calls `synthesize` and writes the audio to `hello.wav`.
 
@@ -187,7 +183,7 @@ With `mcp` 1.x, the client is `streamablehttp_client`, it yields three values, a
 
 ### MCP
 
-The endpoint is `http://HOST:9666/mcp` with the streamable HTTP transport. In releases that ship the `ovos_tts_server.utcp` module, `/mcp` and `/mcp/` both reach it with no redirect. In 1.15.4a1 and older, `/mcp` answers `307` and redirects to `/mcp/`. The reference Python client follows the redirect. The server has no SSE transport. The FastMCP server name is `ovos-tts`.
+The endpoint is `http://HOST:9666/mcp` with the streamable HTTP transport. `/mcp` and `/mcp/` both reach it with no redirect. The server has no SSE transport. The FastMCP server name is `ovos-tts`.
 
 **`synthesize`**
 
@@ -214,8 +210,6 @@ When `text` is empty, the call returns an error: `'text' must be a non-empty str
 
 ### UTCP
 
-This section describes the releases that ship the `ovos_tts_server.utcp` module. In 1.15.4a1, the manual has the same two tools, with `utcp_version` `1.0.1` and `manual_version` `1.0.0`. In 1.15.3a3 and older, the manual also has a `tts_synthesize_legacy` tool, and `tts_synthesize_v2` calls `GET /v2/synthesize`, which returns raw audio.
-
 `GET /utcp` returns a UTCP manual with `utcp_version` `1.0.0`. `manual_version` is the version of the installed `ovos-tts-server` package. The URLs in the manual come from the request. See [Reverse proxy](#reverse-proxy).
 
 | Tool | HTTP call | Inputs | Output |
@@ -233,7 +227,7 @@ from ovos_tts_server import create_app, start_tts_server
 app, engine = start_tts_server("ovos-tts-plugin-espeakng", enable_mcp=True)
 ```
 
-`create_app(engine, enable_mcp=True)` does the same for an engine that you load yourself. The agent protocols live in `ovos_tts_server.mcp_server` (`build_mcp`, `mount_mcp`) and `ovos_tts_server.utcp` (`build_utcp_manual`, `make_utcp_router`). In 1.15.4a1 and older, the UTCP functions are in `ovos_tts_server.utcp_manual`, and `mcp_server` has `mount_mcp` only.
+`create_app(engine, enable_mcp=True)` does the same for an engine that you load yourself. The agent protocols live in `ovos_tts_server.mcp_server` (`build_mcp`, `mount_mcp`) and `ovos_tts_server.utcp` (`build_utcp_manual`, `make_utcp_router`).
 
 ## Deployment
 
@@ -290,6 +284,5 @@ With `Host: tts.example.org` and `X-Forwarded-Proto: https` from a trusted proxy
 | `GET /mcp/` returns `400` with `Bad Request: Missing session ID` | A plain HTTP client, such as a browser or `curl`, sent the request. MCP needs a session that the client opens with an `initialize` call. | Use an MCP client. |
 | `GET /mcp/sse` returns `404` | The server has no SSE transport. | Use the streamable HTTP transport at `/mcp`. |
 | The MCP client fails with `ReadError` and the container log shows no request | The client resolved `localhost` to the IPv6 address `::1`, and the container runtime publishes the port on IPv4 only. Rootless Podman does this. | Use `127.0.0.1` in the URL. |
-| The UTCP client fails with `UnicodeDecodeError` | The client called an endpoint that returns raw audio (WAV or MP3). | Call `ovos_tts.tts_synthesize_v2`, which returns JSON. In 1.15.3a3 and older, that tool also returns raw audio: use the MCP endpoint, or install 1.15.4a1 or later. |
-| The UTCP toolbox of ovos-tool-adapters discovers no tools | ovos-tool-adapters before 0.1.9a1 does not support the `utcp` 1.x client. | Install ovos-tool-adapters 0.1.9a1 or later, or use the MCP toolbox. |
+| The UTCP client fails with `UnicodeDecodeError` | The client called an endpoint that returns raw audio (WAV or MP3). | Call `ovos_tts.tts_synthesize_v2`, which returns JSON. |
 | The manual shows `localhost` or `http` behind a proxy | The proxy does not forward `Host`, or the proxy address is not trusted for `X-Forwarded-Proto`. | See [Reverse proxy](#reverse-proxy). |

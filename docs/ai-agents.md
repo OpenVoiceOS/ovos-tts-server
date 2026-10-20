@@ -2,7 +2,7 @@
 
 ## What you can do
 
-**MCP (Model Context Protocol).** Start the server with `--mcp` and it serves an MCP endpoint at `/mcp`. An MCP client, such as Claude Code, Claude Desktop or an OVOS agent, connects to it and calls the `synthesize` tool. The tool returns the audio file encoded in base64, with its MIME type, inside a JSON object. Use MCP when an agent must receive the audio.
+**MCP (Model Context Protocol).** Start the server with `--mcp` and it serves an MCP endpoint at `/mcp`. An MCP client, such as Claude Code, Claude Desktop, opencode, Mistral Vibe or an OVOS agent, connects to it and calls the `synthesize` tool. The tool returns the audio file encoded in base64, with its MIME type, inside a JSON object. Use MCP when an agent must receive the audio.
 
 **UTCP (Universal Tool Calling Protocol).** Every server publishes a UTCP manual at `GET /utcp`. The manual tells a UTCP client how to call the plain HTTP endpoints of the server. The client then calls them directly, with no wrapper process. Use UTCP when your agent already speaks UTCP or when you do not want to install the MCP extra.
 
@@ -80,6 +80,60 @@ Claude Desktop starts local MCP servers as processes from `claude_desktop_config
 3. Quit and restart Claude Desktop. The `ovos-tts` server and its `synthesize` tool show in the connectors menu.
 
 A custom connector in the Claude settings is a different mechanism. Anthropic servers make that connection, so the endpoint must be reachable from the public internet. The server has no authentication, so do not expose it that way. See [Security](#security).
+
+## Let opencode speak text
+
+You get `synthesize` in opencode.
+
+1. Start the server with `--mcp`, as in [Let Claude Code speak text](#let-claude-code-speak-text).
+2. Add this entry to `opencode.json` in your project folder:
+
+   ```json
+   {
+     "$schema": "https://opencode.ai/config.json",
+     "mcp": {
+       "ovos-tts": {
+         "type": "remote",
+         "url": "http://localhost:9666/mcp",
+         "enabled": true
+       }
+     }
+   }
+   ```
+
+3. Check the connection:
+
+   ```console
+   $ opencode mcp list
+   ┌  MCP Servers
+   │
+   ●  ✓ ovos-tts connected
+   │      http://localhost:9666/mcp
+   │
+   └  1 server(s)
+   ```
+
+## Let Mistral Vibe speak text
+
+You get `synthesize` in Vibe.
+
+1. Start the server with `--mcp`, as in [Let Claude Code speak text](#let-claude-code-speak-text).
+2. Add this entry to `~/.vibe/config.toml`:
+
+   ```toml
+   [[mcp_servers]]
+   name = "ovos-tts"
+   transport = "streamable-http"
+   url = "http://localhost:9666/mcp"
+   ```
+
+   Write the entry in the file. Do not use `vibe mcp add` for this server: that
+   command sets OAuth login for an HTTP server, and the server does not use
+   OAuth.
+
+3. Start `vibe`. Vibe loads the tools of the server when it starts. It gives
+   each tool the server name as a prefix, and it changes each hyphen to `_`:
+   `ovos_tts_synthesize`.
 
 ## Give an OVOS persona or agent a speech tool
 

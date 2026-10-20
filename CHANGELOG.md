@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.3a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.3a2) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.3a1...1.15.3a2)
+
+**Merged pull requests:**
+
+- test: pin the elevenlabs SDK below 3 in the test extra [\#161](https://github.com/OpenVoiceOS/ovos-tts-server/pull/161) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [1.15.3a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.3a1) (2026-10-19)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.2a1...1.15.3a1)

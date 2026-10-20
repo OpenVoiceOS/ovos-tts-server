@@ -139,8 +139,7 @@ class TestMaryTTSRouter:
         r = client.get("/marytts/locales")
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("text/plain")
-        assert "en-us" in r.text
-        assert "de-de" in r.text
+        assert r.text.splitlines() == ["en_US", "de_DE"]
 
     def test_voices_returns_plain_text(self, client):
         r = client.get("/marytts/voices")
@@ -179,7 +178,7 @@ class TestMaryTTSRootAlias:
     def test_root_locales(self, client):
         r = client.get("/locales")
         assert r.status_code == 200
-        assert "en-us" in r.text
+        assert "en_US" in r.text.splitlines()
 
     def test_root_voices(self, client):
         r = client.get("/voices")

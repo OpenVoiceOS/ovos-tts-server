@@ -30,7 +30,7 @@ dependencies = [
 
 [project.optional-dependencies]
 audio = ["pydub"]
-test = ["pytest", "httpx", "requests", "openai", "boto3", "elevenlabs<3", "google-cloud-texttospeech", "azure-cognitiveservices-speech", "ovos-tts-plugin-polly", "ovos-tts-plugin-marytts", "cartesia", "deepgram-sdk", "mcp>=2.3.0", "utcp>=1.2.0", "utcp-http>=1.1.14"]
+test = ["pytest", "httpx", "requests", "openai", "boto3", "elevenlabs<3", "google-cloud-texttospeech", "azure-cognitiveservices-speech", "ovos-tts-plugin-polly", "ovos-tts-plugin-marytts>=0.2.1a1", "cartesia", "deepgram-sdk", "mcp>=2.3.0", "utcp>=1.2.0", "utcp-http>=1.1.14"]
 mcp = ["fastmcp>=4.1.1"]
 playht = ["pyht>=0.1.14"]
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.15.4a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a3) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.4a2...1.15.4a3)
+
+**Merged pull requests:**
+
+- docs: add the AI agents page for MCP and UTCP [\#172](https://github.com/OpenVoiceOS/ovos-tts-server/pull/172) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
+## [1.15.4a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a2) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.4a1...1.15.4a2)
+
+**Merged pull requests:**
+
+- test\(mcp\): assert the synthesized audio in the end2end MCP tests [\#164](https://github.com/OpenVoiceOS/ovos-tts-server/pull/164) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [1.15.4a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a1) (2026-10-20)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.3a3...1.15.4a1)

@@ -25,6 +25,7 @@ dependencies = [
     # without one it answers the handshake with a 404
     "websockets",
     "ovos-utils>=0.0.38",
+    "ovos-spec-tools[langcodes]>=1.16.0a1",
     "pydantic",
 ]
 

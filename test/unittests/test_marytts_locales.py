@@ -62,7 +62,8 @@ def test_voices_list_java_locales(client):
     ("en_us", "en-us"),
     ("EN-US", "en-us"),
     ("en_GB", "en-gb"),
-    ("en_AU", "en"),     # region the engine lacks: the base language
+    ("en_AU", "en-gb"),  # region the engine lacks: the nearest variant
+    ("pt_PT", "pt"),
     ("pt_BR", "pt"),
     ("ca_VA", "ca-va"),
 ])
@@ -83,3 +84,19 @@ def test_locale_round_trips_through_the_listing():
     from ovos_tts_server.routers.marytts import resolve_locale, to_mary_locale
     langs = StrictLangEngine.langs
     assert [resolve_locale(to_mary_locale(lang), langs) for lang in langs] == langs
+
+
+@pytest.mark.parametrize("locale, engine_lang", [
+    ("EN_us", "en-us"),
+    ("en-AU", "en-gb"),   # no bare "en" listed: the nearest regional variant
+    ("pt", "pt-br"),      # bare language, regional engine tag
+    ("pt_PT", "pt-br"),
+    ("de_DE", "de"),
+])
+def test_process_matches_regional_variants(engine, locale, engine_lang):
+    engine.langs = ["en-us", "en-gb", "pt-br", "de"]
+    app = FastAPI()
+    app.include_router(make_marytts_router(engine))
+    r = TestClient(app).get("/marytts/process", params={"INPUT_TEXT": "hello", "LOCALE": locale})
+    assert r.status_code == 200, r.text
+    assert engine.langs_received == [engine_lang]

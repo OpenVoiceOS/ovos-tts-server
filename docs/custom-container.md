@@ -72,29 +72,6 @@ Run with `docker compose up`.
 | `ovos-tts-plugin-piper` | Fast neural TTS, many voices and languages |
 | `ovos-tts-plugin-mimic3` | Mycroft Mimic 3, lightweight |
 
-## MCP / UTCP extras
+## MCP and UTCP
 
-`GET /utcp` is always available and returns a UTCP-1.0 tool manifest describing all
-synthesis endpoints; no extra dependencies required.
-
-For MCP (streamable-HTTP transport, compatible with Claude Desktop and claude-code):
-
-```dockerfile
-RUN pip install --no-cache-dir "ovos-tts-server[mcp]"
-```
-
-Start the server with `--mcp` to activate the `/mcp` endpoint.  Mount it in
-Claude Desktop with:
-
-```json
-{
-  "mcpServers": {
-    "ovos-tts": {
-      "transport": "http",
-      "url": "http://localhost:9666/mcp"
-    }
-  }
-}
-```
-
-This feature is already available in the `dev` branch.
+`GET /utcp` needs no change to the image. To serve MCP, install `ovos-tts-server[mcp]` in the image and add `--mcp` to the start command. [AI agents: Docker](ai-agents.md#docker) has the steps.

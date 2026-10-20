@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.4a4](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a4) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.4a3...1.15.4a4)
+
+**Merged pull requests:**
+
+- refactor: move the agent-protocol code to the shared server layout [\#165](https://github.com/OpenVoiceOS/ovos-tts-server/pull/165) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [1.15.4a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a3) (2026-10-20)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.4a2...1.15.4a3)

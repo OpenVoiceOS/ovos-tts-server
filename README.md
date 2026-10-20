@@ -16,16 +16,16 @@
 ## Install
 
 ```bash
-pip install ovos-tts-server
+pip install --pre ovos-tts-server
 
 # Optional: enable non-WAV output (mp3, ogg, flac, ...) via pydub
-pip install "ovos-tts-server[audio]"
+pip install --pre "ovos-tts-server[audio]"
 ```
 
 You also need at least one TTS plugin, for example [Piper](https://github.com/OpenVoiceOS/ovos-tts-plugin-piper):
 
 ```bash
-pip install ovos-tts-plugin-piper
+pip install --pre ovos-tts-plugin-piper
 ```
 
 ## Quickstart
@@ -143,7 +143,7 @@ Build a small image that serves any plugin:
 ```dockerfile
 FROM python:3.11-slim
 
-RUN pip install --no-cache-dir "ovos-tts-server[audio]" {PLUGIN_HERE}
+RUN pip install --no-cache-dir --pre "ovos-tts-server[audio]" {PLUGIN_HERE}
 
 ENTRYPOINT ["ovos-tts-server", "--engine", "{PLUGIN_HERE}", "--cache"]
 ```
@@ -173,7 +173,7 @@ pytest test/ -v
 - [Voice & language configuration](docs/configuration.md): how requests map to the plugin
 - [Transformer pipelines](docs/transformers.md): dialog/tts transformer plugins around synthesis
 - [Audio format conversion](docs/audio-formats.md): `convert_audio()` and the `[audio]` extra
-- [AI agents (MCP and UTCP)](docs/ai-agents.md): connect Claude Code, Claude Desktop, OVOS agents and UTCP clients
+- [AI agents (MCP and UTCP)](docs/ai-agents.md): connect Claude Code, Claude Desktop, opencode, Mistral Vibe, OVOS agents and UTCP clients
 - [Architecture overview](docs/index.md): classes, entry points, request flow
 
 ---
@@ -188,7 +188,7 @@ ovos-tts-server --engine ovos-tts-plugin-piper --mcp
 claude mcp add --transport http ovos-tts http://localhost:9666/mcp
 ```
 
-[AI agents (MCP and UTCP)](docs/ai-agents.md) has recipes for Claude Code, Claude Desktop, OVOS agents and UTCP clients, and the tool reference.
+[AI agents (MCP and UTCP)](docs/ai-agents.md) has recipes for Claude Code, Claude Desktop, opencode, Mistral Vibe, OVOS agents and UTCP clients, and the tool reference.
 
 ---
 

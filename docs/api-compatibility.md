@@ -8,7 +8,7 @@ collisions. Point a client at the matching prefix and it works unmodified.
 All routers accept any auth token or API key from the client and ignore it silently. Authentication is the responsibility of your reverse proxy.
 
 Audio format conversion is provided by `ovos_tts_server.audio_utils.convert_audio()`.
-Install the `[audio]` extra (`pip install "ovos-tts-server[audio]"`) to enable
+Install the `[audio]` extra (`pip install --pre "ovos-tts-server[audio]"`) to enable
 non-WAV outputs via `pydub`; without it, non-WAV requests fall back to WAV. See
 [audio-formats.md](audio-formats.md).
 

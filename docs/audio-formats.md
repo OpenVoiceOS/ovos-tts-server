@@ -29,7 +29,7 @@ The function lower-cases the `fmt` argument before matching.
 `pydub` lives in the `[audio]` extra (`[project.optional-dependencies] audio = ["pydub"]`). Install it to enable non-WAV output:
 
 ```bash
-pip install "ovos-tts-server[audio]"
+pip install --pre "ovos-tts-server[audio]"
 ```
 
 When `pydub` is absent, any non-WAV request degrades gracefully. The server returns the original WAV bytes with MIME type `audio/wav`. The request still succeeds; the client simply receives WAV instead of the requested container.

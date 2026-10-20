@@ -8,7 +8,7 @@ by layering it on top of the base image.
 ```dockerfile
 FROM ghcr.io/openvoiceos/ovos-tts-server:dev
 
-RUN pip install --no-cache-dir ovos-tts-plugin-piper
+RUN pip install --no-cache-dir --pre ovos-tts-plugin-piper
 
 COPY config/mycroft.conf /config/mycroft/mycroft.conf
 

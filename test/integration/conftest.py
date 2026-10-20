@@ -25,7 +25,11 @@ class FakeEngine:
     langs: List[str] = ["en-us", "de-de"]
     voices: List[str] = ["voice1", "voice2"]
 
+    def __init__(self):
+        self.calls: List[Tuple[str, dict]] = []
+
     def synthesize(self, utterance: str, **kwargs) -> Tuple[str, Optional[str]]:
+        self.calls.append((utterance, kwargs))
         tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
         tmp.close()
         with wave.open(tmp.name, "w") as wf:

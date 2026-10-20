@@ -11,7 +11,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ovos_tts_server.utcp_manual import build_utcp_manual, make_utcp_router
+from ovos_tts_server.utcp import build_utcp_manual, make_utcp_router
 
 
 # ---------------------------------------------------------------------------
@@ -183,21 +183,17 @@ class TestUtcpToolUrlCorrectness:
     def test_v2_synthesize_url_contains_v2_synthesize(self, engine):
         tools = self._tools_by_name(engine)
         url = tools["tts_synthesize_v2"]["tool_call_template"]["url"]
-        assert url == f"{self.BASE}/v2/synthesize"
+        assert url == f"{self.BASE}/v2/synthesize/json"
 
     def test_v2_synthesize_method_is_get(self, engine):
         tools = self._tools_by_name(engine)
         assert tools["tts_synthesize_v2"]["tool_call_template"]["http_method"] == "GET"
 
-    def test_legacy_synthesize_url_contains_utterance_template(self, engine):
-        tools = self._tools_by_name(engine)
-        url = tools["tts_synthesize_legacy"]["tool_call_template"]["url"]
-        assert "{utterance}" in url, f"Expected {{utterance}} in legacy URL, got: {url!r}"
-        assert url.startswith(f"{self.BASE}/synthesize/")
-
-    def test_legacy_synthesize_method_is_get(self, engine):
-        tools = self._tools_by_name(engine)
-        assert tools["tts_synthesize_legacy"]["tool_call_template"]["http_method"] == "GET"
+    def test_every_tool_returns_json(self, engine):
+        manual = build_utcp_manual(engine, self.BASE)
+        for tool in manual["tools"]:
+            assert tool["outputs"]["type"] == "object", tool["name"]
+            assert tool["outputs"].get("format") != "binary", tool["name"]
 
     def test_no_double_slash_in_any_url(self, engine):
         manual = build_utcp_manual(engine, self.BASE)
@@ -207,22 +203,62 @@ class TestUtcpToolUrlCorrectness:
             without_proto = url.split("://", 1)[-1]
             assert "//" not in without_proto, f"Double slash in URL for {tool['name']!r}: {url!r}"
 
-    def test_v2_synthesize_has_content_type_octet_stream(self, engine):
+    def test_v2_synthesize_has_synthesize_tag(self, engine):
         tools = self._tools_by_name(engine)
-        tpl = tools["tts_synthesize_v2"]["tool_call_template"]
-        assert tpl.get("content_type") == "application/octet-stream"
-
-    def test_legacy_tool_has_synthesize_tag(self, engine):
-        tools = self._tools_by_name(engine)
-        assert "synthesize" in tools["tts_synthesize_legacy"].get("tags", [])
+        assert "synthesize" in tools["tts_synthesize_v2"].get("tags", [])
 
     def test_status_inputs_has_no_required_fields(self, engine):
         tools = self._tools_by_name(engine)
         required = tools["tts_status"]["inputs"].get("required", [])
         assert required == [], f"tts_status should require no inputs, got: {required}"
 
-    def test_manual_version_format(self, engine):
+
+# ---------------------------------------------------------------------------
+# Reference client models and the deprecated module
+# ---------------------------------------------------------------------------
+
+class TestReferenceClientModels:
+    BASE = "http://localhost:9666"
+    HTTP_TEMPLATE_FIELDS = {"call_template_type", "name", "http_method", "url", "content_type",
+                            "auth", "headers", "body_field", "header_fields"}
+
+    def test_manual_loads_as_utcp_manual(self, engine):
+        from utcp.data.utcp_manual import UtcpManual
+
         manual = build_utcp_manual(engine, self.BASE)
-        parts = manual["manual_version"].split(".")
-        assert len(parts) == 3
-        assert all(p.isdigit() for p in parts)
+        loaded = UtcpManual.model_validate(manual)
+        assert [t.name for t in loaded.tools] == [t["name"] for t in manual["tools"]]
+        for tool in loaded.tools:
+            assert tool.tool_call_template.call_template_type == "http"
+
+    def test_call_templates_use_only_http_template_fields(self, engine):
+        from utcp_http.http_call_template import HttpCallTemplate
+
+        for tool in build_utcp_manual(engine, self.BASE)["tools"]:
+            template = tool["tool_call_template"]
+            assert set(template) <= self.HTTP_TEMPLATE_FIELDS, tool["name"]
+            assert HttpCallTemplate.model_validate(template).url == template["url"]
+
+
+class TestDeprecatedUtcpManualModule:
+    def test_old_module_warns_with_next_minor_removal(self):
+        import importlib
+        import sys
+        from ovos_tts_server import utcp
+        from ovos_tts_server.version import VERSION_MAJOR, VERSION_MINOR
+
+        sys.modules.pop("ovos_tts_server.utcp_manual", None)
+        removal = f"{VERSION_MAJOR}.{VERSION_MINOR + 1}.0"
+        with pytest.warns(DeprecationWarning, match=f"removed in {removal}"):
+            old = importlib.import_module("ovos_tts_server.utcp_manual")
+        assert old.build_utcp_manual is utcp.build_utcp_manual
+        assert old.make_utcp_router is utcp.make_utcp_router
+
+
+class TestManualVersions:
+    def test_versions_follow_the_shared_layout(self, engine):
+        from ovos_tts_server.version import __version__
+
+        manual = build_utcp_manual(engine, "http://localhost:9666")
+        assert manual["utcp_version"] == "1.0.0"
+        assert manual["manual_version"] == __version__

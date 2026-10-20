@@ -23,7 +23,7 @@ Run in isolation::
 from __future__ import annotations
 
 import asyncio
-import importlib
+import base64
 import socket
 import tempfile
 import threading
@@ -117,10 +117,7 @@ def live_server():
 
     stub = _StubTTSEngine()
     app = create_app(stub)
-    try:
-        base_url, server, thread = _start_server(app)
-    except RuntimeError as exc:
-        pytest.skip(str(exc))
+    base_url, server, thread = _start_server(app)
 
     yield base_url
 
@@ -130,19 +127,11 @@ def live_server():
 
 @pytest.fixture(scope="module")
 def mcp_server():
-    """Run MCP as its own Starlette app to avoid sub-app lifespan issues."""
-    try:
-        from ovos_tts_server.mcp_server import _build_mcp
-    except ImportError:
-        pytest.skip("mcp extra not installed")
+    """Boot create_app with MCP mounted, as ``ovos-tts-server --mcp`` does."""
+    from ovos_tts_server import create_app
 
-    stub = _StubTTSEngine()
-    mcp = _build_mcp(stub)
-    mcp_app = mcp.streamable_http_app()
-    try:
-        base_url, server, thread = _start_server(mcp_app, health_path="/mcp")
-    except RuntimeError as exc:
-        pytest.skip(str(exc))
+    app = create_app(_StubTTSEngine(), enable_mcp=True)
+    base_url, server, thread = _start_server(app)
 
     yield f"{base_url}/mcp"
 
@@ -193,21 +182,45 @@ class TestUtcpE2E:
         assert resp.status_code == 200
 
 
+    def test_json_synthesis_requires_utterance(self, live_server):
+        resp = httpx.get(f"{live_server}/v2/synthesize/json", timeout=10)
+        assert resp.status_code == 400
+        assert resp.json() == {"error": "Missing utterance"}
+
+    def test_reference_client_calls_every_tool(self, live_server):
+        """The reference UTCP client (utcp + utcp-http) must be able to call
+        every tool in the manual, and synthesis must return the audio."""
+        from utcp.utcp_client import UtcpClient
+        from utcp.data.utcp_client_config import UtcpClientConfig
+
+        async def _run():
+            config = UtcpClientConfig(manual_call_templates=[{
+                "name": "ovos_tts",
+                "call_template_type": "http",
+                "url": f"{live_server}/utcp",
+                "http_method": "GET",
+            }])
+            client = await UtcpClient.create(config=config)
+            tools = await client.config.tool_repository.get_tools()
+            results = {}
+            for tool in tools:
+                args = {"utterance": "hello"} if "utterance" in tool.inputs.required else {}
+                results[tool.name] = await client.call_tool(tool.name, args)
+            return results
+
+        results = asyncio.run(_run())
+        assert results["ovos_tts.tts_status"]["plugin"] == "stub-tts"
+        audio = results["ovos_tts.tts_synthesize_v2"]
+        assert audio["mime_type"] == "audio/wav"
+        assert base64.b64decode(audio["data"]) == _wav_bytes()
+
+
 # ---------------------------------------------------------------------------
 # MCP end-to-end
 # ---------------------------------------------------------------------------
 
-_mcp_available = importlib.util.find_spec("mcp") is not None
-mcp_required = pytest.mark.skipif(
-    not _mcp_available,
-    reason="mcp package not installed",
-)
-
-
-@mcp_required
 class TestMcpE2E:
-    """MCP tests use a standalone MCP Starlette app (separate from the main FastAPI app)
-    to avoid the Starlette Mount sub-app lifespan limitation."""
+    """MCP tests call the endpoint that create_app(enable_mcp=True) mounts."""
 
     def test_mcp_endpoint_accessible(self, mcp_server):
         resp = httpx.get(mcp_server, timeout=10)
@@ -218,7 +231,7 @@ class TestMcpE2E:
         from mcp import ClientSession
 
         async def _run():
-            async with streamable_http_client(mcp_server) as (r, w, _):
+            async with streamable_http_client(mcp_server) as (r, w):
                 async with ClientSession(r, w) as session:
                     await session.initialize()
                     result = await session.list_tools()
@@ -233,15 +246,29 @@ class TestMcpE2E:
         from mcp import ClientSession
 
         async def _run():
-            async with streamable_http_client(mcp_server) as (r, w, _):
+            async with streamable_http_client(mcp_server) as (r, w):
                 async with ClientSession(r, w) as session:
                     await session.initialize()
-                    result = await session.call_tool(
+                    return await session.call_tool(
                         "synthesize",
-                        {"utterance": "hello world", "lang": "en-us"},
+                        {"text": "hello world", "lang": "en-us"},
                     )
-                    return result
 
         result = asyncio.run(_run())
-        assert result is not None
-        assert result.content, "Expected non-empty content from synthesize tool"
+        assert not result.is_error, result.content
+        assert result.structured_content["mime_type"] == "audio/wav"
+        assert base64.b64decode(result.structured_content["data"]) == _wav_bytes()
+
+    def test_mcp_synthesize_rejects_empty_text(self, mcp_server):
+        from mcp.client.streamable_http import streamable_http_client
+        from mcp import ClientSession
+
+        async def _run():
+            async with streamable_http_client(mcp_server) as (r, w):
+                async with ClientSession(r, w) as session:
+                    await session.initialize()
+                    return await session.call_tool("synthesize", {"text": "  "})
+
+        result = asyncio.run(_run())
+        assert result.is_error
+        assert "'text' must be a non-empty string" in result.content[0].text

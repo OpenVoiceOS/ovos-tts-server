@@ -34,26 +34,33 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from starlette.concurrency import run_in_threadpool
+
+from ovos_tts_server.audio_utils import audio_mime_type
+from ovos_tts_server.version import __version__
+
 if TYPE_CHECKING:
     from fastapi import FastAPI
+    from fastmcp import FastMCP
     from ovos_tts_server import TTSEngineWrapper
 
 
-def _build_mcp(engine: "TTSEngineWrapper"):
+def build_mcp(engine: "TTSEngineWrapper") -> "FastMCP":
     """Build and return a FastMCP instance wired to *engine*.
 
-    Raises ImportError if the ``mcp`` package is not installed.
+    Raises ImportError if the ``fastmcp`` package is not installed.
     """
     try:
-        from mcp.server.fastmcp import FastMCP
+        from fastmcp import FastMCP
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
-            "MCP support requires the 'mcp' package: "
+            "MCP support requires the 'fastmcp' package: "
             "pip install \"ovos-tts-server[mcp]\""
         ) from exc
 
     mcp = FastMCP(
-        name="ovos-tts-server",
+        name="ovos-tts",
+        version=__version__,
         instructions=(
             "Synthesize speech using the OVOS TTS server. "
             "Call the 'synthesize' tool with the text you want spoken."
@@ -64,10 +71,10 @@ def _build_mcp(engine: "TTSEngineWrapper"):
         name="synthesize",
         description=(
             "Convert text to speech using the configured OVOS TTS engine. "
-            "Returns base64-encoded WAV audio with MIME type audio/wav."
+            "Returns the audio file base64-encoded, with its MIME type."
         ),
     )
-    def synthesize(
+    async def synthesize(
         text: str,
         voice: Optional[str] = None,
         lang: Optional[str] = None,
@@ -81,9 +88,9 @@ def _build_mcp(engine: "TTSEngineWrapper"):
 
         Returns:
             A dict with keys:
-            - ``mime_type``: always ``"audio/wav"``
-            - ``data``: base64-encoded WAV bytes
-            - ``path``: absolute path to the temporary WAV file on the server
+            - ``mime_type``: MIME type of the audio file, e.g. ``"audio/wav"``
+            - ``data``: base64-encoded audio bytes
+            - ``path``: absolute path to the audio file on the server
             - ``phonemes``: phoneme string returned by the engine, or null
         """
         if not text or not text.strip():
@@ -95,13 +102,16 @@ def _build_mcp(engine: "TTSEngineWrapper"):
         if lang:
             kwargs["lang"] = lang
 
-        audio_path, phonemes = engine.synthesize(text, **kwargs)
+        audio_path, phonemes = await run_in_threadpool(engine.synthesize, text, **kwargs)
 
-        with open(audio_path, "rb") as fh:
-            audio_bytes = fh.read()
+        def _read_audio() -> bytes:
+            with open(audio_path, "rb") as fh:
+                return fh.read()
+
+        audio_bytes = await run_in_threadpool(_read_audio)
 
         return {
-            "mime_type": "audio/wav",
+            "mime_type": audio_mime_type(audio_path),
             "data": base64.b64encode(audio_bytes).decode("ascii"),
             "path": str(audio_path),
             "phonemes": phonemes,
@@ -110,11 +120,31 @@ def _build_mcp(engine: "TTSEngineWrapper"):
     return mcp
 
 
+class _ExactMountPath:
+    """ASGI middleware that sends a request for exactly *path* to the mount at *path*.
+
+    Starlette answers ``POST /mcp`` for a ``Mount("/mcp")`` with a 307 to
+    ``/mcp/``. Behind a TLS proxy that uvicorn does not trust, the redirect
+    points at ``http://`` and MCP clients refuse it.
+    """
+
+    def __init__(self, app, path: str):
+        self.app = app
+        self.path = path
+        self.mount_root = path + "/"
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["path"] == self.path:
+            scope = dict(scope, path=self.mount_root, raw_path=self.mount_root.encode())
+        await self.app(scope, receive, send)
+
+
 def mount_mcp(app: "FastAPI", engine: "TTSEngineWrapper", path: str = "/mcp") -> None:
     """Mount the FastMCP ASGI app onto *app* at *path*.
 
-    This is a no-op (with a logged warning) when the ``mcp`` package is not
-    installed, so servers that omit the ``[mcp]`` extra still start cleanly.
+    This is a no-op (with a logged warning) when the ``fastmcp`` package is
+    not installed, so servers that omit the ``[mcp]`` extra still start
+    cleanly.
 
     Args:
         app: The FastAPI application to mount onto.
@@ -122,12 +152,13 @@ def mount_mcp(app: "FastAPI", engine: "TTSEngineWrapper", path: str = "/mcp") ->
         path: URL prefix for the MCP server (default ``"/mcp"``).
     """
     try:
-        mcp = _build_mcp(engine)
+        mcp = build_mcp(engine)
         # Serve the MCP streamable-HTTP transport at the mount root so the
-        # endpoint is exactly *path* (FastMCP defaults to an internal /mcp
+        # endpoint is exactly *path* (fastmcp defaults to an internal /mcp
         # sub-path, which would yield /mcp/mcp when mounted).
-        mcp.settings.streamable_http_path = "/"
-        app.mount(path, mcp.streamable_http_app())
+        mcp_app = mcp.http_app(path="/", transport="streamable-http")
+        app.mount(path, mcp_app)
+        app.add_middleware(_ExactMountPath, path=path)
 
         # Starlette does not propagate lifespan events to mounted sub-apps,
         # and the streamable transport requires its session manager running.
@@ -137,7 +168,7 @@ def mount_mcp(app: "FastAPI", engine: "TTSEngineWrapper", path: str = "/mcp") ->
         @asynccontextmanager
         async def _lifespan_with_mcp(host_app):
             async with _original_lifespan(host_app):
-                async with mcp.session_manager.run():
+                async with mcp_app.lifespan(mcp_app):
                     yield
 
         app.router.lifespan_context = _lifespan_with_mcp

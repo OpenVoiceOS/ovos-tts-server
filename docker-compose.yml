@@ -1,0 +1,27 @@
+services:
+  ovos-tts:
+    build: .
+    image: ghcr.io/openvoiceos/ovos-tts-server:dev
+    ports:
+      - "8080:9666"
+    volumes:
+      - ./config:/config/mycroft
+    environment:
+      # Override the upstream Piper server if you run your own
+      # TTS_HOST: "https://tts.smartgic.io/piper"
+      XDG_CONFIG_HOME: /config
+    command:
+      - "--engine"
+      - "ovos-tts-plugin-server"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "9666"
+    healthcheck:
+      test: ["CMD", "python3", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:9666/status')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped

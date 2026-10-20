@@ -12,3 +12,10 @@ jobs:
       python_versions: '["3.10", "3.11", "3.12", "3.13", "3.14"]'
       install_extras: 'test,mcp'
       test_path: 'test'
+
+  playht_live:
+    uses: OpenVoiceOS/gh-automations/.github/workflows/build-tests.yml@dev
+    with:
+      python_versions: '["3.11"]'
+      install_extras: 'test,playht'
+      test_path: 'test/integration/test_playht_live.py'

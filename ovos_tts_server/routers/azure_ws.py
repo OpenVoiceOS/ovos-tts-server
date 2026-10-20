@@ -42,6 +42,8 @@ References:
 """
 from __future__ import annotations
 
+from starlette.concurrency import run_in_threadpool
+
 import datetime
 import json
 import re
@@ -185,8 +187,8 @@ def make_azure_ws_router(engine) -> APIRouter:
                 if path == "ssml":
                     ssml = str(body)
                     utterance, synth_kwargs = _extract_synth_args(ssml)
-                    wav_path, _ = engine.synthesize(utterance, **synth_kwargs)
-                    audio_bytes, mime = convert_audio(wav_path, output_format)
+                    wav_path, _ = await run_in_threadpool(engine.synthesize, utterance, **synth_kwargs)
+                    audio_bytes, mime = await run_in_threadpool(convert_audio, wav_path, output_format)
 
                     # turn.start
                     await websocket.send_text(_build_text(

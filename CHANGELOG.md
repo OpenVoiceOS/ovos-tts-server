@@ -1,20 +1,140 @@
 # Changelog
 
-## [1.13.4a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.4a1) (2026-07-14)
+## [1.15.4a4](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a4) (2026-10-20)
 
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.3a1...1.13.4a1)
-
-**Merged pull requests:**
-
-- fix: flow --lang into the plugin configuration [\#134](https://github.com/OpenVoiceOS/ovos-tts-server/pull/134) ([JarbasAl](https://github.com/JarbasAl))
-
-## [1.13.3a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.3a1) (2026-07-14)
-
-[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.2...1.13.3a1)
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.4a3...1.15.4a4)
 
 **Merged pull requests:**
 
-- test: match the stream-input route's path-converter voice id [\#133](https://github.com/OpenVoiceOS/ovos-tts-server/pull/133) ([JarbasAl](https://github.com/JarbasAl))
+- refactor: move the agent-protocol code to the shared server layout [\#165](https://github.com/OpenVoiceOS/ovos-tts-server/pull/165) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
+## [1.15.4a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a3) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.4a2...1.15.4a3)
+
+**Merged pull requests:**
+
+- docs: add the AI agents page for MCP and UTCP [\#172](https://github.com/OpenVoiceOS/ovos-tts-server/pull/172) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
+## [1.15.4a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a2) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.4a1...1.15.4a2)
+
+**Merged pull requests:**
+
+- test\(mcp\): assert the synthesized audio in the end2end MCP tests [\#164](https://github.com/OpenVoiceOS/ovos-tts-server/pull/164) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
+## [1.15.4a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a1) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.3a3...1.15.4a1)
+
+**Merged pull requests:**
+
+- fix\(utcp\): return synthesized audio as JSON so UTCP clients can call it [\#163](https://github.com/OpenVoiceOS/ovos-tts-server/pull/163) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
+## [1.15.3a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.3a3) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.3a2...1.15.3a3)
+
+**Merged pull requests:**
+
+- build: set agent-protocol dependency floors and drop the caps [\#162](https://github.com/OpenVoiceOS/ovos-tts-server/pull/162) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
+## [1.15.3a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.3a2) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.3a1...1.15.3a2)
+
+**Merged pull requests:**
+
+- test: pin the elevenlabs SDK below 3 in the test extra [\#161](https://github.com/OpenVoiceOS/ovos-tts-server/pull/161) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
+## [1.15.3a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.3a1) (2026-10-19)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.2a1...1.15.3a1)
+
+**Merged pull requests:**
+
+- fix\(polly\): serve DescribeVoices so the Polly plugin can list voices [\#167](https://github.com/OpenVoiceOS/ovos-tts-server/pull/167) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
+## [1.15.2a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.2a1) (2026-09-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.1a2...1.15.2a1)
+
+**Merged pull requests:**
+
+- fix\(openai\): accept pathlib paths in audio conversion [\#153](https://github.com/OpenVoiceOS/ovos-tts-server/pull/153) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.15.1a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.1a2) (2026-09-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.1a1...1.15.1a2)
+
+**Merged pull requests:**
+
+- docs: correct --lang CLI default [\#154](https://github.com/OpenVoiceOS/ovos-tts-server/pull/154) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.15.1a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.1a1) (2026-09-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.0a1...1.15.1a1)
+
+**Merged pull requests:**
+
+- fix: coerce PosixPath audio path to str before wave.open [\#155](https://github.com/OpenVoiceOS/ovos-tts-server/pull/155) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.15.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.0a1) (2026-09-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.1a2...1.15.0a1)
+
+**Merged pull requests:**
+
+- feat: Docker Compose proxy default and custom-container docs [\#101](https://github.com/OpenVoiceOS/ovos-tts-server/pull/101) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.14.1a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.1a2) (2026-08-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.1a1...1.14.1a2)
+
+**Merged pull requests:**
+
+- refactor: migrate MCP server to the fastmcp package [\#146](https://github.com/OpenVoiceOS/ovos-tts-server/pull/146) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.14.1a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.1a1) (2026-08-13)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.0a2...1.14.1a1)
+
+**Merged pull requests:**
+
+- fix: run blocking synth off the event loop in elevenlabs websocket stream [\#147](https://github.com/OpenVoiceOS/ovos-tts-server/pull/147) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.14.0a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.0a2) (2026-08-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.14.0a1...1.14.0a2)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#144](https://github.com/OpenVoiceOS/ovos-tts-server/pull/144) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.14.0a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.14.0a1) (2026-07-17)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.6a1...1.14.0a1)
+
+**Merged pull requests:**
+
+- feat: dialog and tts transformer pipelines [\#139](https://github.com/OpenVoiceOS/ovos-tts-server/pull/139) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.13.6a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.6a1) (2026-07-15)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.5a1...1.13.6a1)
+
+**Merged pull requests:**
+
+- fix: run blocking synth off the event loop in async endpoints [\#140](https://github.com/OpenVoiceOS/ovos-tts-server/pull/140) ([JarbasAl](https://github.com/JarbasAl))
+
+## [1.13.5a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.13.5a1) (2026-07-15)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.13.4...1.13.5a1)
+
+**Merged pull requests:**
+
+- fix: serve non-WAV plugin output through compat routers [\#137](https://github.com/OpenVoiceOS/ovos-tts-server/pull/137) ([JarbasAl](https://github.com/JarbasAl))
 
 
 

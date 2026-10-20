@@ -65,3 +65,26 @@ class TestPollyBoto3:
         )
         audio = resp["AudioStream"].read()
         assert len(audio) > 16
+
+
+class TestPollyDescribeVoicesBoto3:
+    def test_lists_the_engine_voices(self, polly):
+        voices = polly.describe_voices()["Voices"]
+        assert [v["Id"] for v in voices] == ["voice1", "voice2"]
+        for v in voices:
+            assert v["Name"] == v["Id"]
+            assert v["LanguageCode"] == "en-US"
+            assert v["AdditionalLanguageCodes"] == ["de-DE"]
+            assert set(v["SupportedEngines"]) == {"standard", "neural", "long-form", "generative"}
+
+    def test_filters_by_language(self, polly):
+        assert len(polly.describe_voices(LanguageCode="en-US")["Voices"]) == 2
+        assert polly.describe_voices(LanguageCode="fr-FR")["Voices"] == []
+
+    def test_additional_language_needs_the_flag(self, polly):
+        assert polly.describe_voices(LanguageCode="de-DE")["Voices"] == []
+        voices = polly.describe_voices(LanguageCode="de-DE", IncludeAdditionalLanguageCodes=True)["Voices"]
+        assert [v["Id"] for v in voices] == ["voice1", "voice2"]
+
+    def test_engine_filter_keeps_every_voice(self, polly):
+        assert len(polly.describe_voices(Engine="neural")["Voices"]) == 2

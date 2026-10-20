@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.15.4a5](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a5) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.4a4...1.15.4a5)
+
+**Merged pull requests:**
+
+- docs: add opencode and Mistral Vibe MCP client recipes [\#176](https://github.com/OpenVoiceOS/ovos-tts-server/pull/176) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+- fix\(marytts\): speak Java locales on the MaryTTS routes [\#169](https://github.com/OpenVoiceOS/ovos-tts-server/pull/169) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [1.15.4a4](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a4) (2026-10-20)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.4a3...1.15.4a4)

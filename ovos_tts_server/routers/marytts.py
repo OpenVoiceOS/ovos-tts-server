@@ -13,7 +13,8 @@ Two routers are exposed:
 
 Both routers expose identical behaviour; register either or both.
 """
-from typing import Optional
+import os
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import FileResponse
@@ -37,11 +38,33 @@ class MaryTTSInput(BaseModel):
     AUDIO: str = "WAVE_FILE"
 
 
+def to_mary_locale(tag: str) -> str:
+    """Spell a language tag the way MaryTTS does, as a Java locale: en-us -> en_US."""
+    lang, *rest = tag.replace("_", "-").split("-")
+    return "_".join([lang.lower(), *(part.upper() for part in rest)])
+
+
+def resolve_locale(locale: str, langs: List[str]) -> str:
+    """Find the engine language a MaryTTS LOCALE asks for.
+
+    The match ignores case and the ``_``/``-`` separator, and falls back to the
+    base language (en_US -> en). A locale the engine does not list goes to the
+    engine as a hyphenated tag, for engines that do not declare their languages.
+    """
+    wanted = locale.replace("_", "-").lower()
+    by_key = {lang.replace("_", "-").lower(): lang for lang in langs}
+    base = wanted.split("-")[0]
+    return by_key.get(wanted) or by_key.get(base) or locale.replace("_", "-")
+
+
 def _register_marytts_routes(router: APIRouter, engine) -> None:
+    def engine_langs() -> List[str]:
+        return getattr(engine, "langs", None) or [engine.lang]
+
     @router.get("/locales")
     def mary_locales() -> Response:
-        langs = getattr(engine, "langs", None) or [engine.lang]
-        return Response(content="\n".join(langs), media_type="text/plain")
+        locales = dict.fromkeys(to_mary_locale(lang) for lang in engine_langs())
+        return Response(content="\n".join(locales), media_type="text/plain")
 
     @router.get("/voices")
     def mary_voices() -> Response:
@@ -51,12 +74,12 @@ def _register_marytts_routes(router: APIRouter, engine) -> None:
         line-by-line to populate their valid_voices / valid_langs sets.
         """
         voices = getattr(engine, "voices", None) or ["default"]
-        langs = getattr(engine, "langs", None) or [engine.lang]
-        # Pair each voice with each lang so any (voice, lang) combo the
+        locales = dict.fromkeys(to_mary_locale(lang) for lang in engine_langs())
+        # Pair each voice with each locale so any (voice, locale) combo the
         # plugin tries is in the discovered set.
         lines = [
-            f"{voice} {lang} m {engine.plugin_name}"
-            for voice in voices for lang in langs
+            f"{voice} {locale} m {engine.plugin_name}"
+            for voice in voices for locale in locales
         ]
         return Response(content="\n".join(lines), media_type="text/plain")
 
@@ -64,7 +87,7 @@ def _register_marytts_routes(router: APIRouter, engine) -> None:
     def mary_process(params: MaryTTSInput = Depends()) -> FileResponse:
         synth_kwargs = {}
         if params.LOCALE:
-            synth_kwargs["lang"] = params.LOCALE
+            synth_kwargs["lang"] = resolve_locale(params.LOCALE, engine_langs())
         if params.VOICE:
             synth_kwargs["voice"] = params.VOICE.replace("_", " ")
         try:
@@ -74,6 +97,12 @@ def _register_marytts_routes(router: APIRouter, engine) -> None:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"synthesis failed: {exc}",
             ) from exc
+        if not os.path.isfile(audio_path):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="the TTS engine produced no audio; GET /locales and "
+                       "GET /voices list what it supports",
+            )
         return FileResponse(audio_path, media_type="audio/wav")
 
 

@@ -18,6 +18,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import FileResponse
+from ovos_spec_tools.language import closest_lang, standardize_lang
 from pydantic import BaseModel, Field
 
 
@@ -40,21 +41,21 @@ class MaryTTSInput(BaseModel):
 
 def to_mary_locale(tag: str) -> str:
     """Spell a language tag the way MaryTTS does, as a Java locale: en-us -> en_US."""
-    lang, *rest = tag.replace("_", "-").split("-")
-    return "_".join([lang.lower(), *(part.upper() for part in rest)])
+    return standardize_lang(tag).replace("-", "_")
 
 
 def resolve_locale(locale: str, langs: List[str]) -> str:
     """Find the engine language a MaryTTS LOCALE asks for.
 
-    The match ignores case and the ``_``/``-`` separator, and falls back to the
-    base language (en_US -> en). A locale the engine does not list goes to the
-    engine as a hyphenated tag, for engines that do not declare their languages.
+    The match follows OVOS-INTENT-2 section 2: it ignores case and the
+    ``_``/``-`` separator, prefers an exact tag (en over en-us when both are
+    listed), and accepts the nearest regional variant (en_AU -> en-gb). A locale
+    the engine does not list goes to the engine as a hyphenated tag, for
+    engines that do not declare their languages.
     """
-    wanted = locale.replace("_", "-").lower()
-    by_key = {lang.replace("_", "-").lower(): lang for lang in langs}
-    base = wanted.split("-")[0]
-    return by_key.get(wanted) or by_key.get(base) or locale.replace("_", "-")
+    wanted = standardize_lang(locale)
+    exact = next((lang for lang in langs if standardize_lang(lang) == wanted), None)
+    return exact or closest_lang(locale, langs) or locale.replace("_", "-")
 
 
 def _register_marytts_routes(router: APIRouter, engine) -> None:

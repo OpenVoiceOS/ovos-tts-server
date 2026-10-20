@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.4a1](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.4a1) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.3a3...1.15.4a1)
+
+**Merged pull requests:**
+
+- fix\(utcp\): return synthesized audio as JSON so UTCP clients can call it [\#163](https://github.com/OpenVoiceOS/ovos-tts-server/pull/163) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [1.15.3a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.3a3) (2026-10-20)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.3a2...1.15.3a3)

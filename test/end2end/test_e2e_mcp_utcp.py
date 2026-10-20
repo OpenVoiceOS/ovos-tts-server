@@ -127,13 +127,11 @@ def live_server():
 
 @pytest.fixture(scope="module")
 def mcp_server():
-    """Run MCP as its own Starlette app to avoid sub-app lifespan issues."""
-    from ovos_tts_server.mcp_server import _build_mcp
+    """Boot create_app with MCP mounted, as ``ovos-tts-server --mcp`` does."""
+    from ovos_tts_server import create_app
 
-    stub = _StubTTSEngine()
-    mcp = _build_mcp(stub)
-    mcp_app = mcp.http_app(transport="streamable-http")
-    base_url, server, thread = _start_server(mcp_app, health_path="/mcp")
+    app = create_app(_StubTTSEngine(), enable_mcp=True)
+    base_url, server, thread = _start_server(app)
 
     yield f"{base_url}/mcp"
 
@@ -222,8 +220,7 @@ class TestUtcpE2E:
 # ---------------------------------------------------------------------------
 
 class TestMcpE2E:
-    """MCP tests use a standalone MCP Starlette app (separate from the main FastAPI app)
-    to avoid the Starlette Mount sub-app lifespan limitation."""
+    """MCP tests call the endpoint that create_app(enable_mcp=True) mounts."""
 
     def test_mcp_endpoint_accessible(self, mcp_server):
         resp = httpx.get(mcp_server, timeout=10)

@@ -57,8 +57,10 @@ The server registers drop-in compatibility endpoints for popular cloud TTS APIs 
 All defined in `ovos_tts_server/__init__.py`:
 
 - **`TTSEngineWrapper`**: loads and wraps a TTS plugin for dependency injection. Exposes `synthesize()`, `voices`, and `langs`.
-- **`create_app(tts_engine) -> FastAPI`**: factory that builds the FastAPI app, wires the native endpoints and every compat router, and enables permissive CORS.
-- **`start_tts_server(tts_plugin, cache=False) -> (FastAPI, TTSEngineWrapper)`**: top-level entry point used by `__main__`. Constructs the wrapper and the app.
+- **`create_app(tts_engine, enable_mcp=False) -> FastAPI`**: factory that builds the FastAPI app, wires the native endpoints, every compat router and `GET /utcp`, enables permissive CORS, and mounts `/mcp` when `enable_mcp` is true.
+- **`start_tts_server(tts_plugin, cache=False, enable_mcp=False, lang=None) -> (FastAPI, TTSEngineWrapper)`**: top-level entry point used by `__main__`. Constructs the wrapper and the app.
+
+The agent protocols live in two modules: `ovos_tts_server/mcp_server.py` (`build_mcp`, `mount_mcp`) and `ovos_tts_server/utcp.py` (`build_utcp_manual`, `make_utcp_router`). See [ai-agents.md](ai-agents.md).
 
 ## Entry point
 

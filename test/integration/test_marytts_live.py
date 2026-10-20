@@ -38,9 +38,9 @@ class TestMaryTTSWireProtocol:
         r = requests.get(f"{base_url}/marytts/locales", timeout=10)
         assert r.status_code == 200
         assert r.headers["content-type"].startswith("text/plain")
-        # Newline-separated locales, e.g. "en-us\nde-de"
+        # Newline-separated Java locales, e.g. "en_US\nde_DE"
         locales = [ln for ln in r.text.splitlines() if ln.strip()]
-        assert "en-us" in locales
+        assert "en_US" in locales
 
     def test_voices_plaintext(self, base_url):
         r = requests.get(f"{base_url}/marytts/voices", timeout=10)

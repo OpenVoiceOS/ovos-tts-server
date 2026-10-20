@@ -31,11 +31,11 @@ def test_marytts_plugin_voice_discovery(base_url):
     from ovos_tts_plugin_marytts import MaryTTS
 
     tts = MaryTTS({"url": f"{base_url}/marytts"})
-    # FakeEngine advertises langs=["en-us","de-de"] and voices=["voice1","voice2"]
-    # — the plugin should have discovered them.
+    # FakeEngine advertises langs=["en-us","de-de"] and voices=["voice1","voice2"];
+    # the router lists the langs as MaryTTS does, as Java locales.
     assert "voice1" in tts.valid_voices
     assert "voice2" in tts.valid_voices
-    assert tts.valid_langs  # at least one supported language
+    assert tts.valid_langs == {"en_US", "de_DE"}
 
 
 def test_marytts_plugin_synthesizes_via_compat_router(base_url, tmp_path):
@@ -47,7 +47,7 @@ def test_marytts_plugin_synthesizes_via_compat_router(base_url, tmp_path):
     result_path, phonemes = tts.get_tts(
         "hello world",
         str(out_path),
-        lang="en-us",
+        lang="en-US",
         voice="voice1",
     )
     assert result_path == str(out_path)
@@ -69,5 +69,5 @@ def test_marytts_plugin_against_root_aliases(base_url, tmp_path):
     tts = MaryTTS({"url": base_url, "voice": "voice1"})
     assert "voice1" in tts.valid_voices
     out_path = tmp_path / "marytts_root.wav"
-    tts.get_tts("hello", str(out_path), lang="en-us", voice="voice1")
+    tts.get_tts("hello", str(out_path), lang="en-US", voice="voice1")
     assert out_path.exists()

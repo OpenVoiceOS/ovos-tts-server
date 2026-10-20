@@ -1,15 +1,22 @@
+import base64
+import json
 import os
 import shutil
 import tempfile
 from typing import Optional, Tuple
 from fastapi import FastAPI, Request, Response
+from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from ovos_plugin_manager.transformer_services import (DialogTransformersService,
                                                       TTSTransformersService)
 from ovos_plugin_manager.tts import load_tts_plugin
 from ovos_config import Configuration
+
+from ovos_tts_server.audio_utils import audio_mime_type
+
+_B64_SLICE = 3 * 256 * 1024
 
 
 class TTSEngineWrapper:
@@ -180,6 +187,48 @@ def create_app(tts_engine: TTSEngineWrapper) -> FastAPI:
         audio_path, _ = await run_in_threadpool(
             tts_engine.synthesize, utterance, **plugin_params)
         return FileResponse(audio_path)
+
+    @app.get("/v2/synthesize/json")
+    async def synth_v2_json(request: Request) -> Response:
+        """
+        Synthesize like /v2/synthesize, but return the audio as base64 in a JSON body.
+
+        Tool-calling clients that only read JSON or text responses, such as the
+        reference UTCP HTTP client, call this endpoint instead of the binary one.
+
+        Returns:
+            Response: JSON ``{"mime_type", "data", "phonemes"}`` with the audio file
+            as base64 and its MIME type, or a 400 error when "utterance" is missing.
+        """
+        utterance = request.query_params.get("utterance")
+        if not utterance:
+            return JSONResponse({"error": "Missing utterance"}, status_code=400)
+
+        plugin_params = dict(request.query_params)
+        plugin_params.pop("utterance", None)
+        audio_path, phonemes = await run_in_threadpool(
+            tts_engine.synthesize, utterance, **plugin_params)
+
+        # Built before the response starts, so a missing file or phonemes that
+        # cannot be encoded give a 500 and not a 200 with a cut-off body.
+        header = (b'{"mime_type": ' + json.dumps(audio_mime_type(audio_path)).encode()
+                  + b', "phonemes": ' + json.dumps(phonemes).encode() + b', "data": "')
+        audio_file = open(audio_path, "rb")
+
+        def _json_chunks():
+            # Encode in slices that are a multiple of 3 bytes, so the base64
+            # pieces join into one valid string. Each slice holds the GIL only
+            # briefly, so long audio does not stall other requests.
+            with audio_file:
+                yield header
+                while chunk := audio_file.read(_B64_SLICE):
+                    yield base64.b64encode(chunk)
+            yield b'"}'
+
+        # The background task closes the file also when the client disconnects
+        # before the body streams and the generator never runs.
+        return StreamingResponse(_json_chunks(), media_type="application/json",
+                                 background=BackgroundTask(audio_file.close))
 
     from ovos_tts_server.routers.elevenlabs import make_elevenlabs_router
     app.include_router(make_elevenlabs_router(tts_engine))

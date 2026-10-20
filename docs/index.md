@@ -29,6 +29,7 @@ HTTP response (audio file / bytes / base64 JSON, per vendor)
 | GET | `/status` | Plugin name, supported languages, default voice/model |
 | GET | `/v2/synthesize?utterance=<text>[&lang=...][&voice=...]` | Primary synthesis endpoint, returns WAV audio |
 | GET | `/synthesize/<utterance>` | Legacy path-based synthesis endpoint |
+| GET | `/v2/synthesize/json?utterance=<text>[&lang=...][&voice=...]` | Same as `/v2/synthesize`, but returns JSON `{"mime_type", "phonemes", "data"}`: the audio file as base64 and its MIME type. The body is streamed. The UTCP manual points here. |
 
 The server forwards extra query parameters to the plugin as synthesis options.
 

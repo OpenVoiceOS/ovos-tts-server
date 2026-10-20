@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.15.3a3](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.3a3) (2026-10-20)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.3a2...1.15.3a3)
+
+**Merged pull requests:**
+
+- build: set agent-protocol dependency floors and drop the caps [\#162](https://github.com/OpenVoiceOS/ovos-tts-server/pull/162) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [1.15.3a2](https://github.com/OpenVoiceOS/ovos-tts-server/tree/1.15.3a2) (2026-10-20)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-tts-server/compare/1.15.3a1...1.15.3a2)
